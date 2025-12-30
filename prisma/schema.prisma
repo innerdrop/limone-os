@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ==================== MODELS ====================
+// Note: SQLite doesn't support enums, so we use String with comments for valid values
+
+model Usuario {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  nombre        String
+  telefono      String?
+  rol           String    @default("ALUMNO") // ALUMNO, ADMIN, DOCENTE
+  imagen        String?
+  activo        Boolean   @default(true)
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
+
+  // Relaciones
+  alumno         Alumno?
+  clasesDocente  Clase[]        @relation("DocenteClases")
+  notificaciones Notificacion[]
+
+  @@map("usuarios")
+}
+
+model Alumno {
+  id                 String   @id @default(cuid())
+  usuarioId          String   @unique
+  fechaNacimiento    DateTime?
+  contactoEmergencia String?
+  telefonoEmergencia String?
+  alergias           String?
+  nivel              String   @default("PRINCIPIANTE") // PRINCIPIANTE, INTERMEDIO, AVANZADO
+  notas              String?
+  creadoEn           DateTime @default(now())
+  actualizadoEn      DateTime @updatedAt
+
+  // Relaciones
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  inscripciones Inscripcion[]
+  asistencias   Asistencia[]
+  pagos         Pago[]
+  obras         Obra[]
+
+  @@map("alumnos")
+}
+
+model Taller {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  imagen      String?
+  cupoMaximo  Int      @default(10)
+  precio      Float    @default(0)
+  duracion    Int      @default(90) // minutos
+  activo      Boolean  @default(true)
+  diasSemana  String?  // "LUNES,MIERCOLES"
+  horaInicio  String?  // "18:00"
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  // Relaciones
+  clases        Clase[]
+  inscripciones Inscripcion[]
+
+  @@map("talleres")
+}
+
+model Clase {
+  id              String   @id @default(cuid())
+  tallerId        String
+  docenteId       String
+  fechaHora       DateTime
+  duracionMinutos Int      @default(90)
+  ubicacion       String?
+  estado          String   @default("PROGRAMADA") // PROGRAMADA, COMPLETADA, CANCELADA
+  notas           String?
+  creadoEn        DateTime @default(now())
+  actualizadoEn   DateTime @updatedAt
+
+  // Relaciones
+  taller      Taller       @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  docente     Usuario      @relation("DocenteClases", fields: [docenteId], references: [id])
+  asistencias Asistencia[]
+  obras       Obra[]
+
+  @@map("clases")
+}
+
+model Inscripcion {
+  id               String   @id @default(cuid())
+  alumnoId         String
+  tallerId         String
+  fechaInscripcion DateTime @default(now())
+  estado           String   @default("ACTIVA") // ACTIVA, PAUSADA, FINALIZADA
+  notas            String?
+  creadoEn         DateTime @default(now())
+  actualizadoEn    DateTime @updatedAt
+
+  // Relaciones
+  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  taller Taller @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  pagos  Pago[]
+
+  @@unique([alumnoId, tallerId])
+  @@map("inscripciones")
+}
+
+model Asistencia {
+  id        String   @id @default(cuid())
+  alumnoId  String
+  claseId   String
+  estado    String   @default("PRESENTE") // PRESENTE, AUSENTE, AVISADO, JUSTIFICADO
+  notas     String?
+  creadoEn  DateTime @default(now())
+
+  // Relaciones
+  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  clase  Clase  @relation(fields: [claseId], references: [id], onDelete: Cascade)
+
+  @@unique([alumnoId, claseId])
+  @@map("asistencias")
+}
+
+model Pago {
+  id             String   @id @default(cuid())
+  alumnoId       String
+  inscripcionId  String
+  monto          Float
+  fechaPago      DateTime @default(now())
+  estado         String   @default("PENDIENTE") // PENDIENTE, APROBADO, RECHAZADO
+  mercadoPagoId  String?
+  comprobantePdf String?
+  mesCubierto    Int      // 1-12
+  anioCubierto   Int      // 2024, 2025...
+  concepto       String?
+  creadoEn       DateTime @default(now())
+  actualizadoEn  DateTime @updatedAt
+
+  // Relaciones
+  alumno      Alumno      @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  inscripcion Inscripcion @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)
+
+  @@map("pagos")
+}
+
+model Obra {
+  id            String   @id @default(cuid())
+  alumnoId      String
+  claseId       String?
+  imagenUrl     String
+  titulo        String?
+  descripcion   String?
+  tecnica       String?
+  fechaCreacion DateTime @default(now())
+  destacada     Boolean  @default(false)
+  creadoEn      DateTime @default(now())
+
+  // Relaciones
+  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  clase  Clase? @relation(fields: [claseId], references: [id])
+
+  @@map("obras")
+}
+
+model Notificacion {
+  id         String   @id @default(cuid())
+  usuarioId  String
+  titulo     String
+  mensaje    String
+  leida      Boolean  @default(false)
+  tipo       String?  // "RECORDATORIO", "PAGO", "SISTEMA"
+  enlace     String?
+  fechaEnvio DateTime @default(now())
+
+  // Relaciones
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
+}
+
+model Testimonio {
+  id        String   @id @default(cuid())
+  nombre    String
+  texto     String
+  imagen    String?
+  destacado Boolean  @default(false)
+  activo    Boolean  @default(true)
+  creadoEn  DateTime @default(now())
+
+  @@map("testimonios")
+}
+
+model Configuracion {
+  id          String  @id @default(cuid())
+  clave       String  @unique
+  valor       String
+  descripcion String?
+
+  @@map("configuracion")
+}
