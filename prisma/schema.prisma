@@ -21,9 +21,10 @@ model Usuario {
   telefono      String?
   rol           String    @default("ALUMNO") // ALUMNO, ADMIN, DOCENTE
   imagen        String?
-  activo        Boolean   @default(true)
-  creadoEn      DateTime  @default(now())
-  actualizadoEn DateTime  @updatedAt
+  activo              Boolean   @default(true)
+  debeCambiarPassword Boolean   @default(true)
+  creadoEn            DateTime  @default(now())
+  actualizadoEn       DateTime  @updatedAt
 
   // Relaciones
   alumno         Alumno?

@@ -16,28 +16,29 @@ export const authOptions: NextAuthOptions = {
                     throw new Error('Credenciales requeridas')
                 }
 
-                const user = await prisma.usuario.findUnique({
+                const usuario = await prisma.usuario.findUnique({
                     where: { email: credentials.email },
                     include: { alumno: true }
                 })
 
-                if (!user || !user.activo) {
-                    throw new Error('Usuario no encontrado o inactivo')
+                if (!usuario) {
+                    throw new Error('Email no registrado')
                 }
 
-                const isValid = await compare(credentials.password, user.password)
+                const isValid = await compare(credentials.password, usuario.password)
 
                 if (!isValid) {
                     throw new Error('Contraseña incorrecta')
                 }
 
                 return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.nombre,
-                    role: user.rol,
-                    image: user.imagen,
-                    perfilCompleto: user.alumno?.perfilCompleto ?? false,
+                    id: usuario.id.toString(),
+                    name: usuario.nombre,
+                    email: usuario.email,
+                    role: usuario.rol,
+                    image: usuario.imagen, // Preserving existing field not explicitly removed by the change
+                    perfilCompleto: usuario.alumno?.perfilCompleto || false,
+                    debeCambiarPassword: usuario.debeCambiarPassword
                 }
             }
         })
@@ -47,12 +48,23 @@ export const authOptions: NextAuthOptions = {
         maxAge: 30 * 24 * 60 * 60, // 30 días
     },
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session: updateSession }) {
             if (user) {
                 token.id = user.id
                 token.role = user.role
-                token.perfilCompleto = (user as any).perfilCompleto
+                token.perfilCompleto = user.perfilCompleto
+                token.debeCambiarPassword = user.debeCambiarPassword
             }
+
+            if (trigger === "update" && updateSession) {
+                if (updateSession.perfilCompleto !== undefined) {
+                    token.perfilCompleto = updateSession.perfilCompleto
+                }
+                if (updateSession.debeCambiarPassword !== undefined) {
+                    token.debeCambiarPassword = updateSession.debeCambiarPassword
+                }
+            }
+
             return token
         },
         async session({ session, token }) {
@@ -60,6 +72,7 @@ export const authOptions: NextAuthOptions = {
                 session.user.id = token.id as string
                 session.user.role = token.role as string
                 session.user.perfilCompleto = token.perfilCompleto as boolean
+                session.user.debeCambiarPassword = token.debeCambiarPassword as boolean
             }
             return session
         }

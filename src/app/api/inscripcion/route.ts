@@ -65,7 +65,8 @@ export async function POST(request: NextRequest) {
                 nombre: nombre,
                 telefono: tutorTelefonoPrincipal,
                 rol: 'ALUMNO',
-                activo: true
+                activo: true,
+                debeCambiarPassword: true
             }
         })
 

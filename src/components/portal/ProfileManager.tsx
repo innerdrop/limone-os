@@ -1,31 +1,33 @@
 'use client'
 
-import { useState } from 'react'
-import ProfileCompletionModal from '@/components/ProfileCompletionModal'
-import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import ProfileCompletionModal from '../ProfileCompletionModal'
+import PasswordChangeModal from './PasswordChangeModal'
 
-interface ProfileManagerProps {
-    perfilCompleto: boolean
-    userId: string
-}
+export default function ProfileManager() {
+    const { data: session, status, update } = useSession()
 
-export default function ProfileManager({ perfilCompleto, userId }: ProfileManagerProps) {
-    const [isOpen, setIsOpen] = useState(!perfilCompleto)
-    const router = useRouter()
+    if (status === 'loading') return null
 
-    const handleComplete = () => {
-        setIsOpen(false)
-        router.refresh()
+    const needsProfileUpdate = session?.user?.perfilCompleto === false
+    const needsPasswordChange = session?.user?.debeCambiarPassword === true
+
+    const handleProfileComplete = async () => {
+        await update({ perfilCompleto: true })
     }
 
-    // We only show the modal if the profile is not complete
-    if (perfilCompleto) return null
-
     return (
-        <ProfileCompletionModal
-            isOpen={isOpen}
-            onClose={() => { }} // Cannot be closed until complete
-            onComplete={handleComplete}
-        />
+        <>
+            {/* Show profile update first if needed */}
+            <ProfileCompletionModal
+                isOpen={needsProfileUpdate}
+                onClose={() => { }}
+                onComplete={handleProfileComplete}
+            />
+
+            {/* Show password change only if profile is complete but password is still temporary */}
+            {!needsProfileUpdate && <PasswordChangeModal isOpen={needsPasswordChange} />}
+        </>
     )
 }
+
