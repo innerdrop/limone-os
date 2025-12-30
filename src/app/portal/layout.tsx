@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
 import PortalSidebar from '@/components/portal/Sidebar'
 import PortalHeader from '@/components/portal/Header'
+import ProfileManager from '@/components/portal/ProfileManager'
 
 export default async function PortalLayout({
     children,
@@ -17,6 +18,12 @@ export default async function PortalLayout({
 
     return (
         <div className="min-h-screen bg-canvas-100">
+            {/* Modal de perfil obligatorio si no está completo */}
+            <ProfileManager
+                perfilCompleto={session.user.perfilCompleto}
+                userId={session.user.id}
+            />
+
             {/* Sidebar */}
             <PortalSidebar user={session.user} />
 

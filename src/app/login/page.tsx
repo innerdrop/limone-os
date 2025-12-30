@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -54,10 +55,14 @@ export default function LoginPage() {
             <div className="relative w-full max-w-md">
                 {/* Logo */}
                 <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center gap-2">
-                        <div className="w-12 h-12 rounded-xl bg-lemon-400 flex items-center justify-center shadow-lg">
-                            <span className="text-2xl">🍋</span>
-                        </div>
+                    <Link href="/" className="inline-flex items-center gap-3">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Taller Limoné Logo"
+                            width={50}
+                            height={50}
+                            className="rounded-lg object-contain shadow-lg"
+                        />
                         <span className="font-serif text-2xl font-bold text-warm-800">
                             Taller Limoné
                         </span>
@@ -74,6 +79,21 @@ export default function LoginPage() {
                             Ingresá a tu portal de alumno
                         </p>
                     </div>
+
+                    {/* Success Message */}
+                    {searchParams.get('inscripcion') === 'exitosa' && (
+                        <div className="mb-6 p-4 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm">
+                            <div className="flex items-start gap-2">
+                                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                <div>
+                                    <p className="font-semibold mb-1">¡Inscripción exitosa!</p>
+                                    <p>Tu contraseña temporal son los primeros 4 dígitos del DNI del alumno. Al ingresar, deberás completar información adicional.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Error Messages */}
                     {(error || formError) && (

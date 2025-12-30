@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 
 interface User {
@@ -35,8 +36,13 @@ export default function PortalHeader({ user }: { user: User }) {
 
                 {/* Mobile Logo */}
                 <Link href="/portal" className="lg:hidden flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-lemon-400 flex items-center justify-center">
-                        <span className="text-lg">🍋</span>
+                    <div className="relative w-8 h-8">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Logo Taller Limoné"
+                            fill
+                            className="object-contain"
+                        />
                     </div>
                 </Link>
 

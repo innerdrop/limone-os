@@ -1,20 +1,62 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut, useSession } from 'next-auth/react'
+import Image from 'next/image'
 
 export default function PerfilPage() {
     const { data: session } = useSession()
     const [isEditing, setIsEditing] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [alumnoData, setAlumnoData] = useState<any>(null)
     const [formData, setFormData] = useState({
-        nombre: session?.user?.name || '',
-        email: session?.user?.email || '',
+        nombre: '',
+        email: '',
         telefono: '',
         fechaNacimiento: '',
-        contactoEmergencia: '',
-        telefonoEmergencia: '',
+        dni: '',
+        domicilio: '',
+        tutorNombre: '',
+        tutorEmail: '',
+        tutorTelefonoPrincipal: '',
+        emergenciaNombre: '',
+        emergenciaTelefono: '',
         alergias: '',
     })
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch('/api/perfil')
+                if (res.ok) {
+                    const data = await res.json()
+                    setAlumnoData(data)
+                    setFormData({
+                        nombre: session?.user?.name || '',
+                        email: session?.user?.email || '',
+                        telefono: data.tutorTelefonoPrincipal || '',
+                        fechaNacimiento: data.fechaNacimiento ? data.fechaNacimiento.split('T')[0] : '',
+                        dni: data.dni || '',
+                        domicilio: data.domicilio || '',
+                        tutorNombre: data.tutorNombre || '',
+                        tutorEmail: data.tutorEmail || '',
+                        tutorTelefonoPrincipal: data.tutorTelefonoPrincipal || '',
+                        emergenciaNombre: data.emergenciaNombre || '',
+                        emergenciaTelefono: data.emergenciaTelefono || '',
+                        alergias: data.alergias || '',
+                    })
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        if (session) {
+            fetchProfile()
+        }
+    }, [session])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -23,8 +65,16 @@ export default function PerfilPage() {
         setIsEditing(false)
     }
 
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lemon-500"></div>
+            </div>
+        )
+    }
+
     return (
-        <div className="space-y-6 animate-fade-in max-w-3xl">
+        <div className="space-y-6 animate-fade-in max-w-4xl pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
@@ -32,7 +82,7 @@ export default function PerfilPage() {
                         Mi Perfil
                     </h1>
                     <p className="text-warm-500 mt-1">
-                        Gestioná tu información personal
+                        Información completa del alumno y su inscripción
                     </p>
                 </div>
                 {!isEditing && (
@@ -53,36 +103,44 @@ export default function PerfilPage() {
                 {/* Avatar Section */}
                 <div className="flex items-center gap-6 pb-6 border-b border-canvas-200">
                     <div className="relative">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-lemon-400 to-leaf-400 flex items-center justify-center">
-                            <span className="text-4xl font-bold text-white">
-                                {session?.user?.name?.charAt(0) || 'U'}
-                            </span>
+                        <div className="w-24 h-24 rounded-2xl bg-white border border-canvas-200 flex items-center justify-center overflow-hidden shadow-soft">
+                            <Image
+                                src="/logo.jpg"
+                                alt="Avatar"
+                                width={96}
+                                height={96}
+                                className="object-cover"
+                            />
                         </div>
-                        {isEditing && (
-                            <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-canvas-50 transition-colors">
-                                <svg className="w-4 h-4 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                            </button>
-                        )}
                     </div>
                     <div>
                         <h2 className="text-xl font-semibold text-warm-800">
                             {session?.user?.name || 'Usuario'}
                         </h2>
                         <p className="text-warm-500">{session?.user?.email}</p>
-                        <span className="badge badge-lemon mt-2">Alumno activo</span>
+                        <div className="flex gap-2 mt-2">
+                            <span className="badge badge-lemon">Alumno activo</span>
+                            <span className={`badge ${alumnoData?.perfilCompleto ? 'bg-leaf-100 text-leaf-700' : 'bg-amber-100 text-amber-700'}`}>
+                                {alumnoData?.perfilCompleto ? 'Perfil Completo' : 'Perfil Incompleto'}
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="pt-6 space-y-6">
-                    {/* Personal Info */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-warm-800 mb-4">Información Personal</h3>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div>
+                <form onSubmit={handleSubmit} className="pt-6 space-y-8">
+                    {/* Alumno Info */}
+                    <section>
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-lemon-100 flex items-center justify-center text-lemon-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-warm-800">Datos del Alumno</h3>
+                        </div>
+                        <div className="grid md:grid-cols-3 gap-4">
+                            <div className="md:col-span-2">
                                 <label className="label">Nombre completo</label>
                                 <input
                                     type="text"
@@ -93,23 +151,12 @@ export default function PerfilPage() {
                                 />
                             </div>
                             <div>
-                                <label className="label">Email</label>
+                                <label className="label">DNI</label>
                                 <input
-                                    type="email"
-                                    className="input-field bg-canvas-100"
-                                    value={formData.email}
-                                    disabled
-                                />
-                                <p className="text-xs text-warm-400 mt-1">El email no se puede modificar</p>
-                            </div>
-                            <div>
-                                <label className="label">Teléfono</label>
-                                <input
-                                    type="tel"
+                                    type="text"
                                     className="input-field"
-                                    placeholder="+54 9 2901 ..."
-                                    value={formData.telefono}
-                                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                                    value={formData.dni}
+                                    onChange={(e) => setFormData({ ...formData, dni: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
@@ -123,51 +170,178 @@ export default function PerfilPage() {
                                     disabled={!isEditing}
                                 />
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Emergency Contact */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-warm-800 mb-4">Contacto de Emergencia</h3>
-                        <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label className="label">Nombre del contacto</label>
+                                <label className="label">Edad</label>
+                                <input
+                                    type="number"
+                                    className="input-field bg-canvas-100"
+                                    value={alumnoData?.edad || ''}
+                                    disabled
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Domicilio</label>
                                 <input
                                     type="text"
                                     className="input-field"
-                                    placeholder="Nombre del familiar/tutor"
-                                    value={formData.contactoEmergencia}
-                                    onChange={(e) => setFormData({ ...formData, contactoEmergencia: e.target.value })}
+                                    value={formData.domicilio}
+                                    onChange={(e) => setFormData({ ...formData, domicilio: e.target.value })}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Tutor Info */}
+                    <section className="pt-6 border-t border-canvas-100">
+                        <div className="flex items-center gap-2 mb-4">
+                            <div className="w-8 h-8 rounded-lg bg-leaf-100 flex items-center justify-center text-leaf-600">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-warm-800">Responsable / Tutor</h3>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">Nombre del Tutor</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    value={formData.tutorNombre}
+                                    onChange={(e) => setFormData({ ...formData, tutorNombre: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
                             <div>
-                                <label className="label">Teléfono de emergencia</label>
+                                <label className="label">Parentesco</label>
+                                <input
+                                    type="text"
+                                    className="input-field bg-canvas-100"
+                                    value={alumnoData?.tutorRelacion || ''}
+                                    disabled
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Email de contacto</label>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    value={formData.tutorEmail}
+                                    onChange={(e) => setFormData({ ...formData, tutorEmail: e.target.value })}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Teléfono Principal</label>
                                 <input
                                     type="tel"
                                     className="input-field"
-                                    placeholder="+54 9 2901 ..."
-                                    value={formData.telefonoEmergencia}
-                                    onChange={(e) => setFormData({ ...formData, telefonoEmergencia: e.target.value })}
+                                    value={formData.tutorTelefonoPrincipal}
+                                    onChange={(e) => setFormData({ ...formData, tutorTelefonoPrincipal: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
                         </div>
+                    </section>
+
+                    {/* Security & Health */}
+                    <div className="grid md:grid-cols-2 gap-8 pt-6 border-t border-canvas-100">
+                        <section>
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-warm-800">Emergencias</h3>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="label">Contacto de Emergencia</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={formData.emergenciaNombre}
+                                        onChange={(e) => setFormData({ ...formData, emergenciaNombre: e.target.value })}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Teléfono Emergencia</label>
+                                    <input
+                                        type="tel"
+                                        className="input-field"
+                                        value={formData.emergenciaTelefono}
+                                        onChange={(e) => setFormData({ ...formData, emergenciaTelefono: e.target.value })}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-bold text-warm-800">Salud</h3>
+                            </div>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="label">Alergias / Condiciones</label>
+                                    <textarea
+                                        className="input-field min-h-[80px] resize-none"
+                                        value={formData.alergias}
+                                        onChange={(e) => setFormData({ ...formData, alergias: e.target.value })}
+                                        disabled={!isEditing}
+                                    />
+                                </div>
+                                <div className="p-3 rounded-lg bg-canvas-50 border border-canvas-200 text-sm">
+                                    <p className="text-warm-600">Obra Social: <span className="font-semibold">{alumnoData?.obraSocial || 'No especificada'}</span></p>
+                                    <p className="text-warm-600">Afiliado: <span className="font-semibold">{alumnoData?.numeroAfiliado || '-'}</span></p>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
-                    {/* Health Info */}
-                    <div>
-                        <h3 className="text-lg font-semibold text-warm-800 mb-4">Información de Salud</h3>
-                        <div>
-                            <label className="label">Alergias o condiciones médicas</label>
-                            <textarea
-                                className="input-field min-h-[100px] resize-none"
-                                placeholder="Indicá cualquier alergia o condición que debamos conocer..."
-                                value={formData.alergias}
-                                onChange={(e) => setFormData({ ...formData, alergias: e.target.value })}
-                                disabled={!isEditing}
-                            />
-                        </div>
+                    {/* Authorizations & Payment Info */}
+                    <div className="grid md:grid-cols-2 gap-8 pt-6 border-t border-canvas-100">
+                        <section>
+                            <h3 className="text-sm font-bold text-warm-400 uppercase tracking-wider mb-4">Autorizaciones</h3>
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
+                                    <span className="text-sm text-warm-700">Participación</span>
+                                    <span className={alumnoData?.autorizacionParticipacion ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
+                                        {alumnoData?.autorizacionParticipacion ? 'SÍ' : 'NO'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
+                                    <span className="text-sm text-warm-700">Atención Médica</span>
+                                    <span className={alumnoData?.autorizacionMedica ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
+                                        {alumnoData?.autorizacionMedica ? 'SÍ' : 'NO'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
+                                    <span className="text-sm text-warm-700">Uso de Imagen</span>
+                                    <span className={alumnoData?.autorizacionImagenes ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
+                                        {alumnoData?.autorizacionImagenes ? 'SÍ' : 'NO'}
+                                    </span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section>
+                            <h3 className="text-sm font-bold text-warm-400 uppercase tracking-wider mb-4">Información de Pago</h3>
+                            <div className="p-4 rounded-xl bg-lemon-50 border border-lemon-100">
+                                <p className="text-sm text-warm-600">Plan actual:</p>
+                                <p className="text-lg font-bold text-warm-800">{alumnoData?.planPago || 'No asignado'}</p>
+                                <p className="text-sm text-warm-600 mt-2">Forma de pago:</p>
+                                <p className="font-medium text-warm-700">{alumnoData?.formaPago || '-'}</p>
+                            </div>
+                        </section>
                     </div>
 
                     {/* Actions */}
@@ -191,17 +365,16 @@ export default function PerfilPage() {
                 </form>
             </div>
 
-            {/* Danger Zone */}
-            <div className="card border-red-200">
-                <h3 className="text-lg font-semibold text-red-600 mb-4">Zona de Peligro</h3>
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-red-50">
+            {/* Account Settings - No title as requested */}
+            <div className="p-4 rounded-2xl border border-canvas-200">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <p className="font-medium text-warm-800">Cerrar sesión</p>
                         <p className="text-sm text-warm-500">Salir de tu cuenta en este dispositivo</p>
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: '/' })}
-                        className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-medium hover:bg-red-200 transition-colors"
+                        className="px-4 py-2 bg-canvas-100 text-warm-600 rounded-lg font-medium hover:bg-canvas-200 transition-colors"
                     >
                         Cerrar sesión
                     </button>
@@ -210,3 +383,4 @@ export default function PerfilPage() {
         </div>
     )
 }
+

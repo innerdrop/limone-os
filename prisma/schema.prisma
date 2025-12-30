@@ -36,10 +36,58 @@ model Usuario {
 model Alumno {
   id                 String   @id @default(cuid())
   usuarioId          String   @unique
+  
+  // Datos del alumno
+  dni                String?
   fechaNacimiento    DateTime?
+  edad               Int?
+  domicilio          String?
+  
+  // Datos del padre/madre/tutor legal
+  tutorNombre                String?
+  tutorDni                   String?
+  tutorRelacion              String? // "Padre", "Madre", "Tutor"
+  tutorDomicilio             String?
+  tutorTelefonoPrincipal     String?
+  tutorTelefonoAlternativo   String?
+  tutorEmail                 String?
+  tutorProfesion             String?
+  
+  // Contacto de emergencia
+  emergenciaNombre           String?
+  emergenciaTelefono         String?
+  emergenciaRelacion         String?
+  
+  // Información de salud
+  obraSocial                 String?
+  numeroAfiliado             String?
+  hospitalReferencia         String?
+  alergias                   String?
+  medicacionHabitual         String?
+  condicionesMedicas         String?
+  restriccionesFisicas       String?
+  
+  // Autorizaciones
+  autorizacionParticipacion  Boolean  @default(false)
+  autorizacionMedica         Boolean  @default(false)
+  autorizacionRetiro         String?  // JSON con personas autorizadas
+  autorizacionImagenes       Boolean  @default(false)
+  aceptacionReglamento       Boolean  @default(false)
+  firmaResponsable           String?  // Base64 de la firma
+  aclaracionFirma            String?
+  dniFirma                   String?
+  
+  // Información administrativa
+  planPago                   String?
+  formaPago                  String?
+  firmaConformidad           String?  // Base64 de la firma
+  
+  // Control de perfil
+  perfilCompleto             Boolean  @default(false)
+  
+  // Campos legacy
   contactoEmergencia String?
   telefonoEmergencia String?
-  alergias           String?
   nivel              String   @default("PRINCIPIANTE") // PRINCIPIANTE, INTERMEDIO, AVANZADO
   notas              String?
   creadoEn           DateTime @default(now())

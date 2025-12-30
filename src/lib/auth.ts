@@ -37,6 +37,7 @@ export const authOptions: NextAuthOptions = {
                     name: user.nombre,
                     role: user.rol,
                     image: user.imagen,
+                    perfilCompleto: user.alumno?.perfilCompleto ?? false,
                 }
             }
         })
@@ -50,6 +51,7 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id
                 token.role = user.role
+                token.perfilCompleto = (user as any).perfilCompleto
             }
             return token
         },
@@ -57,6 +59,7 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.id = token.id as string
                 session.user.role = token.role as string
+                session.user.perfilCompleto = token.perfilCompleto as boolean
             }
             return session
         }

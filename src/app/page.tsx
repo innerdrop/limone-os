@@ -144,10 +144,10 @@ function TalleresSection() {
                                 </div>
                                 {/* Cupos Badge */}
                                 <div className={`absolute top-4 right-4 badge ${taller.cuposDisponibles === 0
-                                        ? 'badge-error'
-                                        : taller.cuposDisponibles <= 2
-                                            ? 'badge-warning'
-                                            : 'badge-success'
+                                    ? 'badge-error'
+                                    : taller.cuposDisponibles <= 2
+                                        ? 'badge-warning'
+                                        : 'badge-success'
                                     }`}>
                                     {taller.cuposDisponibles === 0
                                         ? 'Sin cupos'
@@ -179,8 +179,8 @@ function TalleresSection() {
                                 <Link
                                     href={`/inscripcion?taller=${taller.id}`}
                                     className={`mt-4 w-full inline-flex items-center justify-center py-2.5 rounded-xl font-medium transition-all ${taller.cuposDisponibles === 0
-                                            ? 'bg-warm-200 text-warm-400 cursor-not-allowed'
-                                            : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
+                                        ? 'bg-warm-200 text-warm-400 cursor-not-allowed'
+                                        : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
                                         }`}
                                 >
                                     {taller.cuposDisponibles === 0 ? 'Lista de espera' : 'Inscribirme'}
@@ -460,10 +460,14 @@ function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 md:h-20">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-lemon-400 flex items-center justify-center">
-                            <span className="text-xl">🍋</span>
-                        </div>
+                    <Link href="/" className="flex items-center gap-3">
+                        <Image
+                            src="/logo.jpg"
+                            alt="Taller Limoné Logo"
+                            width={50}
+                            height={50}
+                            className="rounded-lg object-contain"
+                        />
                         <span className="font-serif text-xl font-bold text-warm-800">
                             Taller Limoné
                         </span>
@@ -508,10 +512,14 @@ function Footer() {
                 <div className="grid md:grid-cols-4 gap-8 mb-12">
                     {/* Brand */}
                     <div className="md:col-span-2">
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-lemon-400 flex items-center justify-center">
-                                <span className="text-xl">🍋</span>
-                            </div>
+                        <div className="flex items-center gap-3 mb-4">
+                            <Image
+                                src="/logo.jpg"
+                                alt="Taller Limoné Logo"
+                                width={50}
+                                height={50}
+                                className="rounded-lg object-contain"
+                            />
                             <span className="font-serif text-xl font-bold">Taller Limoné</span>
                         </div>
                         <p className="text-warm-300 max-w-md">

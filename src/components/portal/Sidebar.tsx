@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 interface User {
@@ -69,8 +70,13 @@ export default function PortalSidebar({ user }: { user: User }) {
                     {/* Logo */}
                     <div className="flex items-center gap-3 px-6 mb-8">
                         <Link href="/" className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-xl bg-lemon-400 flex items-center justify-center">
-                                <span className="text-xl">🍋</span>
+                            <div className="relative w-10 h-10">
+                                <Image
+                                    src="/logo.jpg"
+                                    alt="Logo Taller Limoné"
+                                    fill
+                                    className="object-contain"
+                                />
                             </div>
                             <div>
                                 <span className="font-serif text-lg font-bold text-warm-800 block">
@@ -90,8 +96,8 @@ export default function PortalSidebar({ user }: { user: User }) {
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                            ? 'bg-lemon-100 text-lemon-700'
-                                            : 'text-warm-600 hover:bg-canvas-100 hover:text-warm-800'
+                                        ? 'bg-lemon-100 text-lemon-700'
+                                        : 'text-warm-600 hover:bg-canvas-100 hover:text-warm-800'
                                         }`}
                                 >
                                     <span className={isActive ? 'text-lemon-600' : 'text-warm-400'}>
