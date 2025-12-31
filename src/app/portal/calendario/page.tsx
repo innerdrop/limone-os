@@ -1,26 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 // Días de la semana en español
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 
-// Clases de ejemplo (en producción vendrían de la BD)
-const clasesEjemplo = [
-    { id: 1, fecha: new Date(2025, 11, 30), taller: 'Pintura al Óleo', hora: '18:00', estado: 'programada' },
-    { id: 2, fecha: new Date(2025, 11, 31), taller: 'Pintura al Óleo', hora: '18:00', estado: 'programada' },
-    { id: 3, fecha: new Date(2026, 0, 2), taller: 'Pintura al Óleo', hora: '18:00', estado: 'programada' },
-    { id: 4, fecha: new Date(2026, 0, 6), taller: 'Pintura al Óleo', hora: '18:00', estado: 'programada' },
-    { id: 5, fecha: new Date(2025, 11, 23), taller: 'Pintura al Óleo', hora: '18:00', estado: 'completada' },
-    { id: 6, fecha: new Date(2025, 11, 25), taller: 'Pintura al Óleo', hora: '18:00', estado: 'ausente' },
-]
+interface Clase {
+    id: string
+    fecha: string | Date
+    taller: string
+    hora: string
+    estado: string
+}
 
 export default function CalendarioPage() {
     const [fechaActual, setFechaActual] = useState(new Date())
-    const [claseSeleccionada, setClaseSeleccionada] = useState<typeof clasesEjemplo[0] | null>(null)
+    const [clases, setClases] = useState<Clase[]>([])
+    const [loading, setLoading] = useState(true)
+    const [claseSeleccionada, setClaseSeleccionada] = useState<Clase | null>(null)
     const [showModal, setShowModal] = useState(false)
+
+    useEffect(() => {
+        fetch('/api/portal/calendario')
+            .then(res => res.json())
+            .then(data => {
+                // Convert string dates to Date objects
+                const formatted = data.classes.map((c: any) => ({
+                    ...c,
+                    fecha: new Date(c.fecha)
+                }))
+                setClases(formatted)
+                setLoading(false)
+            })
+            .catch(err => {
+                console.error(err)
+                setLoading(false)
+            })
+    }, [])
 
     const primerDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1)
     const ultimoDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0)
@@ -36,17 +54,20 @@ export default function CalendarioPage() {
     }
 
     const getClasesDelDia = (dia: number) => {
-        return clasesEjemplo.filter(clase =>
-            clase.fecha.getDate() === dia &&
-            clase.fecha.getMonth() === fechaActual.getMonth() &&
-            clase.fecha.getFullYear() === fechaActual.getFullYear()
-        )
+        return clases.filter(clase => {
+            const f = new Date(clase.fecha)
+            return f.getDate() === dia &&
+                f.getMonth() === fechaActual.getMonth() &&
+                f.getFullYear() === fechaActual.getFullYear()
+        })
     }
 
-    const handleAvisarInasistencia = (clase: typeof clasesEjemplo[0]) => {
+    const handleAvisarInasistencia = (clase: Clase) => {
         setClaseSeleccionada(clase)
         setShowModal(true)
     }
+
+    if (loading) return <div className="p-8 text-center">Cargando calendario...</div>
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -104,7 +125,7 @@ export default function CalendarioPage() {
                     {/* Day cells */}
                     {Array.from({ length: diasEnMes }).map((_, index) => {
                         const dia = index + 1
-                        const clases = getClasesDelDia(dia)
+                        const clasesDelDia = getClasesDelDia(dia)
                         const esHoy =
                             dia === new Date().getDate() &&
                             fechaActual.getMonth() === new Date().getMonth() &&
@@ -113,28 +134,28 @@ export default function CalendarioPage() {
                         return (
                             <div
                                 key={dia}
-                                className={`aspect-square p-1 rounded-lg border transition-all ${esHoy
-                                        ? 'border-lemon-400 bg-lemon-50'
-                                        : 'border-transparent hover:border-canvas-200'
+                                className={`aspect-square p-1 rounded-lg border transition-all overflow-hidden ${esHoy
+                                    ? 'border-lemon-400 bg-lemon-50'
+                                    : 'border-transparent hover:border-canvas-200'
                                     }`}
                             >
                                 <div className={`text-sm font-medium ${esHoy ? 'text-lemon-700' : 'text-warm-600'}`}>
                                     {dia}
                                 </div>
-                                {clases.length > 0 && (
+                                {clasesDelDia.length > 0 && (
                                     <div className="mt-1 space-y-0.5">
-                                        {clases.slice(0, 2).map((clase) => (
+                                        {clasesDelDia.slice(0, 2).map((clase) => (
                                             <button
                                                 key={clase.id}
                                                 onClick={() => handleAvisarInasistencia(clase)}
-                                                className={`w-full text-xs px-1 py-0.5 rounded truncate text-left ${clase.estado === 'completada'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : clase.estado === 'ausente'
-                                                            ? 'bg-red-100 text-red-700'
-                                                            : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
+                                                className={`w-full text-[10px] sm:text-xs px-1 py-0.5 rounded truncate text-left ${clase.estado === 'completada'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : clase.estado === 'ausente'
+                                                        ? 'bg-red-100 text-red-700'
+                                                        : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
                                                     }`}
                                             >
-                                                {clase.hora}
+                                                {clase.hora} {clase.taller}
                                             </button>
                                         ))}
                                     </div>
@@ -165,33 +186,37 @@ export default function CalendarioPage() {
             <div className="card">
                 <h3 className="text-lg font-semibold text-warm-800 mb-4">Próximas Clases</h3>
                 <div className="space-y-3">
-                    {clasesEjemplo
-                        .filter(c => c.fecha >= new Date() && c.estado === 'programada')
+                    {clases
+                        .filter(c => new Date(c.fecha) >= new Date() && c.estado === 'programada')
+                        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
                         .slice(0, 5)
-                        .map((clase) => (
-                            <div key={clase.id} className="flex items-center justify-between p-4 rounded-xl bg-canvas-50 border border-canvas-200">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-lemon-100 flex flex-col items-center justify-center">
-                                        <span className="text-xs text-lemon-600 font-medium">
-                                            {clase.fecha.toLocaleDateString('es-AR', { weekday: 'short' })}
-                                        </span>
-                                        <span className="text-lg font-bold text-lemon-700">
-                                            {clase.fecha.getDate()}
-                                        </span>
+                        .map((clase) => {
+                            const f = new Date(clase.fecha)
+                            return (
+                                <div key={clase.id} className="flex items-center justify-between p-4 rounded-xl bg-canvas-50 border border-canvas-200">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-lemon-100 flex flex-col items-center justify-center">
+                                            <span className="text-xs text-lemon-600 font-medium">
+                                                {f.toLocaleDateString('es-AR', { weekday: 'short' })}
+                                            </span>
+                                            <span className="text-lg font-bold text-lemon-700">
+                                                {f.getDate()}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-medium text-warm-800">{clase.taller}</h4>
+                                            <p className="text-sm text-warm-500">{clase.hora} hs</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h4 className="font-medium text-warm-800">{clase.taller}</h4>
-                                        <p className="text-sm text-warm-500">{clase.hora} hs</p>
-                                    </div>
+                                    <button
+                                        onClick={() => handleAvisarInasistencia(clase)}
+                                        className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        Avisar inasistencia
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={() => handleAvisarInasistencia(clase)}
-                                    className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    Avisar inasistencia
-                                </button>
-                            </div>
-                        ))}
+                            )
+                        })}
                 </div>
             </div>
 
@@ -205,7 +230,7 @@ export default function CalendarioPage() {
                         <p className="text-warm-600 mb-4">
                             ¿Estás seguro que querés avisar que no podrás asistir a la clase de{' '}
                             <strong>{claseSeleccionada.taller}</strong> del día{' '}
-                            <strong>{claseSeleccionada.fecha.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>?
+                            <strong>{new Date(claseSeleccionada.fecha).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}</strong>?
                         </p>
 
                         <div className="mb-4">
@@ -225,7 +250,6 @@ export default function CalendarioPage() {
                             </button>
                             <button
                                 onClick={() => {
-                                    // Aquí iría la lógica para enviar el aviso
                                     alert('¡Aviso enviado! Natalia será notificada.')
                                     setShowModal(false)
                                 }}
@@ -240,3 +264,4 @@ export default function CalendarioPage() {
         </div>
     )
 }
+

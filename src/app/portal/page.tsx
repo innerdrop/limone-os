@@ -1,42 +1,68 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
+import prisma from '@/lib/prisma'
 
-// Datos de ejemplo (en producción vendrían de la BD)
-const proximaClase = {
-    taller: 'Pintura al Óleo',
-    fecha: 'Lunes 30 de Diciembre',
-    hora: '18:00 - 19:30',
-    ubicacion: 'Taller Limoné',
+const DAYS_MAP: Record<string, number> = {
+    'DOMINGO': 0, 'LUNES': 1, 'MARTES': 2, 'MIERCOLES': 3, 'JUEVES': 4, 'VIERNES': 5, 'SABADO': 6
 }
-
-const avisos = [
-    {
-        id: 1,
-        titulo: '¡Bienvenido al taller!',
-        mensaje: 'Recordá traer tus materiales para la próxima clase.',
-        fecha: '28 Dic',
-        tipo: 'info',
-    },
-    {
-        id: 2,
-        titulo: 'Cuota de Enero',
-        mensaje: 'Tu cuota de Enero está pendiente de pago.',
-        fecha: '27 Dic',
-        tipo: 'warning',
-    },
-]
-
-const estadisticas = [
-    { label: 'Clases este mes', value: '8', icon: '📚' },
-    { label: 'Asistencia', value: '95%', icon: '✅' },
-    { label: 'Obras creadas', value: '12', icon: '🎨' },
-    { label: 'Meses activo', value: '6', icon: '⭐' },
-]
 
 export default async function PortalDashboard() {
     const session = await getServerSession(authOptions)
+    if (!session?.user?.id) return null
+
+    const student = await prisma.alumno.findUnique({
+        where: { usuarioId: session.user.id },
+        include: {
+            inscripciones: {
+                where: { pagado: true, estado: 'ACTIVA' },
+                include: { taller: true }
+            },
+            asistencias: true,
+            obras: true
+        }
+    })
+
     const userName = session?.user?.name?.split(' ')[0] || 'Alumno'
+    const enrollments = student?.inscripciones || []
+
+    // Calculate Next Class
+    let nextClass = null
+    if (enrollments.length > 0) {
+        const now = new Date()
+        const currentDay = now.getDay()
+
+        const sortedClasses = enrollments.map(ins => {
+            const targetDay = DAYS_MAP[ins.dia || ''] || 0
+            let daysUntil = (targetDay - currentDay + 7) % 7
+
+            // If it's today but the hour passed, go to next week
+            if (daysUntil === 0) {
+                const [startHour] = (ins.horario || '00:00').split(':')
+                if (now.getHours() >= parseInt(startHour)) {
+                    daysUntil = 7
+                }
+            }
+
+            const classDate = new Date(now)
+            classDate.setDate(now.getDate() + daysUntil)
+            return {
+                taller: ins.taller.nombre,
+                dia: ins.dia,
+                horario: ins.horario,
+                date: classDate
+            }
+        }).sort((a, b) => a.date.getTime() - b.date.getTime())
+
+        nextClass = sortedClasses[0]
+    }
+
+    const estadisticas = [
+        { label: 'Talleres activos', value: enrollments.length.toString(), icon: '📚' },
+        { label: 'Asistencia', value: student?.asistencias.length ? '100%' : '0%', icon: '✅' },
+        { label: 'Obras creadas', value: student?.obras.length.toString() || '0', icon: '🎨' },
+        { label: 'Estado cuenta', value: 'Al día', icon: '💳' },
+    ]
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -50,8 +76,11 @@ export default async function PortalDashboard() {
                         Bienvenido a tu portal del Taller Limoné
                     </p>
                 </div>
-                <Link href="/portal/calendario" className="btn-primary">
-                    Ver mi calendario
+                <Link href="/portal/inscripcion" className="btn-primary">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Nueva Inscripción
                 </Link>
             </div>
 
@@ -78,43 +107,43 @@ export default async function PortalDashboard() {
                         <h2 className="text-lg font-semibold text-warm-800">Próxima Clase</h2>
                     </div>
 
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
-                        <h3 className="text-xl font-bold text-warm-800 mb-2">
-                            {proximaClase.taller}
-                        </h3>
-                        <div className="space-y-2 text-warm-600">
-                            <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span>{proximaClase.fecha}</span>
+                    {nextClass ? (
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
+                            <h3 className="text-xl font-bold text-warm-800 mb-2">
+                                {nextClass.taller}
+                            </h3>
+                            <div className="space-y-2 text-warm-600">
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{nextClass.dia} {nextClass.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>{nextClass.horario}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>{proximaClase.hora}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                </svg>
-                                <span>{proximaClase.ubicacion}</span>
+
+                            <div className="mt-4 flex gap-2">
+                                <Link
+                                    href="/portal/calendario"
+                                    className="flex-1 py-2 px-4 bg-lemon-500 text-warm-800 rounded-lg text-sm font-medium hover:bg-lemon-600 transition-colors text-center"
+                                >
+                                    Ver mi calendario
+                                </Link>
                             </div>
                         </div>
-
-                        <div className="mt-4 flex gap-2">
-                            <button className="flex-1 py-2 px-4 bg-white text-warm-700 rounded-lg text-sm font-medium hover:bg-canvas-50 transition-colors border border-canvas-200">
-                                Avisar inasistencia
-                            </button>
-                            <Link
-                                href="/portal/calendario"
-                                className="flex-1 py-2 px-4 bg-lemon-500 text-warm-800 rounded-lg text-sm font-medium hover:bg-lemon-600 transition-colors text-center"
-                            >
-                                Ver detalles
+                    ) : (
+                        <div className="p-8 text-center border-2 border-dashed border-canvas-200 rounded-xl">
+                            <p className="text-warm-400 mb-4">No tenés clases programadas</p>
+                            <Link href="/portal/inscripcion" className="text-lemon-600 font-medium hover:underline">
+                                Inscribite a un taller ahora →
                             </Link>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Avisos */}
@@ -126,27 +155,18 @@ export default async function PortalDashboard() {
                             </div>
                             <h2 className="text-lg font-semibold text-warm-800">Avisos</h2>
                         </div>
-                        <span className="badge badge-lemon">{avisos.length} nuevos</span>
                     </div>
 
                     <div className="space-y-3">
-                        {avisos.map((aviso) => (
-                            <div
-                                key={aviso.id}
-                                className={`p-4 rounded-xl border ${aviso.tipo === 'warning'
-                                        ? 'bg-amber-50 border-amber-200'
-                                        : 'bg-canvas-50 border-canvas-200'
-                                    }`}
-                            >
-                                <div className="flex items-start justify-between gap-2">
-                                    <div>
-                                        <h4 className="font-medium text-warm-800">{aviso.titulo}</h4>
-                                        <p className="text-sm text-warm-500 mt-1">{aviso.mensaje}</p>
-                                    </div>
-                                    <span className="text-xs text-warm-400 whitespace-nowrap">{aviso.fecha}</span>
+                        <div className="p-4 rounded-xl border bg-canvas-50 border-canvas-200">
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <h4 className="font-medium text-warm-800">¡Bienvenido al portal!</h4>
+                                    <p className="text-sm text-warm-500 mt-1">Desde acá podrás gestionar tus inscripciones y seguir tu progreso artístico.</p>
                                 </div>
+                                <span className="text-xs text-warm-400 whitespace-nowrap">Hoy</span>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -156,8 +176,8 @@ export default async function PortalDashboard() {
                 <h2 className="text-lg font-semibold text-warm-800 mb-4">Accesos rápidos</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
-                        { label: 'Pagar cuota', href: '/portal/pagos', icon: '💳', color: 'bg-lemon-100' },
-                        { label: 'Ver galería', href: '/portal/galeria', icon: '🖼️', color: 'bg-leaf-100' },
+                        { label: 'Inscribirme', href: '/portal/inscripcion', icon: '🎨', color: 'bg-lemon-100' },
+                        { label: 'Mis Pagos', href: '/portal/pagos', icon: '💳', color: 'bg-green-100' },
                         { label: 'Mi calendario', href: '/portal/calendario', icon: '📅', color: 'bg-blue-100' },
                         { label: 'Editar perfil', href: '/portal/perfil', icon: '👤', color: 'bg-purple-100' },
                     ].map((action, index) => (
@@ -177,3 +197,4 @@ export default async function PortalDashboard() {
         </div>
     )
 }
+

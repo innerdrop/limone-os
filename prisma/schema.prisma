@@ -150,6 +150,9 @@ model Inscripcion {
   id               String   @id @default(cuid())
   alumnoId         String
   tallerId         String
+  dia              String?  // "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"
+  horario          String?  // "09:00-11:00", "14:00-16:00", "18:00-20:00"
+  pagado           Boolean  @default(false)
   fechaInscripcion DateTime @default(now())
   estado           String   @default("ACTIVA") // ACTIVA, PAUSADA, FINALIZADA
   notas            String?
@@ -161,9 +164,9 @@ model Inscripcion {
   taller Taller @relation(fields: [tallerId], references: [id], onDelete: Cascade)
   pagos  Pago[]
 
-  @@unique([alumnoId, tallerId])
   @@map("inscripciones")
 }
+
 
 model Asistencia {
   id        String   @id @default(cuid())
