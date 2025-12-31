@@ -5,10 +5,10 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 interface User {
-    name: string
-    email: string
+    name?: string | null
+    email?: string | null
     role: string
-    image?: string
+    image?: string | null
 }
 
 const menuItems = [

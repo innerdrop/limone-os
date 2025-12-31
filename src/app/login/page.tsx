@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function LoginPage() {
+function LoginForm() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const callbackUrl = searchParams.get('callbackUrl') || '/portal'
@@ -179,5 +180,17 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-lemon flex items-center justify-center p-4">
+                <div className="animate-spin h-8 w-8 text-lemon-600" />
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     )
 }

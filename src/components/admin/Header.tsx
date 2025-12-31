@@ -5,10 +5,10 @@ import Link from 'next/link'
 import { useState } from 'react'
 
 interface User {
-    name: string
-    email: string
+    name?: string | null
+    email?: string | null
     role: string
-    image?: string
+    image?: string | null
 }
 
 export default function AdminHeader({ user }: { user: User }) {
@@ -90,7 +90,7 @@ export default function AdminHeader({ user }: { user: User }) {
                                 <hr className="my-2 border-canvas-100" />
                                 <button
                                     onClick={() => signOut({ callbackUrl: '/' })}
-                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 border border-red-100 rounded-lg transition-colors"
                                 >
                                     Cerrar Sesión
                                 </button>

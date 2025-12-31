@@ -4,10 +4,10 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 interface User {
-    name: string
-    email: string
+    name?: string | null
+    email?: string | null
     role: string
-    image?: string
+    image?: string | null
 }
 
 const menuItems = [
@@ -97,8 +97,8 @@ export default function AdminSidebar({ user }: { user: User }) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                        ? 'bg-lemon-500 text-warm-800'
-                                        : 'text-warm-300 hover:bg-warm-700 hover:text-white'
+                                    ? 'bg-lemon-500 text-warm-800'
+                                    : 'text-warm-300 hover:bg-warm-700 hover:text-white'
                                     }`}
                             >
                                 <span className={isActive ? 'text-warm-800' : ''}>

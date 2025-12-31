@@ -374,7 +374,7 @@ export default function PerfilPage() {
                     </div>
                     <button
                         onClick={() => signOut({ callbackUrl: '/' })}
-                        className="px-4 py-2 bg-canvas-100 text-warm-600 rounded-lg font-medium hover:bg-canvas-200 transition-colors"
+                        className="px-4 py-2 border border-red-200 text-red-600 bg-red-50/30 rounded-lg font-medium hover:bg-red-50 transition-colors"
                     >
                         Cerrar sesión
                     </button>
