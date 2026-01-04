@@ -80,7 +80,7 @@ function TalleresSection() {
             horario: 'Lunes y Miércoles 18:00',
             cupos: 8,
             cuposDisponibles: 3,
-            imagen: '/talleres/oleo.jpg',
+            imagen: '/talleres/oleo.svg',
             nivel: 'Todos los niveles'
         },
         {
@@ -90,7 +90,7 @@ function TalleresSection() {
             horario: 'Martes y Jueves 16:00',
             cupos: 10,
             cuposDisponibles: 5,
-            imagen: '/talleres/acuarela.jpg',
+            imagen: '/talleres/acuarela.svg',
             nivel: 'Principiantes'
         },
         {
@@ -100,7 +100,7 @@ function TalleresSection() {
             horario: 'Viernes 17:00',
             cupos: 12,
             cuposDisponibles: 2,
-            imagen: '/talleres/dibujo.jpg',
+            imagen: '/talleres/dibujo.svg',
             nivel: 'Todos los niveles'
         },
         {
@@ -110,7 +110,7 @@ function TalleresSection() {
             horario: 'Sábados 10:00',
             cupos: 8,
             cuposDisponibles: 0,
-            imagen: '/talleres/mixtas.jpg',
+            imagen: '/talleres/mixtas.svg',
             nivel: 'Intermedio'
         },
     ]
@@ -136,12 +136,13 @@ function TalleresSection() {
                         >
                             {/* Image */}
                             <div className="relative h-48 -mx-6 -mt-6 mb-4 overflow-hidden bg-canvas-200">
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-warm-900/20" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-16 h-16 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                    </svg>
-                                </div>
+                                <Image
+                                    src={taller.imagen}
+                                    alt={taller.nombre}
+                                    fill
+                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-warm-900/10" />
                                 {/* Cupos Badge */}
                                 <div className={`absolute top-4 right-4 badge ${taller.cuposDisponibles === 0
                                     ? 'badge-error'
@@ -203,16 +204,12 @@ function AboutSection() {
                     {/* Image Side */}
                     <div className="relative">
                         <div className="relative aspect-[4/5] rounded-3xl overflow-hidden bg-canvas-200">
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center p-8">
-                                    <div className="w-32 h-32 mx-auto rounded-full bg-lemon-100 flex items-center justify-center mb-4">
-                                        <svg className="w-16 h-16 text-lemon-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-warm-400 text-sm">Foto de Natalia Fusari</p>
-                                </div>
-                            </div>
+                            <Image
+                                src="/natalia.jpg"
+                                alt="Natalia Fusari"
+                                fill
+                                className="object-cover"
+                            />
                         </div>
                         {/* Decorative Elements */}
                         <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-lemon-200 rounded-3xl -z-10" />
