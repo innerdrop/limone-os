@@ -140,13 +140,17 @@ export default function PortalHeader({ user }: { user: User }) {
 
                 {/* Mobile Logo */}
                 <Link href="/portal" className="lg:hidden flex items-center gap-2">
-                    <div className="relative w-8 h-8">
+                    <div className="flex items-center gap-2">
                         <Image
-                            src="/logo.jpg"
+                            src="/colores.png"
                             alt="Logo Taller Limoné"
-                            fill
+                            width={32}
+                            height={32}
                             className="object-contain"
                         />
+                        <span className="font-gigi text-xl font-bold text-warm-800">
+                            Limoné
+                        </span>
                     </div>
                 </Link>
 

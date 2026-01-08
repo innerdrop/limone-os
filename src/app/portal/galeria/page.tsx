@@ -23,13 +23,22 @@ export default function GaleriaPage() {
     const [filtroTecnica, setFiltroTecnica] = useState('todas')
     const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null)
 
-    // TODO: Fetch real artworks from API
+    // Fetch real artworks from API
     useEffect(() => {
-        // Simulate fetch
-        setTimeout(() => {
-            setObras([]) // Zero artworks for new user
-            setLoading(false)
-        }, 500)
+        const fetchObras = async () => {
+            try {
+                const response = await fetch('/api/portal/galeria')
+                const data = await response.json()
+                if (Array.isArray(data)) {
+                    setObras(data)
+                }
+            } catch (error) {
+                console.error('Error fetching gallery:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchObras()
     }, [])
 
     const obrasFiltradas = filtroTecnica === 'todas'

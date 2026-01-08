@@ -78,23 +78,28 @@ export default async function PortalDashboard() {
 
                     // Find next 2 occurrences
                     const weeksToShow = freq
-                    const daysToShow = weeksToShow * 5
+                    const endDate = new Date(startDate)
+                    endDate.setDate(startDate.getDate() + (weeksToShow * 7))
 
                     let found = 0
-                    let d = new Date()
+                    let d = new Date(now)
+                    d.setHours(0, 0, 0, 0)
                     if (d < startDate) d = new Date(startDate)
 
                     let checks = 0
-                    while (found < 2 && checks < 60) {
+                    while (found < 2 && checks < 60 && d < endDate) {
                         const dayOfWeek = d.getDay()
                         if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                            const sessionDate = new Date(d)
+                            sessionDate.setHours(17, 0, 0, 0) // Fixed time for sorting
+
                             upcomingClasses.push({
                                 type: 'class',
                                 id: `${ins.id}-${d.getTime()}`,
                                 taller: 'Colonia de Verano',
                                 dia: 'Verano',
                                 horario: '17:00',
-                                date: new Date(d)
+                                date: sessionDate
                             })
                             found++
                         }

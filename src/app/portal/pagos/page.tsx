@@ -18,18 +18,26 @@ export default function PagosPage() {
     const [loading, setLoading] = useState(true)
     const [showPayModal, setShowPayModal] = useState(false)
 
-    // TODO: Fetch real payments from API
+    // Fetch real payments from API
     useEffect(() => {
-        // Simulate fetch delay or fetching from an empty endpoint for now
-        // In a real implementation: fetch('/api/pagos').then(res => res.json()).then(data => setPagos(data))
-        setTimeout(() => {
-            setPagos([]) // No payments for new user
-            setLoading(false)
-        }, 500)
+        const fetchPagos = async () => {
+            try {
+                const response = await fetch('/api/portal/pagos')
+                const data = await response.json()
+                if (Array.isArray(data)) {
+                    setPagos(data)
+                }
+            } catch (error) {
+                console.error('Error fetching payments:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchPagos()
     }, [])
 
     const cuotaPendiente = pagos.find(p => p.estado === 'PENDIENTE')
-    const pagosAprobados = pagos.filter(p => p.estado === 'APROBADO')
+    const pagosAprobados = pagos.filter(p => p.estado === 'CONFIRMADO' || p.estado === 'APROBADO')
     const totalPagado = pagosAprobados.reduce((sum, p) => sum + p.monto, 0)
 
     const formatMoney = (amount: number) => {
@@ -162,13 +170,13 @@ export default function PagosPage() {
                                             {formatMoney(pago.monto)}
                                         </td>
                                         <td className="py-4 px-4 text-center">
-                                            <span className={`badge ${pago.estado === 'APROBADO'
+                                            <span className={`badge ${(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO')
                                                 ? 'badge-success'
                                                 : pago.estado === 'PENDIENTE'
                                                     ? 'badge-warning'
                                                     : 'badge-error'
                                                 }`}>
-                                                {pago.estado === 'APROBADO' ? 'Pagado' :
+                                                {(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO') ? 'Pagado' :
                                                     pago.estado === 'PENDIENTE' ? 'Pendiente' : 'Rechazado'}
                                             </span>
                                         </td>

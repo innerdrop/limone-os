@@ -82,7 +82,7 @@ export default function PortalSidebar({ user }: { user: User }) {
                         <Link href="/" className="flex items-center gap-2">
                             <div className="flex items-center gap-3 px-2">
                                 <Image
-                                    src="/logo.png"
+                                    src="/colores.png"
                                     alt="Taller Limoné Logo"
                                     width={40}
                                     height={40}

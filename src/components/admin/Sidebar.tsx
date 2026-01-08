@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 interface User {
@@ -78,9 +79,11 @@ export default function AdminSidebar({ user }: { user: User }) {
                 <div className="flex items-center gap-3 px-6 mb-8">
                     <Link href="/admin" className="flex items-center gap-3">
                         <div className="w-12 h-12 flex items-center justify-center">
-                            <img
-                                src="/footerlogo.png"
+                            <Image
+                                src="/colores.png"
                                 alt="Limoné Logo"
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-contain"
                             />
                         </div>

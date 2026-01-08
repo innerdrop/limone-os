@@ -2,6 +2,7 @@
 
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import QuickTaskForm from './QuickTaskForm'
 
@@ -36,8 +37,17 @@ export default function AdminHeader({ user }: { user: User }) {
 
                 {/* Mobile Logo */}
                 <Link href="/admin" className="lg:hidden flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-lemon-400 flex items-center justify-center">
-                        <span className="text-lg">🍋</span>
+                    <div className="flex items-center gap-2">
+                        <Image
+                            src="/colores.png"
+                            alt="Logo Taller Limoné"
+                            width={32}
+                            height={32}
+                            className="object-contain"
+                        />
+                        <span className="font-gigi text-xl font-bold text-warm-800">
+                            Limoné
+                        </span>
                     </div>
                 </Link>
 

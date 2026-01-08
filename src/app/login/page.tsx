@@ -62,14 +62,14 @@ function LoginForm() {
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-flex items-center gap-3">
                         <Image
-                            src="/logo.jpg"
-                            alt="Taller Limoné Logo"
+                            src="/colores.png"
+                            alt="Logo Taller Limoné"
                             width={50}
                             height={50}
-                            className="rounded-lg object-contain shadow-lg"
+                            className="object-contain"
                         />
-                        <span className="font-serif text-2xl font-bold text-warm-800">
-                            Taller Limoné
+                        <span className="font-gigi text-3xl font-bold text-warm-800">
+                            Limoné
                         </span>
                     </Link>
                 </div>
