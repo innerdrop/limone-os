@@ -58,11 +58,11 @@ export default function PromotionalPopup() {
 
                     <p className="text-warm-600 text-sm leading-relaxed mb-8 max-w-[240px]">
                         Dibujo, pintura y creatividad.
-                        Últimos cupos para todas las edades en Ushuaia.
+                        Para niñas y niños de 5 a 12 años en Ushuaia.
                     </p>
 
                     <Link
-                        href="/inscripcion"
+                        href="/taller-verano"
                         onClick={closePopup}
                         className="btn-primary w-full py-4 text-base shadow-lg hover:shadow-glow-lemon"
                     >

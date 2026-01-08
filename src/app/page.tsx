@@ -15,16 +15,22 @@ function HeroSection() {
 
             <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
                 {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm border border-lemon-200 mb-8 animate-fade-in">
-                    <span className="w-2 h-2 rounded-full bg-leaf-500 animate-pulse" />
-                    <span className="text-sm font-medium text-warm-600">Arte en Ushuaia, Tierra del Fuego</span>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 backdrop-blur-sm border border-brand-yellow/30 mb-8 animate-fade-in shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
+                    <span className="text-sm font-medium text-brand-charcoal/70">Arte en Ushuaia, Tierra del Fuego</span>
                 </div>
 
-                {/* Main Title */}
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 animate-slide-up">
-                    <span className="block text-warm-800">Taller</span>
-                    <span className="text-gradient">Limoné</span>
-                </h1>
+                {/* Logo Title Section */}
+                <div className="mb-10 animate-scale-up">
+                    <Image
+                        src="/logo.png"
+                        alt="Taller Limoné Logo"
+                        width={600}
+                        height={600}
+                        className="mx-auto"
+                        priority
+                    />
+                </div>
 
                 {/* Subtitle */}
                 <p className="text-xl md:text-2xl text-warm-600 max-w-2xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -77,7 +83,7 @@ function MethodologySection() {
         <section className="section bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
-                    <span className="badge badge-lemon mb-4">Nuestra Propuesta</span>
+                    <span className="font-artistic text-2xl text-brand-green mb-2 block">Nuestra Propuesta</span>
                     <h2 className="section-title">Metodología Limoné</h2>
                 </div>
 
@@ -107,11 +113,11 @@ function MethodologySection() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="aspect-[3/4] rounded-2xl bg-canvas-200 relative overflow-hidden transform translate-y-8">
-                            <Image src="/talleres/acuarela.svg" alt="Clase de arte" fill className="object-cover" />
+                        <div className="aspect-[3/4] rounded-2xl bg-canvas-200 relative overflow-hidden transform translate-y-8 shadow-xl">
+                            <Image src="/talleres/acuarela-v2.png" alt="Técnica de Acuarela" fill className="object-cover hover:scale-105 transition-transform duration-500" />
                         </div>
-                        <div className="aspect-[3/4] rounded-2xl bg-canvas-200 relative overflow-hidden">
-                            <Image src="/talleres/oleo.svg" alt="Alumnos pintando" fill className="object-cover" />
+                        <div className="aspect-[3/4] rounded-2xl bg-canvas-200 relative overflow-hidden shadow-xl">
+                            <Image src="/talleres/oleo-v2.png" alt="Técnica de Óleo" fill className="object-cover hover:scale-105 transition-transform duration-500" />
                         </div>
                     </div>
                 </div>
@@ -142,12 +148,12 @@ function TechniquesSection() {
                     {techniques.map((tech, index) => (
                         <span
                             key={index}
-                            className="px-6 py-3 bg-white border border-canvas-200 rounded-xl text-warm-700 font-medium hover:border-lemon-400 hover:text-lemon-700 hover:shadow-lg transition-all cursor-default"
+                            className="px-6 py-3 bg-white border border-canvas-200 rounded-xl text-brand-charcoal hover:border-brand-purple hover:text-brand-purple hover:shadow-lg transition-all cursor-default"
                         >
                             {tech}
                         </span>
                     ))}
-                    <span className="px-6 py-3 bg-lemon-100 border border-lemon-200 rounded-xl text-lemon-700 font-medium">
+                    <span className="px-6 py-3 bg-brand-yellow/10 border border-brand-yellow/30 rounded-xl text-brand-orange font-bold font-artistic text-xl">
                         ¡Y muchas más!
                     </span>
                 </div>
@@ -161,12 +167,12 @@ function SpecialMomentsSection() {
     return (
         <section className="section bg-warm-900 text-white overflow-hidden relative">
             {/* Background blobs */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-lemon-500/10 rounded-full blur-3xl" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-purple/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-brand-yellow/10 rounded-full blur-3xl" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 <div className="text-center mb-16">
-                    <span className="badge bg-white/10 text-white border-white/20 mb-4">Momentos Especiales</span>
+                    <span className="font-artistic text-2xl text-brand-yellow mb-2 block animate-pulse">Momentos Especiales</span>
                     <h2 className="text-3xl md:text-5xl font-bold mb-6">Dos grandes hitos del año</h2>
                 </div>
 
@@ -210,9 +216,9 @@ function AboutSection() {
                 <div className="grid lg:grid-cols-2 gap-12 items-center">
                     {/* Image */}
                     <div className="relative">
-                        <div className="aspect-[4/5] rounded-[3rem] overflow-hidden relative z-10">
+                        <div className="aspect-[4/5] rounded-[3rem] overflow-hidden relative z-10 shadow-2xl">
                             <Image
-                                src="/foto-natalia.jpg"
+                                src="/natalia.jpg"
                                 alt="Natalia Fusari"
                                 fill
                                 className="object-cover"
@@ -225,9 +231,9 @@ function AboutSection() {
 
                     {/* Content */}
                     <div>
-                        <span className="badge badge-lemon mb-4">La Profesora</span>
+                        <span className="font-artistic text-3xl text-brand-orange mb-4 block">La Profesora</span>
                         <h2 className="section-title mb-6">Hola, soy Natalia</h2>
-                        <div className="space-y-6 text-lg text-warm-600 leading-relaxed">
+                        <div className="space-y-6 text-lg text-brand-charcoal/80 leading-relaxed">
                             <p>
                                 Soy artista plástica y docente con más de 10 años de experiencia guiando a niños
                                 y adolescentes en su camino creativo.
@@ -243,11 +249,11 @@ function AboutSection() {
 
                             <div className="pt-6 border-t border-canvas-200 flex gap-8">
                                 <div>
-                                    <div className="text-3xl font-bold text-lemon-600">Docente</div>
+                                    <div className="text-3xl font-bold text-brand-yellow font-artistic">Docente</div>
                                     <div className="text-sm text-warm-500">Certificada</div>
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-bold text-lemon-600">Artista</div>
+                                    <div className="text-3xl font-bold text-brand-purple font-artistic">Artista</div>
                                     <div className="text-sm text-warm-500">Plástica</div>
                                 </div>
                             </div>
@@ -356,18 +362,18 @@ function ContactSection() {
 
                     {/* Map & Info */}
                     <div className="space-y-6">
-                        {/* Map Placeholder */}
-                        <div className="aspect-video rounded-2xl overflow-hidden bg-canvas-200 relative">
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="text-center">
-                                    <svg className="w-12 h-12 text-lemon-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <p className="text-warm-500">Alem 4611</p>
-                                    <p className="text-sm text-warm-400">Ushuaia, Tierra del Fuego</p>
-                                </div>
-                            </div>
+                        {/* Real Map */}
+                        <div className="aspect-video rounded-2xl overflow-hidden bg-canvas-200 relative shadow-inner border border-canvas-200">
+                            <iframe
+                                src="https://maps.google.com/maps?q=Av.%20Alem%204611%2C%20Ushuaia%2C%20Tierra%20del%20Fuego&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                className="grayscale hover:grayscale-0 transition-all duration-700"
+                            ></iframe>
                         </div>
 
                         {/* Contact Info Cards */}
@@ -444,17 +450,16 @@ function Header() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-3">
                         <Image
-                            src="/logo.jpg"
-                            alt="Taller Limoné Logo"
+                            src="/colores.png"
+                            alt="Taller Limoné Colors"
                             width={50}
-                            height={50}
-                            className="rounded-lg object-contain"
+                            height={30}
+                            className="object-contain"
                         />
-                        <span className="font-serif text-xl font-bold text-warm-800">
-                            Taller Limoné
+                        <span className="font-gigi text-3xl font-bold text-warm-800">
+                            Limoné
                         </span>
                     </Link>
-
                     {/* Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
                         <Link href="#talleres" className="text-warm-600 hover:text-lemon-600 transition-colors">
@@ -496,13 +501,13 @@ function Footer() {
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-3 mb-4">
                             <Image
-                                src="/logo.jpg"
+                                src="/logo.png"
                                 alt="Taller Limoné Logo"
                                 width={50}
                                 height={50}
-                                className="rounded-lg object-contain"
+                                className="object-contain"
                             />
-                            <span className="font-serif text-xl font-bold">Taller Limoné</span>
+                            <span className="font-gigi text-2xl font-bold">Taller Limoné</span>
                         </div>
                         <p className="text-warm-300 max-w-md">
                             Arte en el fin del mundo. Clases de pintura, dibujo y técnicas mixtas

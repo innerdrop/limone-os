@@ -281,9 +281,9 @@ export default function InscripcionPage() {
 
             <main className="max-w-3xl mx-auto px-4 py-8">
                 {/* Progress Bar */}
-                <div className="w-full bg-warm-200 h-2 rounded-full mb-8 overflow-hidden">
+                <div className="w-full bg-canvas-200 h-2 rounded-full mb-8 overflow-hidden shadow-inner">
                     <div
-                        className="bg-lemon-500 h-full transition-all duration-500 ease-out"
+                        className="bg-brand-yellow h-full transition-all duration-500 ease-out shadow-glow-lemon"
                         style={{ width: `${(step / 4) * 100}%` }}
                     />
                 </div>
@@ -433,7 +433,7 @@ export default function InscripcionPage() {
                             <div className="space-y-4">
                                 <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
                                     <label className="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" className="mt-1 w-5 h-5 text-lemon-600 rounded"
+                                        <input type="checkbox" className="mt-1 w-5 h-5 text-brand-purple rounded border-canvas-300 focus:ring-brand-purple"
                                             checked={authData.autorizacionParticipacion}
                                             onChange={e => handleAuthChange('autorizacionParticipacion', e.target.checked)} />
                                         <span className="text-sm text-warm-800">
@@ -536,6 +536,16 @@ export default function InscripcionPage() {
                                         Borrar
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-canvas-200">
+                                <Image
+                                    src="/logo.png"
+                                    alt="Taller Limoné Logo"
+                                    width={120}
+                                    height={120}
+                                    className="mx-auto"
+                                />
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">

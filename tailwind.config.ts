@@ -9,18 +9,27 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                // Paleta Limón
+                // Paleta de Marca Limoné (Extraída del logo)
+                brand: {
+                    charcoal: '#2D2D2D', // Texto y contraste
+                    purple: '#8E44AD',   // Creatividad
+                    red: '#E74C3C',      // Pasión
+                    orange: '#F39C12',   // Calidez
+                    yellow: '#F1C40F',   // Energía (Corazón de Limoné)
+                    green: '#27AE60',    // Frescura
+                },
+                // Mantenemos las paletas funcionales pero vinculadas a la marca
                 lemon: {
                     50: '#FFFEF5',
                     100: '#FFF9C4',
                     200: '#FFF59D',
                     300: '#FFF176',
                     400: '#FFEE58',
-                    500: '#FFEB3B',
-                    600: '#FDD835',
-                    700: '#FBC02D',
-                    800: '#F9A825',
-                    900: '#F57F17',
+                    500: '#F1C40F', // Vinculado a brand.yellow
+                    600: '#D4AC0D',
+                    700: '#B7950B',
+                    800: '#9A7D0A',
+                    900: '#7D6608',
                 },
                 // Paleta Hojas/Verde Orgánico
                 leaf: {
@@ -29,11 +38,11 @@ const config: Config = {
                     200: '#C5E1A5',
                     300: '#AED581',
                     400: '#9CCC65',
-                    500: '#8BC34A',
-                    600: '#7CB342',
-                    700: '#689F38',
-                    800: '#558B2F',
-                    900: '#33691E',
+                    500: '#27AE60', // Vinculado a brand.green
+                    600: '#1E8449',
+                    700: '#196F3D',
+                    800: '#145A32',
+                    900: '#0E3E22',
                 },
                 // Tonos Canvas/Lienzo
                 canvas: {
@@ -54,13 +63,15 @@ const config: Config = {
                     500: '#78716C',
                     600: '#57534E',
                     700: '#44403C',
-                    800: '#292524',
+                    800: '#2D2D2D', // Vinculado a brand.charcoal
                     900: '#1C1917',
                 },
             },
             fontFamily: {
                 sans: ['Inter', 'system-ui', 'sans-serif'],
                 serif: ['Playfair Display', 'Georgia', 'serif'],
+                artistic: ['Caveat', 'cursive'], // Nueva fuente manuscrita
+                gigi: ['Gigi', 'cursive'],
             },
             backgroundImage: {
                 'canvas-texture': "url('/textures/canvas.png')",

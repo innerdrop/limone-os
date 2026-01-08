@@ -80,19 +80,17 @@ export default function PortalSidebar({ user }: { user: User }) {
                     {/* Logo */}
                     <div className="flex items-center gap-3 px-6 mb-8">
                         <Link href="/" className="flex items-center gap-2">
-                            <div className="relative w-10 h-10">
+                            <div className="flex items-center gap-3 px-2">
                                 <Image
-                                    src="/logo.jpg"
-                                    alt="Logo Taller Limoné"
-                                    fill
+                                    src="/logo.png"
+                                    alt="Taller Limoné Logo"
+                                    width={40}
+                                    height={40}
                                     className="object-contain"
                                 />
-                            </div>
-                            <div>
-                                <span className="font-serif text-lg font-bold text-warm-800 block">
+                                <span className="font-gigi text-xl font-bold text-warm-800">
                                     Taller Limoné
                                 </span>
-                                <span className="text-xs text-warm-400">Portal del Alumno</span>
                             </div>
                         </Link>
                     </div>
@@ -106,11 +104,11 @@ export default function PortalSidebar({ user }: { user: User }) {
                                     key={item.href}
                                     href={item.href}
                                     className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                        ? 'bg-lemon-100 text-lemon-700'
+                                        ? 'bg-brand-purple/10 text-brand-purple'
                                         : 'text-warm-600 hover:bg-canvas-100 hover:text-warm-800'
                                         }`}
                                 >
-                                    <span className={isActive ? 'text-lemon-600' : 'text-warm-400'}>
+                                    <span className={isActive ? 'text-brand-purple' : 'text-warm-400'}>
                                         {item.icon}
                                     </span>
                                     {item.label}
@@ -123,8 +121,8 @@ export default function PortalSidebar({ user }: { user: User }) {
                     <div className="px-4 mt-6">
                         <div className="p-4 rounded-xl bg-canvas-50 border border-canvas-200">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-lemon-200 flex items-center justify-center">
-                                    <span className="text-lemon-700 font-semibold">
+                                <div className="w-10 h-10 rounded-full bg-brand-yellow/20 flex items-center justify-center">
+                                    <span className="text-brand-orange font-semibold">
                                         {user.name?.charAt(0) || 'U'}
                                     </span>
                                 </div>

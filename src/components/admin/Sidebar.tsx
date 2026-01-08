@@ -98,11 +98,11 @@ export default function AdminSidebar({ user }: { user: User }) {
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
-                                    ? 'bg-lemon-500 text-warm-800'
+                                    ? 'bg-brand-yellow text-brand-charcoal shadow-glow-lemon'
                                     : 'text-warm-300 hover:bg-warm-700 hover:text-white'
                                     }`}
                             >
-                                <span className={isActive ? 'text-warm-800' : ''}>
+                                <span className={isActive ? 'text-brand-charcoal' : ''}>
                                     {item.icon}
                                 </span>
                                 {item.label}
@@ -115,8 +115,8 @@ export default function AdminSidebar({ user }: { user: User }) {
                 <div className="px-4 mt-6">
                     <div className="p-4 rounded-xl bg-warm-700">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-lemon-400 flex items-center justify-center">
-                                <span className="text-warm-800 font-semibold">
+                            <div className="w-10 h-10 rounded-full bg-brand-purple flex items-center justify-center">
+                                <span className="text-white font-semibold">
                                     {user.name?.charAt(0) || 'A'}
                                 </span>
                             </div>
