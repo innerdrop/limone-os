@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useState, Suspense } from 'react'
+import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -35,7 +34,12 @@ function LoginForm() {
             if (result?.error) {
                 setFormError('Email o contraseña incorrectos')
             } else {
-                router.push(callbackUrl)
+                const session = await getSession()
+                if (session?.user?.role === 'ADMIN') {
+                    router.push('/admin')
+                } else {
+                    router.push(callbackUrl)
+                }
                 router.refresh()
             }
         } catch (error) {
@@ -107,6 +111,7 @@ function LoginForm() {
                         <div>
                             <label className="label">Email</label>
                             <input
+                                suppressHydrationWarning
                                 type="email"
                                 className="input-field"
                                 placeholder="tu@email.com"
@@ -120,6 +125,7 @@ function LoginForm() {
                         <div>
                             <label className="label">Contraseña</label>
                             <input
+                                suppressHydrationWarning
                                 type="password"
                                 className="input-field"
                                 placeholder="••••••••"

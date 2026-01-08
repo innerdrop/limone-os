@@ -1,36 +1,79 @@
-'use client'
+import prisma from '@/lib/prisma'
+import { startOfMonth, subMonths, format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import Link from 'next/link'
+import RegistrarPagoManual from '@/components/admin/RegistrarPagoManual'
 
-import { useState } from 'react'
+export default async function FinanzasPage(props: {
+    searchParams: Promise<{ busqueda?: string, estado?: string, mes?: string }>
+}) {
+    const searchParams = await props.searchParams
+    const busqueda = searchParams.busqueda || ''
+    const estado = searchParams.estado || ''
 
-// Datos de ejemplo
-const ingresosMensuales = [
-    { mes: 'Jul', monto: 850000 },
-    { mes: 'Ago', monto: 920000 },
-    { mes: 'Sep', monto: 880000 },
-    { mes: 'Oct', monto: 1050000 },
-    { mes: 'Nov', monto: 1150000 },
-    { mes: 'Dic', monto: 1250000 },
-]
+    const now = new Date()
+    const monthStart = startOfMonth(now)
 
-const morosos = [
-    { id: 1, nombre: 'Ana Martínez', email: 'ana@email.com', deudaMeses: 2, montoDeuda: 56000 },
-    { id: 2, nombre: 'Roberto Silva', email: 'roberto@email.com', deudaMeses: 1, montoDeuda: 28000 },
-    { id: 3, nombre: 'Carmen López', email: 'carmen@email.com', deudaMeses: 1, montoDeuda: 25000 },
-]
+    // 1. Fetch Stats & Pagos with filters
+    const [pagosMes, todosPagos, morososRaw] = await Promise.all([
+        prisma.pago.aggregate({
+            _sum: { monto: true },
+            where: {
+                estado: 'APROBADO',
+                fechaPago: { gte: monthStart }
+            }
+        }),
+        prisma.pago.findMany({
+            where: {
+                AND: [
+                    busqueda ? {
+                        alumno: {
+                            usuario: {
+                                nombre: { contains: busqueda, mode: 'insensitive' }
+                            }
+                        }
+                    } : {},
+                    estado ? { estado: estado as any } : {}
+                ]
+            },
+            include: { alumno: { include: { usuario: true } } },
+            orderBy: { fechaPago: 'desc' }
+        }),
+        prisma.inscripcion.findMany({
+            where: {
+                pagado: false,
+                estado: 'ACTIVA'
+            },
+            include: {
+                alumno: { include: { usuario: true } },
+                taller: true
+            }
+        })
+    ])
 
-const pagosRecientes = [
-    { id: 1, alumno: 'María García', concepto: 'Cuota Enero', monto: 28000, fecha: '28 Dic', estado: 'aprobado' },
-    { id: 2, alumno: 'Carlos Rodríguez', concepto: 'Cuota Enero', monto: 25000, fecha: '27 Dic', estado: 'aprobado' },
-    { id: 3, alumno: 'Lucía Fernández', concepto: 'Cuota Enero', monto: 22000, fecha: '26 Dic', estado: 'pendiente' },
-    { id: 4, alumno: 'Pedro Gómez', concepto: 'Cuota Enero', monto: 28000, fecha: '25 Dic', estado: 'aprobado' },
-]
+    // Generate last 6 months revenue for chart
+    const last6Months = Array.from({ length: 6 }).map((_, i) => subMonths(now, 5 - i))
+    const ingresosChart = await Promise.all(last6Months.map(async (date) => {
+        const start = startOfMonth(date)
+        const d_copy = new Date(date)
+        d_copy.setMonth(d_copy.getMonth() + 1)
+        const end = startOfMonth(d_copy)
 
-export default function FinanzasPage() {
-    const [periodoSeleccionado, setPeriodoSeleccionado] = useState('6m')
+        const sum = await prisma.pago.aggregate({
+            _sum: { monto: true },
+            where: {
+                estado: 'APROBADO',
+                fechaPago: { gte: start, lt: end }
+            }
+        })
+        return {
+            mes: format(date, 'MMM', { locale: es }),
+            monto: sum._sum.monto || 0
+        }
+    }))
 
-    const totalMes = 1250000
-    const totalDeuda = morosos.reduce((sum, m) => sum + m.montoDeuda, 0)
-    const maxIngreso = Math.max(...ingresosMensuales.map(i => i.monto))
+    const totalMes = pagosMes._sum.monto || 0
+    const maxIngreso = Math.max(...ingresosChart.map(i => i.monto), 1)
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
@@ -53,23 +96,12 @@ export default function FinanzasPage() {
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="btn-outline">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Exportar
-                    </button>
-                    <button className="btn-primary">
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Registrar Pago
-                    </button>
+                    <RegistrarPagoManual />
                 </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="card p-6">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-leaf-100 flex items-center justify-center">
@@ -79,26 +111,12 @@ export default function FinanzasPage() {
                         </div>
                         <div>
                             <p className="text-2xl font-bold text-warm-800">{formatMoney(totalMes)}</p>
-                            <p className="text-sm text-warm-500">Ingresos del mes</p>
+                            <p className="text-sm text-warm-500">Ingresos {format(now, 'MMMM', { locale: es })}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="card p-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-lemon-100 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold text-warm-800">39</p>
-                            <p className="text-sm text-warm-500">Cuotas al día</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="card p-6">
+                <div className="card p-6 border-l-4 border-red-400">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center">
                             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,126 +124,153 @@ export default function FinanzasPage() {
                             </svg>
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-red-600">{morosos.length}</p>
-                            <p className="text-sm text-warm-500">Morosos</p>
+                            <p className="text-2xl font-bold text-red-600">{morososRaw.length}</p>
+                            <p className="text-sm text-warm-500">Inscripciones pendientes</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="card p-6">
+                <div className="card p-6 border-l-4 border-lemon-400">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <div className="w-12 h-12 rounded-xl bg-lemon-100 flex items-center justify-center">
+                            <svg className="w-6 h-6 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-amber-600">{formatMoney(totalDeuda)}</p>
-                            <p className="text-sm text-warm-500">Deuda total</p>
+                            <p className="text-2xl font-bold text-warm-800">{todosPagos.length}</p>
+                            <p className="text-sm text-warm-500">Operaciones filtradas</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
-                {/* Chart */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-semibold text-warm-800">Ingresos Mensuales</h2>
-                        <select
-                            value={periodoSeleccionado}
-                            onChange={(e) => setPeriodoSeleccionado(e.target.value)}
-                            className="input-field py-1.5 px-3 w-auto text-sm"
-                        >
-                            <option value="6m">Últimos 6 meses</option>
-                            <option value="12m">Último año</option>
+            {/* Filters */}
+            <div className="card p-4">
+                <form className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1">
+                        <input
+                            name="busqueda"
+                            type="text"
+                            placeholder="Buscar por nombre de alumno..."
+                            className="input-field"
+                            defaultValue={busqueda}
+                        />
+                    </div>
+                    <div className="w-full md:w-48">
+                        <select name="estado" className="input-field" defaultValue={estado}>
+                            <option value="">Todos los Estados</option>
+                            <option value="APROBADO">Aprobado</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="RECHAZADO">Rechazado</option>
                         </select>
                     </div>
-
-                    {/* Simple Bar Chart */}
-                    <div className="flex items-end justify-between gap-2 h-48 px-4">
-                        {ingresosMensuales.map((item, index) => (
-                            <div key={index} className="flex flex-col items-center gap-2 flex-1">
-                                <div
-                                    className="w-full bg-leaf-500 rounded-t-lg transition-all hover:bg-leaf-600"
-                                    style={{ height: `${(item.monto / maxIngreso) * 100}%` }}
-                                />
-                                <span className="text-xs text-warm-500">{item.mes}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Morosos */}
-                <div className="card">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-warm-800">Alumnos Morosos</h2>
-                        <span className="badge badge-error">{morosos.length} pendientes</span>
-                    </div>
-
-                    <div className="space-y-3">
-                        {morosos.map((moroso) => (
-                            <div key={moroso.id} className="flex items-center justify-between p-4 rounded-xl bg-red-50 border border-red-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-red-200 flex items-center justify-center">
-                                        <span className="text-red-700 font-semibold">{moroso.nombre.charAt(0)}</span>
-                                    </div>
-                                    <div>
-                                        <p className="font-medium text-warm-800">{moroso.nombre}</p>
-                                        <p className="text-sm text-warm-500">{moroso.deudaMeses} mes(es) de deuda</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-red-600">{formatMoney(moroso.montoDeuda)}</p>
-                                    <button className="text-xs text-lemon-600 hover:text-lemon-700 font-medium">
-                                        Enviar recordatorio
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                    <button type="submit" className="btn-primary px-8">
+                        Filtrar
+                    </button>
+                    {(busqueda || estado) && (
+                        <Link href="/admin/finanzas" className="btn-outline">
+                            Limpiar
+                        </Link>
+                    )}
+                </form>
             </div>
 
-            {/* Recent Payments */}
-            <div className="card">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-warm-800">Pagos Recientes</h2>
-                    <button className="text-sm text-lemon-600 hover:text-lemon-700 font-medium">
-                        Ver todos
-                    </button>
+            {/* Main Content Area */}
+            <div className="grid lg:grid-cols-3 gap-6">
+                {/* 1. Payments Table */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="card overflow-hidden">
+                        <div className="flex items-center justify-between p-6 border-b border-canvas-100">
+                            <h2 className="text-lg font-bold text-warm-800">Historial de Pagos</h2>
+                            <span className="text-xs text-warm-500 font-medium">Mostrando {todosPagos.length} registros</span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-canvas-50">
+                                    <tr>
+                                        <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Alumno</th>
+                                        <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Fecha</th>
+                                        <th className="text-right py-3 px-6 text-sm font-medium text-warm-500 italic">Monto</th>
+                                        <th className="text-center py-3 px-6 text-sm font-medium text-warm-500 italic">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-canvas-100 italic">
+                                    {todosPagos.map((pago) => (
+                                        <tr key={pago.id} className="hover:bg-canvas-50 transition-colors">
+                                            <td className="py-4 px-6">
+                                                <div className="font-medium text-warm-800">{pago.alumno.usuario.nombre}</div>
+                                                <div className="text-xs text-warm-400">{pago.alumno.usuario.email}</div>
+                                            </td>
+                                            <td className="py-4 px-6 text-sm text-warm-500">
+                                                {format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}
+                                            </td>
+                                            <td className="py-4 px-6 text-right font-bold text-leaf-700">
+                                                {formatMoney(pago.monto)}
+                                            </td>
+                                            <td className="py-4 px-6 text-center">
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${pago.estado === 'APROBADO' ? 'bg-green-100 text-green-700' :
+                                                        pago.estado === 'RECHAZADO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                                    }`}>
+                                                    {pago.estado}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {todosPagos.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} className="py-12 text-center text-warm-400">
+                                                No se encontraron pagos con los filtros aplicados.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-canvas-50">
-                            <tr>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Alumno</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Concepto</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Fecha</th>
-                                <th className="text-right py-3 px-4 text-sm font-medium text-warm-500">Monto</th>
-                                <th className="text-center py-3 px-4 text-sm font-medium text-warm-500">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-canvas-100">
-                            {pagosRecientes.map((pago) => (
-                                <tr key={pago.id} className="hover:bg-canvas-50">
-                                    <td className="py-4 px-4 font-medium text-warm-800">{pago.alumno}</td>
-                                    <td className="py-4 px-4 text-warm-600">{pago.concepto}</td>
-                                    <td className="py-4 px-4 text-warm-500">{pago.fecha}</td>
-                                    <td className="py-4 px-4 text-right font-semibold text-warm-800">
-                                        {formatMoney(pago.monto)}
-                                    </td>
-                                    <td className="py-4 px-4 text-center">
-                                        <span className={`badge ${pago.estado === 'aprobado' ? 'badge-success' : 'badge-warning'
-                                            }`}>
-                                            {pago.estado === 'aprobado' ? 'Aprobado' : 'Pendiente'}
-                                        </span>
-                                    </td>
-                                </tr>
+                {/* 2. Side Panel: Morosos/Pending */}
+                <div className="space-y-6">
+                    <div className="card border-l-4 border-red-500">
+                        <div className="p-6 border-b border-canvas-100">
+                            <h2 className="text-lg font-bold text-warm-800 flex items-center justify-between">
+                                Pagos Pendientes
+                                <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-xs">{morososRaw.length}</span>
+                            </h2>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            {morososRaw.length > 0 ? morososRaw.map((insc) => (
+                                <div key={insc.id} className="flex flex-col p-3 rounded-lg bg-red-50 hover:bg-red-100 transition-colors group italic">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="font-bold text-warm-800">{insc.alumno.usuario.nombre}</span>
+                                        <span className="text-red-600 font-bold">{formatMoney(insc.taller.precio)}</span>
+                                    </div>
+                                    <div className="text-xs text-warm-500">{insc.taller.nombre}</div>
+                                </div>
+                            )) : (
+                                <p className="text-center py-6 text-warm-400">Todo al día ✨</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div className="p-6 border-b border-canvas-100 italic">
+                            <h2 className="text-lg font-bold text-warm-800">Recaudación Mensual</h2>
+                        </div>
+                        <div className="p-6 flex items-end justify-between gap-2 h-32 px-4 italic">
+                            {ingresosChart.map((item, index) => (
+                                <div key={index} className="flex flex-col items-center gap-1 flex-1">
+                                    <div
+                                        className="w-full bg-leaf-500 rounded-t transition-all hover:bg-leaf-600"
+                                        style={{ height: `${(item.monto / maxIngreso) * 100}%` }}
+                                    />
+                                    <span className="text-[10px] text-warm-500 uppercase font-medium">{item.mes}</span>
+                                </div>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

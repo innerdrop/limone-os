@@ -2,10 +2,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
+import PlacementCard from '@/components/portal/PlacementCard'
 
 const DAYS_MAP: Record<string, number> = {
     'DOMINGO': 0, 'LUNES': 1, 'MARTES': 2, 'MIERCOLES': 3, 'JUEVES': 4, 'VIERNES': 5, 'SABADO': 6
 }
+
+export const dynamic = 'force-dynamic'
 
 export default async function PortalDashboard() {
     const session = await getServerSession(authOptions)
@@ -19,43 +22,129 @@ export default async function PortalDashboard() {
                 include: { taller: true }
             },
             asistencias: true,
-            obras: true
+            obras: true,
+            citasNivelacion: {
+                where: {
+                    estado: 'PENDIENTE'
+                },
+                orderBy: { fecha: 'asc' },
+                take: 5
+            }
         }
+    })
+
+    const notificaciones = await prisma.notificacion.findMany({
+        where: { usuarioId: session.user.id, leida: false },
+        orderBy: { fechaEnvio: 'desc' },
+        take: 5
     })
 
     const userName = session?.user?.name?.split(' ')[0] || 'Alumno'
     const enrollments = student?.inscripciones || []
+    const upcomingPlacements = student?.citasNivelacion || []
 
-    // Calculate Next Class
-    let nextClass = null
+    // Calculate Upcoming Classes (Top 5 candidates to mix with placements)
+    let upcomingClasses: {
+        type: 'class',
+        id: string,
+        taller: string,
+        dia: string,
+        horario: string,
+        date: Date
+    }[] = []
+
     if (enrollments.length > 0) {
         const now = new Date()
         const currentDay = now.getDay()
 
-        const sortedClasses = enrollments.map(ins => {
-            const targetDay = DAYS_MAP[ins.dia || ''] || 0
-            let daysUntil = (targetDay - currentDay + 7) % 7
+        enrollments.forEach(ins => {
+            if (ins.dia === 'VERANO' && ins.notas) {
+                // Handle Summer Workshop
+                const startDateMatch = ins.notas.match(/Inicio: (\d{4}-\d{2}-\d{2})/)
+                const frequencyMatch = ins.notas.match(/Frecuencia: (\d)x/)
 
-            // If it's today but the hour passed, go to next week
-            if (daysUntil === 0) {
+                if (startDateMatch) {
+                    const [y, m, dNum] = startDateMatch[1].split('-').map(Number)
+                    const startDate = new Date(y, m - 1, dNum) // Local
+                    const freq = frequencyMatch ? parseInt(frequencyMatch[1]) : 1
+
+                    const mainDay = startDate.getDay()
+                    const secondDay = (mainDay + 3) % 7
+
+                    // Find next 2 occurrences
+                    let found = 0
+                    let d = new Date()
+                    // Start checking from today (or start date if future)
+                    if (d < startDate) d = new Date(startDate)
+
+                    // Safety break
+                    let checks = 0
+                    while (found < 2 && checks < 60) {
+                        const day = d.getDay()
+                        const isMain = day === mainDay
+                        const isSecond = freq === 2 && day === secondDay
+
+                        if (isMain || isSecond) {
+                            // Check if it hasn't passed today (if today, check time? assume 17:00)
+                            // Actually we just want "Upcoming", so if it's today and 20:00, maybe skip.
+                            // Let's assume future:
+                            upcomingClasses.push({
+                                type: 'class',
+                                id: `${ins.id}-${d.getTime()}`,
+                                taller: 'Taller de Verano',
+                                dia: 'Verano',
+                                horario: '17:00',
+                                date: new Date(d)
+                            })
+                            found++
+                        }
+                        d.setDate(d.getDate() + 1)
+                        checks++
+                    }
+                }
+            } else {
+                // Regular Logic
+                const targetDay = DAYS_MAP[(ins.dia || '').toUpperCase()] || 0
+                let daysUntil = (targetDay - currentDay + 7) % 7
+
+                // If it's today, check time
                 const [startHour] = (ins.horario || '00:00').split(':')
-                if (now.getHours() >= parseInt(startHour)) {
+                if (daysUntil === 0 && now.getHours() >= parseInt(startHour)) {
                     daysUntil = 7
                 }
-            }
 
-            const classDate = new Date(now)
-            classDate.setDate(now.getDate() + daysUntil)
-            return {
-                taller: ins.taller.nombre,
-                dia: ins.dia,
-                horario: ins.horario,
-                date: classDate
-            }
-        }).sort((a, b) => a.date.getTime() - b.date.getTime())
+                // Generate next 2 occurrences for each enrollment
+                for (let i = 0; i < 2; i++) {
+                    const classDate = new Date(now)
+                    classDate.setDate(now.getDate() + daysUntil + (i * 7))
 
-        nextClass = sortedClasses[0]
+                    const [h, m] = (ins.horario || '00:00').split(':').map(Number)
+                    classDate.setHours(h, m, 0, 0)
+
+                    upcomingClasses.push({
+                        type: 'class',
+                        id: `${ins.id}-${i}`,
+                        taller: 'Taller de Arte', // Forced name as requested
+                        dia: ins.dia!,
+                        horario: ins.horario!,
+                        date: classDate
+                    })
+                }
+            }
+        })
     }
+
+    // Combine and Sort
+    const allActivities = [
+        ...upcomingPlacements.map(p => ({
+            type: 'placement' as const,
+            id: p.id,
+            cita: p,
+            date: p.fecha
+        })),
+        ...upcomingClasses
+    ].sort((a, b) => a.date.getTime() - b.date.getTime())
+        .slice(0, 2)
 
     const estadisticas = [
         { label: 'Talleres activos', value: enrollments.length.toString(), icon: '📚' },
@@ -98,52 +187,53 @@ export default async function PortalDashboard() {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
-                {/* Próxima Clase */}
+                {/* Próxima Clase / Evento */}
                 <div className="card">
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-10 h-10 rounded-xl bg-lemon-100 flex items-center justify-center">
                             <span className="text-xl">📅</span>
                         </div>
-                        <h2 className="text-lg font-semibold text-warm-800">Próxima Clase</h2>
+                        <h2 className="text-lg font-semibold text-warm-800">Próximas Actividades</h2>
                     </div>
 
-                    {nextClass ? (
-                        <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
-                            <h3 className="text-xl font-bold text-warm-800 mb-2">
-                                {nextClass.taller}
-                            </h3>
-                            <div className="space-y-2 text-warm-600">
-                                <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <span>{nextClass.dia} {nextClass.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</span>
+                    <div className="space-y-4">
+                        {allActivities.length > 0 ? (
+                            allActivities.map((activity) => (
+                                <div key={activity.id}>
+                                    {activity.type === 'class' ? (
+                                        <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
+                                            <h3 className="text-xl font-bold text-warm-800 mb-2">
+                                                {activity.taller}
+                                            </h3>
+                                            <div className="space-y-2 text-warm-600">
+                                                <div className="flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span>{activity.dia} {activity.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>{activity.horario}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <PlacementCard cita={activity.cita!} />
+                                    )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>{nextClass.horario}</span>
-                                </div>
-                            </div>
-
-                            <div className="mt-4 flex gap-2">
-                                <Link
-                                    href="/portal/calendario"
-                                    className="flex-1 py-2 px-4 bg-lemon-500 text-warm-800 rounded-lg text-sm font-medium hover:bg-lemon-600 transition-colors text-center"
-                                >
-                                    Ver mi calendario
+                            ))
+                        ) : (
+                            <div className="p-8 text-center border-2 border-dashed border-canvas-200 rounded-xl">
+                                <p className="text-warm-400 mb-4">No tenés actividades programadas</p>
+                                <Link href="/portal/inscripcion" className="text-lemon-600 font-medium hover:underline">
+                                    Inscribite a un taller ahora →
                                 </Link>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="p-8 text-center border-2 border-dashed border-canvas-200 rounded-xl">
-                            <p className="text-warm-400 mb-4">No tenés clases programadas</p>
-                            <Link href="/portal/inscripcion" className="text-lemon-600 font-medium hover:underline">
-                                Inscribite a un taller ahora →
-                            </Link>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Avisos */}
@@ -158,18 +248,53 @@ export default async function PortalDashboard() {
                     </div>
 
                     <div className="space-y-3">
-                        <div className="p-4 rounded-xl border bg-canvas-50 border-canvas-200">
-                            <div className="flex items-start justify-between gap-2">
-                                <div>
-                                    <h4 className="font-medium text-warm-800">¡Bienvenido al portal!</h4>
-                                    <p className="text-sm text-warm-500 mt-1">Desde acá podrás gestionar tus inscripciones y seguir tu progreso artístico.</p>
+                        {/* Placement Test Notice */}
+                        {upcomingPlacements.length > 0 && upcomingPlacements[0].estado === 'PENDIENTE' && (
+                            <div className="p-4 rounded-xl border bg-lemon-50 border-lemon-200">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 className="font-medium text-warm-800">Prueba de Nivelación Pendiente</h4>
+                                        <p className="text-sm text-warm-600 mt-1">
+                                            Recordá que tenés una cita agendada para el {new Date(upcomingPlacements[0].fecha).toLocaleDateString()} a las {new Date(upcomingPlacements[0].fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}hs.
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-lemon-600 font-bold whitespace-nowrap">Importante</span>
                                 </div>
-                                <span className="text-xs text-warm-400 whitespace-nowrap">Hoy</span>
                             </div>
-                        </div>
+                        )}
+
+                    </div>
+
+                    {/* Dynamic Notifications */}
+                    <div className="space-y-3 mt-3">
+                        {notificaciones.map((notif: any) => (
+                            <div key={notif.id} className={`p-4 rounded-xl border ${notif.tipo === 'SUCCESS' ? 'bg-green-50 border-green-200' : 'bg-canvas-50 border-canvas-200'}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 className="font-medium text-warm-800">{notif.titulo}</h4>
+                                        <p className="text-sm text-warm-600 mt-1">{notif.mensaje}</p>
+                                    </div>
+                                    <span className="text-xs text-warm-400 whitespace-nowrap">{new Date(notif.fechaEnvio).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        ))}
+
+                        {(!upcomingPlacements.length && (!notificaciones || notificaciones.length === 0)) && (
+                            <div className="p-4 rounded-xl border bg-canvas-50 border-canvas-200">
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h4 className="font-medium text-warm-800">¡Bienvenido al portal!</h4>
+                                        <p className="text-sm text-warm-500 mt-1">Acá verás tus avisos importantes.</p>
+                                    </div>
+                                    <span className="text-xs text-warm-400 whitespace-nowrap">Info</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Quick Actions */}
 
             {/* Quick Actions */}
             <div className="card">
@@ -194,7 +319,7 @@ export default async function PortalDashboard() {
                     ))}
                 </div>
             </div>
-        </div>
+        </div >
     )
 }
 

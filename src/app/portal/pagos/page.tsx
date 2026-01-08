@@ -1,49 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
-// Pagos de ejemplo (en producción vendrían de la BD)
-const pagosEjemplo = [
-    {
-        id: 1,
-        concepto: 'Cuota Diciembre 2024',
-        monto: 25000,
-        fecha: '5 Dic 2024',
-        estado: 'aprobado',
-        comprobante: true,
-    },
-    {
-        id: 2,
-        concepto: 'Cuota Noviembre 2024',
-        monto: 25000,
-        fecha: '3 Nov 2024',
-        estado: 'aprobado',
-        comprobante: true,
-    },
-    {
-        id: 3,
-        concepto: 'Cuota Octubre 2024',
-        monto: 23000,
-        fecha: '4 Oct 2024',
-        estado: 'aprobado',
-        comprobante: true,
-    },
-    {
-        id: 4,
-        concepto: 'Cuota Enero 2025',
-        monto: 28000,
-        fecha: null,
-        estado: 'pendiente',
-        comprobante: false,
-    },
-]
+// Interface for Payment (corresponds to Prisma model)
+interface Pago {
+    id: string
+    concepto: string
+    monto: number
+    fechaPago: string
+    estado: string // 'PENDIENTE', 'APROBADO', 'RECHAZADO'
+    comprobantePdf?: string | null
+}
 
 export default function PagosPage() {
+    const [pagos, setPagos] = useState<Pago[]>([])
+    const [loading, setLoading] = useState(true)
     const [showPayModal, setShowPayModal] = useState(false)
 
-    const cuotaPendiente = pagosEjemplo.find(p => p.estado === 'pendiente')
-    const pagosAprobados = pagosEjemplo.filter(p => p.estado === 'aprobado')
+    // TODO: Fetch real payments from API
+    useEffect(() => {
+        // Simulate fetch delay or fetching from an empty endpoint for now
+        // In a real implementation: fetch('/api/pagos').then(res => res.json()).then(data => setPagos(data))
+        setTimeout(() => {
+            setPagos([]) // No payments for new user
+            setLoading(false)
+        }, 500)
+    }, [])
+
+    const cuotaPendiente = pagos.find(p => p.estado === 'PENDIENTE')
+    const pagosAprobados = pagos.filter(p => p.estado === 'APROBADO')
     const totalPagado = pagosAprobados.reduce((sum, p) => sum + p.monto, 0)
 
     const formatMoney = (amount: number) => {
@@ -52,6 +38,10 @@ export default function PagosPage() {
             currency: 'ARS',
             minimumFractionDigits: 0,
         }).format(amount)
+    }
+
+    if (loading) {
+        return <div className="p-8 text-center text-warm-500">Cargando pagos...</div>
     }
 
     return (
@@ -142,67 +132,74 @@ export default function PagosPage() {
             <div className="card">
                 <h2 className="text-lg font-semibold text-warm-800 mb-4">Historial de Pagos</h2>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-canvas-200">
-                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Concepto</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Fecha</th>
-                                <th className="text-right py-3 px-4 text-sm font-medium text-warm-500">Monto</th>
-                                <th className="text-center py-3 px-4 text-sm font-medium text-warm-500">Estado</th>
-                                <th className="text-right py-3 px-4 text-sm font-medium text-warm-500">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {pagosEjemplo.map((pago) => (
-                                <tr key={pago.id} className="border-b border-canvas-100 hover:bg-canvas-50">
-                                    <td className="py-4 px-4">
-                                        <span className="font-medium text-warm-800">{pago.concepto}</span>
-                                    </td>
-                                    <td className="py-4 px-4 text-warm-500">
-                                        {pago.fecha || '-'}
-                                    </td>
-                                    <td className="py-4 px-4 text-right font-semibold text-warm-800">
-                                        {formatMoney(pago.monto)}
-                                    </td>
-                                    <td className="py-4 px-4 text-center">
-                                        <span className={`badge ${pago.estado === 'aprobado'
+                {pagos.length === 0 ? (
+                    <div className="text-center py-12 text-warm-500">
+                        <p className="text-xl mb-2">💸</p>
+                        <p>No tenés pagos registrados todavía.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-canvas-200">
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Concepto</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Fecha</th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-warm-500">Monto</th>
+                                    <th className="text-center py-3 px-4 text-sm font-medium text-warm-500">Estado</th>
+                                    <th className="text-right py-3 px-4 text-sm font-medium text-warm-500">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {pagos.map((pago) => (
+                                    <tr key={pago.id} className="border-b border-canvas-100 hover:bg-canvas-50">
+                                        <td className="py-4 px-4">
+                                            <span className="font-medium text-warm-800">{pago.concepto}</span>
+                                        </td>
+                                        <td className="py-4 px-4 text-warm-500">
+                                            {pago.fechaPago ? new Date(pago.fechaPago).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="py-4 px-4 text-right font-semibold text-warm-800">
+                                            {formatMoney(pago.monto)}
+                                        </td>
+                                        <td className="py-4 px-4 text-center">
+                                            <span className={`badge ${pago.estado === 'APROBADO'
                                                 ? 'badge-success'
-                                                : pago.estado === 'pendiente'
+                                                : pago.estado === 'PENDIENTE'
                                                     ? 'badge-warning'
                                                     : 'badge-error'
-                                            }`}>
-                                            {pago.estado === 'aprobado' ? 'Pagado' :
-                                                pago.estado === 'pendiente' ? 'Pendiente' : 'Rechazado'}
-                                        </span>
-                                    </td>
-                                    <td className="py-4 px-4 text-right">
-                                        {pago.comprobante ? (
-                                            <button className="inline-flex items-center gap-1 text-sm text-lemon-600 hover:text-lemon-700 font-medium">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                </svg>
-                                                Comprobante
-                                            </button>
-                                        ) : pago.estado === 'pendiente' ? (
-                                            <button
-                                                onClick={() => setShowPayModal(true)}
-                                                className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                                </svg>
-                                                Pagar
-                                            </button>
-                                        ) : (
-                                            <span className="text-warm-400 text-sm">-</span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                                                }`}>
+                                                {pago.estado === 'APROBADO' ? 'Pagado' :
+                                                    pago.estado === 'PENDIENTE' ? 'Pendiente' : 'Rechazado'}
+                                            </span>
+                                        </td>
+                                        <td className="py-4 px-4 text-right">
+                                            {pago.comprobantePdf ? (
+                                                <button className="inline-flex items-center gap-1 text-sm text-lemon-600 hover:text-lemon-700 font-medium">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                    </svg>
+                                                    Comprobante
+                                                </button>
+                                            ) : pago.estado === 'PENDIENTE' ? (
+                                                <button
+                                                    onClick={() => setShowPayModal(true)}
+                                                    className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                    </svg>
+                                                    Pagar
+                                                </button>
+                                            ) : (
+                                                <span className="text-warm-400 text-sm">-</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
             {/* Pay Modal */}

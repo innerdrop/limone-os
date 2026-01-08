@@ -29,7 +29,8 @@ export default function CalendarioPage() {
                 // Convert string dates to Date objects
                 const formatted = data.classes.map((c: any) => ({
                     ...c,
-                    fecha: new Date(c.fecha)
+                    fecha: new Date(c.fecha),
+                    taller: c.tipo === 'nivelacion' ? c.taller : 'Taller de Arte'
                 }))
                 setClases(formatted)
                 setLoading(false)
@@ -144,15 +145,18 @@ export default function CalendarioPage() {
                                 </div>
                                 {clasesDelDia.length > 0 && (
                                     <div className="mt-1 space-y-0.5">
-                                        {clasesDelDia.slice(0, 2).map((clase) => (
+                                        {clasesDelDia.slice(0, 3).map((clase: any) => (
                                             <button
                                                 key={clase.id}
-                                                onClick={() => handleAvisarInasistencia(clase)}
-                                                className={`w-full text-[10px] sm:text-xs px-1 py-0.5 rounded truncate text-left ${clase.estado === 'completada'
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : clase.estado === 'ausente'
-                                                        ? 'bg-red-100 text-red-700'
-                                                        : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
+                                                onClick={() => clase.tipo !== 'nivelacion' && handleAvisarInasistencia(clase)}
+                                                disabled={clase.tipo === 'nivelacion'}
+                                                className={`w-full text-[10px] sm:text-xs px-1 py-0.5 rounded truncate text-left ${clase.tipo === 'nivelacion'
+                                                    ? 'bg-blue-100 text-blue-700 font-medium'
+                                                    : clase.estado === 'completada'
+                                                        ? 'bg-green-100 text-green-700'
+                                                        : clase.estado === 'ausente'
+                                                            ? 'bg-red-100 text-red-700'
+                                                            : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
                                                     }`}
                                             >
                                                 {clase.hora} {clase.taller}
@@ -187,19 +191,20 @@ export default function CalendarioPage() {
                 <h3 className="text-lg font-semibold text-warm-800 mb-4">Próximas Clases</h3>
                 <div className="space-y-3">
                     {clases
-                        .filter(c => new Date(c.fecha) >= new Date() && c.estado === 'programada')
+                        .filter(c => new Date(c.fecha) >= new Date() && (c.estado === 'programada' || c.estado === 'pendiente'))
                         .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
                         .slice(0, 5)
-                        .map((clase) => {
+                        .map((clase: any) => {
                             const f = new Date(clase.fecha)
+                            const isNivelacion = clase.tipo === 'nivelacion'
                             return (
                                 <div key={clase.id} className="flex items-center justify-between p-4 rounded-xl bg-canvas-50 border border-canvas-200">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-lemon-100 flex flex-col items-center justify-center">
-                                            <span className="text-xs text-lemon-600 font-medium">
+                                        <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center ${isNivelacion ? 'bg-blue-100 text-blue-700' : 'bg-lemon-100 text-lemon-700'}`}>
+                                            <span className={`text-xs font-medium ${isNivelacion ? 'text-blue-600' : 'text-lemon-600'}`}>
                                                 {f.toLocaleDateString('es-AR', { weekday: 'short' })}
                                             </span>
-                                            <span className="text-lg font-bold text-lemon-700">
+                                            <span className="text-lg font-bold">
                                                 {f.getDate()}
                                             </span>
                                         </div>
@@ -208,12 +213,19 @@ export default function CalendarioPage() {
                                             <p className="text-sm text-warm-500">{clase.hora} hs</p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleAvisarInasistencia(clase)}
-                                        className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                        Avisar inasistencia
-                                    </button>
+                                    {!isNivelacion && (
+                                        <button
+                                            onClick={() => handleAvisarInasistencia(clase)}
+                                            className="px-4 py-2 text-sm font-medium text-warm-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            Avisar inasistencia
+                                        </button>
+                                    )}
+                                    {isNivelacion && (
+                                        <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                            Nivelación
+                                        </span>
+                                    )}
                                 </div>
                             )
                         })}

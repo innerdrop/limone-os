@@ -1,80 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-// Obras de ejemplo (en producción vendrían de la BD)
-const obrasEjemplo = [
-    {
-        id: 1,
-        titulo: 'Atardecer en los Andes',
-        descripcion: 'Óleo sobre lienzo. Mi primera obra de paisaje.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '15 Dic 2024',
-        tecnica: 'Óleo',
-        clase: 'Pintura al Óleo',
-        destacada: true,
-    },
-    {
-        id: 2,
-        titulo: 'Retrato abstracto',
-        descripcion: 'Experimentando con colores cálidos.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '10 Dic 2024',
-        tecnica: 'Acrílico',
-        clase: 'Técnicas Mixtas',
-        destacada: false,
-    },
-    {
-        id: 3,
-        titulo: 'Naturaleza muerta',
-        descripcion: 'Estudio de frutas y texturas.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '5 Dic 2024',
-        tecnica: 'Óleo',
-        clase: 'Pintura al Óleo',
-        destacada: true,
-    },
-    {
-        id: 4,
-        titulo: 'El faro del fin del mundo',
-        descripcion: 'Inspirado en el faro de Ushuaia.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '28 Nov 2024',
-        tecnica: 'Acuarela',
-        clase: 'Acuarela Creativa',
-        destacada: false,
-    },
-    {
-        id: 5,
-        titulo: 'Bosque patagónico',
-        descripcion: 'Técnica de espatulado.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '20 Nov 2024',
-        tecnica: 'Óleo',
-        clase: 'Pintura al Óleo',
-        destacada: false,
-    },
-    {
-        id: 6,
-        titulo: 'Composición geométrica',
-        descripcion: 'Explorando formas y colores.',
-        imagenUrl: '/obras/placeholder.jpg',
-        fecha: '15 Nov 2024',
-        tecnica: 'Acrílico',
-        clase: 'Técnicas Mixtas',
-        destacada: false,
-    },
-]
+// Interface for Artwork (corresponds to Prisma model)
+interface Obra {
+    id: string
+    titulo: string
+    descripcion: string | null
+    imagenUrl: string
+    fechaCreacion: string
+    tecnica: string | null
+    destacada: boolean
+    clase?: {
+        // Assuming we might fetch associated class info
+        tema?: string
+    }
+}
 
 export default function GaleriaPage() {
+    const [obras, setObras] = useState<Obra[]>([])
+    const [loading, setLoading] = useState(true)
     const [filtroTecnica, setFiltroTecnica] = useState('todas')
-    const [obraSeleccionada, setObraSeleccionada] = useState<typeof obrasEjemplo[0] | null>(null)
+    const [obraSeleccionada, setObraSeleccionada] = useState<Obra | null>(null)
+
+    // TODO: Fetch real artworks from API
+    useEffect(() => {
+        // Simulate fetch
+        setTimeout(() => {
+            setObras([]) // Zero artworks for new user
+            setLoading(false)
+        }, 500)
+    }, [])
 
     const obrasFiltradas = filtroTecnica === 'todas'
-        ? obrasEjemplo
-        : obrasEjemplo.filter(obra => obra.tecnica.toLowerCase() === filtroTecnica)
+        ? obras
+        : obras.filter(obra => obra.tecnica?.toLowerCase() === filtroTecnica)
 
-    const tecnicasUnicas = [...new Set(obrasEjemplo.map(o => o.tecnica))]
+    const tecnicasUnicas = [...new Set(obras.map(o => o.tecnica).filter(Boolean))] as string[]
+
+    if (loading) {
+        return <div className="p-8 text-center text-warm-500">Cargando galería...</div>
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -88,102 +54,123 @@ export default function GaleriaPage() {
                         Todas las obras que has creado en el taller
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-warm-500">Filtrar por:</span>
-                    <select
-                        value={filtroTecnica}
-                        onChange={(e) => setFiltroTecnica(e.target.value)}
-                        className="input-field py-2 px-4 w-auto"
-                    >
-                        <option value="todas">Todas las técnicas</option>
-                        {tecnicasUnicas.map((tecnica) => (
-                            <option key={tecnica} value={tecnica.toLowerCase()}>
-                                {tecnica}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="card p-4 text-center">
-                    <p className="text-3xl font-bold text-lemon-600">{obrasEjemplo.length}</p>
-                    <p className="text-sm text-warm-500">Obras totales</p>
-                </div>
-                <div className="card p-4 text-center">
-                    <p className="text-3xl font-bold text-leaf-600">{obrasEjemplo.filter(o => o.destacada).length}</p>
-                    <p className="text-sm text-warm-500">Destacadas</p>
-                </div>
-                <div className="card p-4 text-center">
-                    <p className="text-3xl font-bold text-blue-600">{tecnicasUnicas.length}</p>
-                    <p className="text-sm text-warm-500">Técnicas</p>
-                </div>
-                <div className="card p-4 text-center">
-                    <p className="text-3xl font-bold text-purple-600">6</p>
-                    <p className="text-sm text-warm-500">Meses creando</p>
-                </div>
-            </div>
-
-            {/* Gallery Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {obrasFiltradas.map((obra) => (
-                    <div
-                        key={obra.id}
-                        onClick={() => setObraSeleccionada(obra)}
-                        className="card group cursor-pointer overflow-hidden hover:shadow-glow-lemon"
-                    >
-                        {/* Image */}
-                        <div className="relative aspect-[4/3] -mx-6 -mt-6 mb-4 bg-canvas-200 overflow-hidden">
-                            {/* Placeholder para imagen */}
-                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lemon-100 to-leaf-100">
-                                <svg className="w-16 h-16 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            {/* Badges */}
-                            {obra.destacada && (
-                                <div className="absolute top-3 left-3 badge bg-lemon-400 text-warm-800">
-                                    ⭐ Destacada
-                                </div>
-                            )}
-                            <div className="absolute top-3 right-3 badge bg-white/90">
-                                {obra.tecnica}
-                            </div>
-                            {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <span className="bg-white/90 px-4 py-2 rounded-full text-sm font-medium text-warm-800">
-                                    Ver detalle
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div>
-                            <h3 className="font-semibold text-warm-800 group-hover:text-lemon-700 transition-colors">
-                                {obra.titulo}
-                            </h3>
-                            <p className="text-sm text-warm-500 mt-1 line-clamp-2">
-                                {obra.descripcion}
-                            </p>
-                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-canvas-100">
-                                <span className="text-xs text-warm-400">{obra.fecha}</span>
-                                <span className="text-xs text-leaf-600 font-medium">{obra.clase}</span>
-                            </div>
-                        </div>
+                {/* Only show filters if there are artworks */}
+                {obras.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-warm-500">Filtrar por:</span>
+                        <select
+                            value={filtroTecnica}
+                            onChange={(e) => setFiltroTecnica(e.target.value)}
+                            className="input-field py-2 px-4 w-auto"
+                        >
+                            <option value="todas">Todas las técnicas</option>
+                            {tecnicasUnicas.map((tecnica) => (
+                                <option key={tecnica} value={tecnica.toLowerCase()}>
+                                    {tecnica}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                ))}
+                )}
             </div>
 
-            {/* Empty State */}
-            {obrasFiltradas.length === 0 && (
+            {/* Stats - Only show if there is data */}
+            {obras.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="card p-4 text-center">
+                        <p className="text-3xl font-bold text-lemon-600">{obras.length}</p>
+                        <p className="text-sm text-warm-500">Obras totales</p>
+                    </div>
+                    <div className="card p-4 text-center">
+                        <p className="text-3xl font-bold text-leaf-600">{obras.filter(o => o.destacada).length}</p>
+                        <p className="text-sm text-warm-500">Destacadas</p>
+                    </div>
+                    <div className="card p-4 text-center">
+                        <p className="text-3xl font-bold text-blue-600">{tecnicasUnicas.length}</p>
+                        <p className="text-sm text-warm-500">Técnicas</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Gallery Grid or Empty State */}
+            {obras.length === 0 ? (
                 <div className="card py-16 text-center">
                     <div className="text-6xl mb-4">🎨</div>
+                    <h3 className="text-xl font-semibold text-warm-800 mb-2">
+                        Todavía no hay obras en tu galería
+                    </h3>
+                    <p className="text-warm-500">
+                        ¡Pronto verás aquí tus creaciones del taller!
+                    </p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {obrasFiltradas.map((obra) => (
+                        <div
+                            key={obra.id}
+                            onClick={() => setObraSeleccionada(obra)}
+                            className="card group cursor-pointer overflow-hidden hover:shadow-glow-lemon"
+                        >
+                            {/* Image */}
+                            <div className="relative aspect-[4/3] -mx-6 -mt-6 mb-4 bg-canvas-200 overflow-hidden">
+                                {obra.imagenUrl ? (
+                                    /* In real app, use next/image */
+                                    <img src={obra.imagenUrl} alt={obra.titulo} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lemon-100 to-leaf-100">
+                                        <svg className="w-16 h-16 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                )}
+
+                                {/* Badges */}
+                                {obra.destacada && (
+                                    <div className="absolute top-3 left-3 badge bg-lemon-400 text-warm-800">
+                                        ⭐ Destacada
+                                    </div>
+                                )}
+                                {obra.tecnica && (
+                                    <div className="absolute top-3 right-3 badge bg-white/90">
+                                        {obra.tecnica}
+                                    </div>
+                                )}
+                                {/* Hover overlay */}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <span className="bg-white/90 px-4 py-2 rounded-full text-sm font-medium text-warm-800">
+                                        Ver detalle
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div>
+                                <h3 className="font-semibold text-warm-800 group-hover:text-lemon-700 transition-colors">
+                                    {obra.titulo || 'Sin título'}
+                                </h3>
+                                <p className="text-sm text-warm-500 mt-1 line-clamp-2">
+                                    {obra.descripcion}
+                                </p>
+                                <div className="flex items-center justify-between mt-3 pt-3 border-t border-canvas-100">
+                                    <span className="text-xs text-warm-400">
+                                        {new Date(obra.fechaCreacion).toLocaleDateString()}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Filter Empty State (only if we have works but filtered them all out) */}
+            {obras.length > 0 && obrasFiltradas.length === 0 && (
+                <div className="card py-16 text-center">
+                    <div className="text-6xl mb-4">🔍</div>
                     <h3 className="text-xl font-semibold text-warm-800 mb-2">
                         No hay obras con este filtro
                     </h3>
                     <p className="text-warm-500">
-                        Probá seleccionando otra técnica o "Todas las técnicas"
+                        Probá seleccionando otra técnica
                     </p>
                 </div>
             )}
@@ -200,11 +187,16 @@ export default function GaleriaPage() {
                     >
                         {/* Image */}
                         <div className="aspect-video bg-canvas-200 relative">
-                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lemon-100 to-leaf-100">
-                                <svg className="w-24 h-24 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
+                            {obraSeleccionada.imagenUrl ? (
+                                <img src={obraSeleccionada.imagenUrl} alt={obraSeleccionada.titulo} className="w-full h-full object-contain bg-black" />
+                            ) : (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lemon-100 to-leaf-100">
+                                    <svg className="w-24 h-24 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                            )}
+
                             <button
                                 onClick={() => setObraSeleccionada(null)}
                                 className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
@@ -223,8 +215,10 @@ export default function GaleriaPage() {
                                         {obraSeleccionada.titulo}
                                     </h2>
                                     <div className="flex items-center gap-3 mt-2">
-                                        <span className="badge badge-lemon">{obraSeleccionada.tecnica}</span>
-                                        <span className="text-sm text-warm-400">{obraSeleccionada.fecha}</span>
+                                        {obraSeleccionada.tecnica && (
+                                            <span className="badge badge-lemon">{obraSeleccionada.tecnica}</span>
+                                        )}
+                                        <span className="text-sm text-warm-400">{new Date(obraSeleccionada.fechaCreacion).toLocaleDateString()}</span>
                                     </div>
                                 </div>
                                 {obraSeleccionada.destacada && (
@@ -235,12 +229,6 @@ export default function GaleriaPage() {
                             <p className="mt-4 text-warm-600">
                                 {obraSeleccionada.descripcion}
                             </p>
-
-                            <div className="mt-4 pt-4 border-t border-canvas-200">
-                                <p className="text-sm text-warm-500">
-                                    <span className="font-medium">Clase:</span> {obraSeleccionada.clase}
-                                </p>
-                            </div>
 
                             <div className="mt-6 flex gap-3">
                                 <button className="flex-1 btn-primary">

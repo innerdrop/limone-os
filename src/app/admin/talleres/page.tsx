@@ -1,54 +1,16 @@
 import Link from 'next/link'
+import prisma from '@/lib/prisma'
 
-// Datos de ejemplo
-const talleres = [
-    {
-        id: 1,
-        nombre: 'Pintura al Óleo',
-        descripcion: 'Domina las técnicas clásicas de los grandes maestros.',
-        horario: 'Lunes y Miércoles 18:00 - 19:30',
-        cupoMaximo: 8,
-        inscritos: 8,
-        precio: 28000,
-        nivel: 'Todos los niveles',
-        activo: true,
-    },
-    {
-        id: 2,
-        nombre: 'Acuarela Creativa',
-        descripcion: 'Explora la transparencia y fluidez de la acuarela.',
-        horario: 'Martes y Jueves 16:00 - 17:30',
-        cupoMaximo: 10,
-        inscritos: 7,
-        precio: 25000,
-        nivel: 'Principiantes',
-        activo: true,
-    },
-    {
-        id: 3,
-        nombre: 'Dibujo Artístico',
-        descripcion: 'Desarrollá tu trazo y dominio del lápiz.',
-        horario: 'Viernes 17:00 - 19:00',
-        cupoMaximo: 12,
-        inscritos: 11,
-        precio: 22000,
-        nivel: 'Todos los niveles',
-        activo: true,
-    },
-    {
-        id: 4,
-        nombre: 'Técnicas Mixtas',
-        descripcion: 'Combina materiales y libera tu creatividad.',
-        horario: 'Sábados 10:00 - 12:00',
-        cupoMaximo: 8,
-        inscritos: 8,
-        precio: 28000,
-        nivel: 'Intermedio',
-        activo: true,
-    },
-]
+export default async function TalleresPage() {
+    const talleres = await prisma.taller.findMany({
+        include: {
+            _count: {
+                select: { inscripciones: { where: { estado: 'ACTIVA' } } }
+            }
+        },
+        orderBy: { nombre: 'asc' }
+    })
 
-export default function TalleresPage() {
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -66,7 +28,7 @@ export default function TalleresPage() {
                         Gestión de Talleres
                     </h1>
                     <p className="text-warm-500 mt-1">
-                        {talleres.length} talleres activos
+                        {talleres.length} talleres configurados en el sistema
                     </p>
                 </div>
                 <button className="btn-primary">
@@ -78,34 +40,35 @@ export default function TalleresPage() {
             </div>
 
             {/* Talleres Grid */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {talleres.map((taller) => {
-                    const ocupacion = (taller.inscritos / taller.cupoMaximo) * 100
+                    const inscritos = taller._count.inscripciones
+                    const ocupacion = (inscritos / taller.cupoMaximo) * 100
 
                     return (
-                        <div key={taller.id} className="card">
+                        <div key={taller.id} className="card flex flex-col h-full">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <h3 className="text-xl font-semibold text-warm-800">{taller.nombre}</h3>
-                                    <p className="text-sm text-warm-500 mt-1">{taller.descripcion}</p>
+                                    <h3 className="text-lg font-semibold text-warm-800">{taller.nombre}</h3>
+                                    <p className="text-sm text-warm-500 mt-1 line-clamp-2">{taller.descripcion || 'Sin descripción'}</p>
                                 </div>
                                 <span className={`badge ${taller.activo ? 'badge-success' : 'badge-warning'}`}>
                                     {taller.activo ? 'Activo' : 'Pausado'}
                                 </span>
                             </div>
 
-                            <div className="space-y-3 mb-4">
+                            <div className="space-y-3 mb-6 flex-1">
                                 <div className="flex items-center gap-2 text-sm text-warm-600">
                                     <svg className="w-4 h-4 text-lemon-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    {taller.horario}
+                                    {taller.diasSemana || 'Días no definidos'} {taller.horaInicio ? `- ${taller.horaInicio} hs` : ''}
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-warm-600">
                                     <svg className="w-4 h-4 text-leaf-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                     </svg>
-                                    Nivel: {taller.nivel}
+                                    Duración: {taller.duracion} min
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-warm-600">
                                     <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -116,15 +79,15 @@ export default function TalleresPage() {
                             </div>
 
                             {/* Capacity */}
-                            <div className="mb-4">
+                            <div className="mb-6">
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-warm-500">Ocupación</span>
-                                    <span className="font-medium text-warm-700">{taller.inscritos}/{taller.cupoMaximo}</span>
+                                    <span className="font-medium text-warm-700">{inscritos}/{taller.cupoMaximo}</span>
                                 </div>
                                 <div className="h-2 bg-canvas-200 rounded-full overflow-hidden">
                                     <div
                                         className={`h-full rounded-full ${ocupacion >= 100 ? 'bg-red-500' :
-                                                ocupacion >= 80 ? 'bg-amber-500' : 'bg-leaf-500'
+                                            ocupacion >= 80 ? 'bg-amber-500' : 'bg-leaf-500'
                                             }`}
                                         style={{ width: `${Math.min(ocupacion, 100)}%` }}
                                     />
@@ -132,10 +95,13 @@ export default function TalleresPage() {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex gap-2 pt-4 border-t border-canvas-200">
-                                <button className="flex-1 py-2 text-sm font-medium text-lemon-600 hover:bg-lemon-50 rounded-lg transition-colors">
-                                    Ver alumnos
-                                </button>
+                            <div className="flex gap-2 pt-4 border-t border-canvas-200 mt-auto">
+                                <Link
+                                    href={`/admin/alumnos?taller=${taller.id}`}
+                                    className="flex-1 py-2 text-center text-sm font-medium text-lemon-600 hover:bg-lemon-50 rounded-lg transition-colors border border-lemon-200"
+                                >
+                                    Ver Alumnos
+                                </Link>
                                 <button className="flex-1 py-2 text-sm font-medium text-warm-600 hover:bg-canvas-100 rounded-lg transition-colors">
                                     Editar
                                 </button>
@@ -147,3 +113,4 @@ export default function TalleresPage() {
         </div>
     )
 }
+

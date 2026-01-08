@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,115 +7,93 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-// ==================== MODELS ====================
-// Note: SQLite doesn't support enums, so we use String with comments for valid values
-
 model Usuario {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  nombre        String
-  telefono      String?
-  rol           String    @default("ALUMNO") // ALUMNO, ADMIN, DOCENTE
-  imagen        String?
-  activo              Boolean   @default(true)
-  debeCambiarPassword Boolean   @default(true)
-  creadoEn            DateTime  @default(now())
-  actualizadoEn       DateTime  @updatedAt
-
-  // Relaciones
-  alumno         Alumno?
-  clasesDocente  Clase[]        @relation("DocenteClases")
-  notificaciones Notificacion[]
+  id                  String         @id @default(cuid())
+  email               String         @unique
+  password            String
+  nombre              String
+  telefono            String?
+  rol                 String         @default("ALUMNO")
+  imagen              String?
+  activo              Boolean        @default(true)
+  debeCambiarPassword Boolean        @default(true)
+  creadoEn            DateTime       @default(now())
+  actualizadoEn       DateTime       @updatedAt
+  alumno              Alumno?
+  clasesDocente       Clase[]        @relation("DocenteClases")
+  notificaciones      Notificacion[]
 
   @@map("usuarios")
 }
 
 model Alumno {
-  id                 String   @id @default(cuid())
-  usuarioId          String   @unique
-  
-  // Datos del alumno
-  dni                String?
-  fechaNacimiento    DateTime?
-  edad               Int?
-  domicilio          String?
-  
-  // Datos del padre/madre/tutor legal
-  tutorNombre                String?
-  tutorDni                   String?
-  tutorRelacion              String? // "Padre", "Madre", "Tutor"
-  tutorDomicilio             String?
-  tutorTelefonoPrincipal     String?
-  tutorTelefonoAlternativo   String?
-  tutorEmail                 String?
-  tutorProfesion             String?
-  
-  // Contacto de emergencia
-  emergenciaNombre           String?
-  emergenciaTelefono         String?
-  emergenciaRelacion         String?
-  
-  // Información de salud
-  obraSocial                 String?
-  numeroAfiliado             String?
-  hospitalReferencia         String?
-  alergias                   String?
-  medicacionHabitual         String?
-  condicionesMedicas         String?
-  restriccionesFisicas       String?
-  
-  // Autorizaciones
-  autorizacionParticipacion  Boolean  @default(false)
-  autorizacionMedica         Boolean  @default(false)
-  autorizacionRetiro         String?  // JSON con personas autorizadas
-  autorizacionImagenes       Boolean  @default(false)
-  aceptacionReglamento       Boolean  @default(false)
-  firmaResponsable           String?  // Base64 de la firma
-  aclaracionFirma            String?
-  dniFirma                   String?
-  
-  // Información administrativa
-  planPago                   String?
-  formaPago                  String?
-  firmaConformidad           String?  // Base64 de la firma
-  
-  // Control de perfil
-  perfilCompleto             Boolean  @default(false)
-  
-  // Campos legacy
-  contactoEmergencia String?
-  telefonoEmergencia String?
-  nivel              String   @default("PRINCIPIANTE") // PRINCIPIANTE, INTERMEDIO, AVANZADO
-  notas              String?
-  creadoEn           DateTime @default(now())
-  actualizadoEn      DateTime @updatedAt
-
-  // Relaciones
-  usuario       Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  inscripciones Inscripcion[]
-  asistencias   Asistencia[]
-  pagos         Pago[]
-  obras         Obra[]
+  id                        String           @id @default(cuid())
+  usuarioId                 String           @unique
+  dni                       String?
+  fechaNacimiento           DateTime?
+  edad                      Int?
+  domicilio                 String?
+  colegio                   String?
+  grado                     String?
+  tutorNombre               String?
+  tutorDni                  String?
+  tutorRelacion             String?
+  tutorDomicilio            String?
+  tutorTelefonoPrincipal    String?
+  tutorTelefonoAlternativo  String?
+  tutorEmail                String?
+  tutorProfesion            String?
+  emergenciaNombre          String?
+  emergenciaTelefono        String?
+  emergenciaRelacion        String?
+  obraSocial                String?
+  numeroAfiliado            String?
+  hospitalReferencia        String?
+  alergias                  String?
+  medicacionHabitual        String?
+  condicionesMedicas        String?
+  restriccionesFisicas      String?
+  autorizacionParticipacion Boolean          @default(false)
+  autorizacionMedica        Boolean          @default(false)
+  autorizacionRetiro        String?
+  autorizacionImagenes      Boolean          @default(false)
+  aceptacionReglamento      Boolean          @default(false)
+  firmaResponsable          String?
+  aclaracionFirma           String?
+  dniFirma                  String?
+  planPago                  String?
+  formaPago                 String?
+  firmaConformidad          String?
+  perfilCompleto            Boolean          @default(false)
+  contactoEmergencia        String?
+  telefonoEmergencia        String?
+  nivel                     String           @default("PRINCIPIANTE")
+  notas                     String?
+  creadoEn                  DateTime         @default(now())
+  actualizadoEn             DateTime         @updatedAt
+  usuario                   Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  asistencias               Asistencia[]
+  citasNivelacion           CitaNivelacion[]
+  inscripciones             Inscripcion[]
+  obras                     Obra[]
+  pagos                     Pago[]
 
   @@map("alumnos")
 }
 
 model Taller {
-  id          String   @id @default(cuid())
-  nombre      String   @unique
-  descripcion String?
-  imagen      String?
-  cupoMaximo  Int      @default(10)
-  precio      Float    @default(0)
-  duracion    Int      @default(90) // minutos
-  activo      Boolean  @default(true)
-  diasSemana  String?  // "LUNES,MIERCOLES"
-  horaInicio  String?  // "18:00"
-  creadoEn    DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
-
-  // Relaciones
+  id            String        @id @default(cuid())
+  nombre        String        @unique
+  descripcion   String?
+  imagen        String?
+  cupoMaximo    Int           @default(10)
+  precio        Float         @default(0)
+  duracion      Int           @default(90)
+  activo        Boolean       @default(true)
+  diasSemana    String?
+  horaInicio    String?
+  creadoEn      DateTime      @default(now())
+  actualizadoEn DateTime      @updatedAt
   clases        Clase[]
   inscripciones Inscripcion[]
 
@@ -126,84 +101,88 @@ model Taller {
 }
 
 model Clase {
-  id              String   @id @default(cuid())
+  id              String       @id @default(cuid())
   tallerId        String
   docenteId       String
   fechaHora       DateTime
-  duracionMinutos Int      @default(90)
+  duracionMinutos Int          @default(90)
   ubicacion       String?
-  estado          String   @default("PROGRAMADA") // PROGRAMADA, COMPLETADA, CANCELADA
+  estado          String       @default("PROGRAMADA")
   notas           String?
-  creadoEn        DateTime @default(now())
-  actualizadoEn   DateTime @updatedAt
-
-  // Relaciones
-  taller      Taller       @relation(fields: [tallerId], references: [id], onDelete: Cascade)
-  docente     Usuario      @relation("DocenteClases", fields: [docenteId], references: [id])
-  asistencias Asistencia[]
-  obras       Obra[]
+  creadoEn        DateTime     @default(now())
+  actualizadoEn   DateTime     @updatedAt
+  asistencias     Asistencia[]
+  docente         Usuario      @relation("DocenteClases", fields: [docenteId], references: [id])
+  taller          Taller       @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  obras           Obra[]
 
   @@map("clases")
+}
+
+model CitaNivelacion {
+  id            String   @id @default(cuid())
+  alumnoId      String
+  fecha         DateTime
+  estado        String   @default("PENDIENTE")
+  notas         String?
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+  alumno        Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+
+  @@map("citas_nivelacion")
 }
 
 model Inscripcion {
   id               String   @id @default(cuid())
   alumnoId         String
   tallerId         String
-  dia              String?  // "LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO"
-  horario          String?  // "09:00-11:00", "14:00-16:00", "18:00-20:00"
+  dia              String?
+  horario          String?
   pagado           Boolean  @default(false)
   fechaInscripcion DateTime @default(now())
-  estado           String   @default("ACTIVA") // ACTIVA, PAUSADA, FINALIZADA
+  estado           String   @default("ACTIVA")
   notas            String?
-  fase             String?  // "Fase 1", "Fase 2", "Fase 3"
-  asiento          Int?     // 1 a 10
+  fase             String?
+  asiento          Int?
   creadoEn         DateTime @default(now())
   actualizadoEn    DateTime @updatedAt
-
-  // Relaciones
-  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  taller Taller @relation(fields: [tallerId], references: [id], onDelete: Cascade)
-  pagos  Pago[]
+  taller           Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
+  alumno           Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  pagos            Pago[]
 
   @@map("inscripciones")
 }
 
-
 model Asistencia {
-  id        String   @id @default(cuid())
-  alumnoId  String
-  claseId   String
-  estado    String   @default("PRESENTE") // PRESENTE, AUSENTE, AVISADO, JUSTIFICADO
-  notas     String?
-  creadoEn  DateTime @default(now())
-
-  // Relaciones
-  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  clase  Clase  @relation(fields: [claseId], references: [id], onDelete: Cascade)
+  id       String   @id @default(cuid())
+  alumnoId String
+  claseId  String
+  estado   String   @default("PRESENTE")
+  notas    String?
+  creadoEn DateTime @default(now())
+  clase    Clase    @relation(fields: [claseId], references: [id], onDelete: Cascade)
+  alumno   Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
 
   @@unique([alumnoId, claseId])
   @@map("asistencias")
 }
 
 model Pago {
-  id             String   @id @default(cuid())
+  id             String      @id @default(cuid())
   alumnoId       String
   inscripcionId  String
   monto          Float
-  fechaPago      DateTime @default(now())
-  estado         String   @default("PENDIENTE") // PENDIENTE, APROBADO, RECHAZADO
+  fechaPago      DateTime    @default(now())
+  estado         String      @default("PENDIENTE")
   mercadoPagoId  String?
   comprobantePdf String?
-  mesCubierto    Int      // 1-12
-  anioCubierto   Int      // 2024, 2025...
+  mesCubierto    Int
+  anioCubierto   Int
   concepto       String?
-  creadoEn       DateTime @default(now())
-  actualizadoEn  DateTime @updatedAt
-
-  // Relaciones
-  alumno      Alumno      @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  inscripcion Inscripcion @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)
+  creadoEn       DateTime    @default(now())
+  actualizadoEn  DateTime    @updatedAt
+  inscripcion    Inscripcion @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)
+  alumno         Alumno      @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
 
   @@map("pagos")
 }
@@ -219,10 +198,8 @@ model Obra {
   fechaCreacion DateTime @default(now())
   destacada     Boolean  @default(false)
   creadoEn      DateTime @default(now())
-
-  // Relaciones
-  alumno Alumno @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
-  clase  Clase? @relation(fields: [claseId], references: [id])
+  clase         Clase?   @relation(fields: [claseId], references: [id])
+  alumno        Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
 
   @@map("obras")
 }
@@ -233,12 +210,10 @@ model Notificacion {
   titulo     String
   mensaje    String
   leida      Boolean  @default(false)
-  tipo       String?  // "RECORDATORIO", "PAGO", "SISTEMA"
+  tipo       String?
   enlace     String?
   fechaEnvio DateTime @default(now())
-
-  // Relaciones
-  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
   @@map("notificaciones")
 }
@@ -262,4 +237,17 @@ model Configuracion {
   descripcion String?
 
   @@map("configuracion")
+}
+
+model Tarea {
+  id            String   @id @default(cuid())
+  titulo        String
+  descripcion   String?
+  fecha         DateTime
+  completada    Boolean  @default(false)
+  prioridad     String   @default("MEDIA")
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("tareas")
 }

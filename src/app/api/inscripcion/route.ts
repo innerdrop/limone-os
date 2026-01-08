@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
             fechaNacimiento,
             edad,
             domicilio,
+            colegio,
+            grado,
             // Guardian data
             tutorNombre,
             tutorDni,
@@ -23,7 +25,16 @@ export async function POST(request: NextRequest) {
             tutorTelefonoPrincipal,
             tutorTelefonoAlternativo,
             tutorEmail,
-            tutorProfesion
+            tutorProfesion,
+            // Authorizations
+            autorizacionParticipacion,
+            autorizacionMedica,
+            autorizacionRetiro,
+            autorizacionImagenes,
+            aceptacionReglamento,
+            firmaResponsable,
+            aclaracionFirma,
+            dniFirma
         } = body
 
         // Validate required fields
@@ -79,6 +90,8 @@ export async function POST(request: NextRequest) {
                 fechaNacimiento: new Date(fechaNacimiento),
                 edad: parseInt(edad),
                 domicilio,
+                colegio,
+                grado,
                 // Guardian data
                 tutorNombre,
                 tutorDni,
@@ -88,8 +101,17 @@ export async function POST(request: NextRequest) {
                 tutorTelefonoAlternativo,
                 tutorEmail,
                 tutorProfesion,
-                // Profile not complete yet
-                perfilCompleto: false
+                // Authorizations
+                autorizacionParticipacion: autorizacionParticipacion || false,
+                autorizacionMedica: autorizacionMedica || false,
+                autorizacionRetiro,
+                autorizacionImagenes: autorizacionImagenes || false,
+                aceptacionReglamento: aceptacionReglamento || false,
+                firmaResponsable,
+                aclaracionFirma,
+                dniFirma,
+                // Profile
+                perfilCompleto: true // Since we are collecting everything now
             }
         })
 

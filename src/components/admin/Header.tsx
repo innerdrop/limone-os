@@ -3,6 +3,7 @@
 import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { useState } from 'react'
+import QuickTaskForm from './QuickTaskForm'
 
 interface User {
     name?: string | null
@@ -43,15 +44,9 @@ export default function AdminHeader({ user }: { user: User }) {
                 {/* Right Side */}
                 <div className="flex items-center gap-4">
                     {/* Quick Add Button */}
-                    <Link
-                        href="/admin/alumnos/nuevo"
-                        className="hidden sm:flex btn-primary py-2 px-4 text-sm"
-                    >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Nuevo Alumno
-                    </Link>
+                    <div className="hidden sm:block">
+                        <QuickTaskForm />
+                    </div>
 
                     {/* Notifications */}
                     <button className="relative p-2 rounded-lg hover:bg-canvas-100 transition-colors">
@@ -89,7 +84,10 @@ export default function AdminHeader({ user }: { user: User }) {
                                 </Link>
                                 <hr className="my-2 border-canvas-100" />
                                 <button
-                                    onClick={() => signOut({ callbackUrl: '/' })}
+                                    onClick={async () => {
+                                        await signOut({ redirect: false })
+                                        window.location.href = window.location.origin
+                                    }}
                                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 border border-red-100 rounded-lg transition-colors"
                                 >
                                     Cerrar Sesión
