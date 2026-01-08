@@ -88,13 +88,13 @@ export async function POST(request: NextRequest) {
                     data: {
                         alumnoId: alumno.id,
                         tallerId: taller.id,
-                        fase: 'Taller de Verano',
+                        fase: 'Colonia de Verano',
                         dia: 'VERANO',
                         horario: 'INTENSIVO',
                         asiento: 0, // Dummy
                         estado: 'ACTIVA',
                         notas: `Modalidad: ${summerModality}, Frecuencia: ${summerFrequency}, Inicio: ${summerStartDate}`,
-                        pagado: true
+                        pagado: false
                     }
                 })
 
@@ -121,15 +121,45 @@ export async function POST(request: NextRequest) {
                 await tx.notificacion.create({
                     data: {
                         usuarioId: session.user.id,
-                        titulo: 'Inscripción Taller de Verano',
-                        mensaje: `Te has inscrito en ${summerModality} (${summerFrequency}).`,
+                        titulo: 'Inscripción Colonia de Verano',
+                        mensaje: `Te has inscrito en ${summerModality === 'BASE' ? 'Horario Base' : 'Horario Extendido'} (${summerFrequency}).`,
                         tipo: 'SUCCESS',
                         leida: false
                     }
                 })
             })
 
-            return NextResponse.json({ success: true })
+            // Generate WhatsApp message for Summer Workshop
+            const usuario = await prisma.usuario.findUnique({
+                where: { id: session.user.id }
+            })
+
+            const modalidStr = summerModality === 'BASE' ? 'Horario Base (17:00 a 19:30)' : 'Horario Extendido (17:00 a 22:00)'
+            const freqStr = summerFrequency === '1x' ? '1 semana' : '2 semanas'
+            const montoFinal = summerModality === 'BASE'
+                ? (summerFrequency === '1x' ? 75000 : 130000)
+                : (summerFrequency === '1x' ? 145000 : 210000)
+
+            const whatsappMessage = `Hola Natalia! 👋
+
+Quiero inscribirme a la *Colonia de Verano*:
+
+☀️ *Modalidad:* ${modalidStr}
+📅 *Duración:* ${freqStr}
+🗓️ *Fecha de Inicio:* ${summerStartDate}
+💰 *Total:* $${montoFinal.toLocaleString('es-AR')}
+
+👤 *Nombre:* ${usuario?.nombre}
+📧 *Email:* ${usuario?.email}
+
+¡Gracias!`
+
+            const whatsappUrl = `https://wa.me/5492901588969?text=${encodeURIComponent(whatsappMessage)}`
+
+            return NextResponse.json({
+                success: true,
+                whatsappUrl
+            })
         }
 
         // --- REGULAR FLOW ---
@@ -203,19 +233,19 @@ export async function POST(request: NextRequest) {
                             horario,
                             fase,
                             asiento,
-                            pagado: true, // Auto-pay for demo/MVP or set to false if integrating real payment later
+                            pagado: false, // Payment pending
                             estado: 'ACTIVA'
                         }
                     })
                     inscriptionsResults.push(newInsc)
 
-                    // Create Payment (Mock)
+                    // Create Payment (PENDIENTE)
                     await tx.pago.create({
                         data: {
                             alumnoId: alumno.id,
                             inscripcionId: newInsc.id,
                             monto: 25000,
-                            estado: 'APROBADO',
+                            estado: 'PENDIENTE',
                             mesCubierto: new Date().getMonth() + 1,
                             anioCubierto: new Date().getFullYear(),
                             concepto: `Inscripción - ${fase}, ${dia} ${horario}, Asiento: ${asiento}`
@@ -228,9 +258,9 @@ export async function POST(request: NextRequest) {
                 await tx.notificacion.create({
                     data: {
                         usuarioId: session.user.id,
-                        titulo: '¡Inscripción Exitosa!',
-                        mensaje: `Te inscribiste correctamente en ${fase}. Turnos: ${diasStr}`,
-                        tipo: 'SUCCESS',
+                        titulo: 'Inscripción Registrada',
+                        mensaje: `Tu inscripción en ${fase} ha sido registrada. Turnos: ${diasStr}. Realizá la transferencia para confirmar.`,
+                        tipo: 'INFO',
                         leida: false
                     }
                 })
@@ -240,7 +270,34 @@ export async function POST(request: NextRequest) {
             throw new Error(err.message)
         }
 
-        return NextResponse.json({ success: true, inscripciones: inscriptionsResults })
+        // Get user info for WhatsApp message
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: session.user.id }
+        })
+
+        // Generate WhatsApp message
+        const diasStr = enrollmentSlots.map((s: any) => `${s.dia} ${s.horario} (Asiento ${s.asiento})`).join('\n')
+        const whatsappMessage = `Hola Natalia! 👋
+
+Quiero inscribirme al Taller de Arte:
+
+📚 *Fase:* ${fase}
+📅 *Turnos:*
+${diasStr}
+💰 *Total:* $${(25000 * enrollmentSlots.length).toLocaleString('es-AR')}
+
+👤 *Nombre:* ${usuario?.nombre}
+📧 *Email:* ${usuario?.email}
+
+¡Gracias!`
+
+        const whatsappUrl = `https://wa.me/5492901588969?text=${encodeURIComponent(whatsappMessage)}`
+
+        return NextResponse.json({
+            success: true,
+            inscripciones: inscriptionsResults,
+            whatsappUrl
+        })
 
     } catch (error: any) {
         console.error('Error en inscripción:', error)

@@ -3,12 +3,23 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/PrintButton'
+import ConfirmPaymentButton from '@/components/admin/ConfirmPaymentButton'
 
 export default async function AlumnoDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params
     const alumno = await prisma.alumno.findUnique({
         where: { id: params.id },
-        include: { usuario: true }
+        include: {
+            usuario: true,
+            inscripciones: {
+                include: {
+                    taller: true,
+                    pagos: {
+                        where: { estado: 'PENDIENTE' }
+                    }
+                }
+            }
+        }
     })
 
     if (!alumno) {
@@ -143,7 +154,52 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                     </div>
                 </section>
 
-                {/* 3. Autorizaciones y Firma */}
+                {/* 3. Pagos Pendientes */}
+                {alumno.inscripciones.some(ins => ins.pagos.length > 0) && (
+                    <section className="card border-l-4 border-yellow-500 no-print">
+                        <h2 className="text-xl font-bold text-warm-800 mb-6 flex items-center gap-2">
+                            <span>💳</span> Pagos Pendientes
+                        </h2>
+                        <div className="space-y-4">
+                            {alumno.inscripciones
+                                .filter(ins => ins.pagos.length > 0)
+                                .map(ins => ins.pagos.map(pago => (
+                                    <div key={pago.id} className="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex-1">
+                                                <h3 className="font-bold text-lg text-warm-800 mb-2">{ins.taller.nombre}</h3>
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                    <div>
+                                                        <span className="text-warm-600">Fase:</span>
+                                                        <span className="ml-2 font-semibold">{ins.fase}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-warm-600">Día:</span>
+                                                        <span className="ml-2 font-semibold">{ins.dia}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-warm-600">Horario:</span>
+                                                        <span className="ml-2 font-semibold">{ins.horario}</span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-warm-600">Asiento:</span>
+                                                        <span className="ml-2 font-semibold">A{ins.asiento}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-warm-600 mb-1">Monto</p>
+                                                <p className="text-3xl font-black text-warm-900">${pago.monto.toLocaleString('es-AR')}</p>
+                                            </div>
+                                        </div>
+                                        <ConfirmPaymentButton pagoId={pago.id} monto={pago.monto} />
+                                    </div>
+                                )))}
+                        </div>
+                    </section>
+                )}
+
+                {/* 4. Autorizaciones y Firma */}
                 <section className="card border-l-4 border-lemon-500">
                     <h2 className="text-xl font-bold text-warm-800 mb-6 flex items-center gap-2">
                         <span>✍️</span> Autorizaciones y Firma

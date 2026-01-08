@@ -55,46 +55,36 @@ export async function GET(request: NextRequest) {
                     const startDate = new Date(y, m - 1, dNum)
                     const freq = frequencyMatch ? parseInt(frequencyMatch[1]) : 1
 
-                    // Summer ends Feb 28th 2026
-                    const summerEnd = new Date(2026, 1, 28) // Month is 0-indexed (1 = Feb)
+                    // Calculate how many days per week (1x = 1 day/week, 2x = 2 days/week)
+                    // For continuous days: if 1x per week, show 1 week of continuous days
+                    // if 2x per week, show 2 weeks of continuous days
+                    const weeksToShow = freq // 1x = 1 week, 2x = 2 weeks
+                    const daysToShow = weeksToShow * 5 // 5 days per week (Mon-Fri)
 
                     let d = new Date(startDate)
-                    // Ensure we don't start before the requested range 'start' if possible, 
-                    // but we need to calculate correct day-of-week recurrence.
+                    let daysAdded = 0
 
-                    // Main recurrence day
-                    const mainDay = startDate.getDay()
-                    // Secondary day for 2x: Add 3 days (e.g., Mon->Thu, Tue->Fri)
-                    const secondDay = (mainDay + 3) % 7
-
-                    while (d <= summerEnd) {
+                    while (daysAdded < daysToShow) {
                         // Check if current d is within the requested view range [start, end]
                         if (d >= start && d <= end) {
                             const dayOfWeek = d.getDay()
 
-                            // Weekend Check (0=Sun, 6=Sat) - Taller Limoné is likely closed?
-                            // Assuming Summer Workshop runs Mon-Fri
+                            // Skip weekends (0=Sun, 6=Sat)
                             if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                                // Check if this day matches our frequency pattern
-                                const isMainDay = dayOfWeek === mainDay
-                                const isSecondDay = freq === 2 && dayOfWeek === secondDay
+                                // Set time to 17:00 for summer workshop
+                                const safeDate = new Date(d)
+                                safeDate.setHours(17, 0, 0, 0)
 
-                                if (isMainDay || isSecondDay) {
-                                    // Set time to 12:00 to avoid timezone shifts (e.g. 00:00 UTC -> Previous Day in Local)
-                                    const safeDate = new Date(d)
-                                    safeDate.setHours(12, 0, 0, 0)
-
-                                    classes.push({
-                                        id: `${ins.id}-summer-${d.getTime()}`,
-                                        taller: 'Taller de Verano',
-                                        dia: 'Verano Intensivo',
-                                        // Use explicit time if user wants, but 12:00 safe for date placement
-                                        hora: '17:00',
-                                        fecha: safeDate,
-                                        estado: 'programada',
-                                        tipo: 'taller'
-                                    })
-                                }
+                                classes.push({
+                                    id: `${ins.id}-summer-${d.getTime()}`,
+                                    taller: 'Colonia de Verano',
+                                    dia: 'Verano',
+                                    hora: '17:00',
+                                    fecha: safeDate,
+                                    estado: 'programada',
+                                    tipo: 'verano'
+                                })
+                                daysAdded++
                             }
                         }
                         d.setDate(d.getDate() + 1)

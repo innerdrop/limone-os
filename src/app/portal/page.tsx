@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import PlacementCard from '@/components/portal/PlacementCard'
+import PendingPaymentCard from '@/components/portal/PendingPaymentCard'
 
 const DAYS_MAP: Record<string, number> = {
     'DOMINGO': 0, 'LUNES': 1, 'MARTES': 2, 'MIERCOLES': 3, 'JUEVES': 4, 'VIERNES': 5, 'SABADO': 6
@@ -18,8 +19,11 @@ export default async function PortalDashboard() {
         where: { usuarioId: session.user.id },
         include: {
             inscripciones: {
-                where: { pagado: true, estado: 'ACTIVA' },
-                include: { taller: true }
+                where: { estado: 'ACTIVA' },
+                include: {
+                    taller: true,
+                    pagos: true
+                }
             },
             asistencias: true,
             obras: true,
@@ -40,7 +44,8 @@ export default async function PortalDashboard() {
     })
 
     const userName = session?.user?.name?.split(' ')[0] || 'Alumno'
-    const enrollments = student?.inscripciones || []
+    const enrollments = student?.inscripciones?.filter(ins => ins.pagado) || []
+    const pendingEnrollments = student?.inscripciones?.filter(ins => !ins.pagado) || []
     const upcomingPlacements = student?.citasNivelacion || []
 
     // Calculate Upcoming Classes (Top 5 candidates to mix with placements)
@@ -72,26 +77,21 @@ export default async function PortalDashboard() {
                     const secondDay = (mainDay + 3) % 7
 
                     // Find next 2 occurrences
+                    const weeksToShow = freq
+                    const daysToShow = weeksToShow * 5
+
                     let found = 0
                     let d = new Date()
-                    // Start checking from today (or start date if future)
                     if (d < startDate) d = new Date(startDate)
 
-                    // Safety break
                     let checks = 0
                     while (found < 2 && checks < 60) {
-                        const day = d.getDay()
-                        const isMain = day === mainDay
-                        const isSecond = freq === 2 && day === secondDay
-
-                        if (isMain || isSecond) {
-                            // Check if it hasn't passed today (if today, check time? assume 17:00)
-                            // Actually we just want "Upcoming", so if it's today and 20:00, maybe skip.
-                            // Let's assume future:
+                        const dayOfWeek = d.getDay()
+                        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
                             upcomingClasses.push({
                                 type: 'class',
                                 id: `${ins.id}-${d.getTime()}`,
-                                taller: 'Taller de Verano',
+                                taller: 'Colonia de Verano',
                                 dia: 'Verano',
                                 horario: '17:00',
                                 date: new Date(d)
@@ -104,31 +104,40 @@ export default async function PortalDashboard() {
                 }
             } else {
                 // Regular Logic
-                const targetDay = DAYS_MAP[(ins.dia || '').toUpperCase()] || 0
-                let daysUntil = (targetDay - currentDay + 7) % 7
+                const targetDay = DAYS_MAP[(ins.dia || '').toUpperCase()]
 
-                // If it's today, check time
-                const [startHour] = (ins.horario || '00:00').split(':')
-                if (daysUntil === 0 && now.getHours() >= parseInt(startHour)) {
-                    daysUntil = 7
-                }
+                if (targetDay !== undefined) {
+                    let daysUntil = (targetDay - currentDay + 7) % 7
 
-                // Generate next 2 occurrences for each enrollment
-                for (let i = 0; i < 2; i++) {
-                    const classDate = new Date(now)
-                    classDate.setDate(now.getDate() + daysUntil + (i * 7))
+                    // If it's today, check time
+                    if (ins.horario) {
+                        const [startHour] = ins.horario.split('-')[0].split(':')
+                        if (daysUntil === 0 && now.getHours() >= parseInt(startHour)) {
+                            daysUntil = 7
+                        }
+                    }
 
-                    const [h, m] = (ins.horario || '00:00').split(':').map(Number)
-                    classDate.setHours(h, m, 0, 0)
+                    // Generate next 2 occurrences for each enrollment
+                    for (let i = 0; i < 2; i++) {
+                        const classDate = new Date(now)
+                        classDate.setDate(now.getDate() + daysUntil + (i * 7))
 
-                    upcomingClasses.push({
-                        type: 'class',
-                        id: `${ins.id}-${i}`,
-                        taller: 'Taller de Arte', // Forced name as requested
-                        dia: ins.dia!,
-                        horario: ins.horario!,
-                        date: classDate
-                    })
+                        // Set time from horario (format: "16:00-17:20")
+                        if (ins.horario) {
+                            const [startTime] = ins.horario.split('-')
+                            const [h, m] = startTime.split(':').map(Number)
+                            classDate.setHours(h, m, 0, 0)
+                        }
+
+                        upcomingClasses.push({
+                            type: 'class',
+                            id: `${ins.id}-${i}`,
+                            taller: 'Taller de Arte',
+                            dia: ins.dia!,
+                            horario: ins.horario!,
+                            date: classDate
+                        })
+                    }
                 }
             }
         })
@@ -186,6 +195,32 @@ export default async function PortalDashboard() {
                 ))}
             </div>
 
+            {/* Pending Payments Section */}
+            {pendingEnrollments.length > 0 && (
+                <div className="card">
+                    <div className="flex items-center gap-2 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-yellow-100 flex items-center justify-center">
+                            <span className="text-xl">💳</span>
+                        </div>
+                        <h2 className="text-lg font-semibold text-warm-800">Pagos Pendientes</h2>
+                    </div>
+                    <div className="space-y-4">
+                        {pendingEnrollments.map(ins => (
+                            <PendingPaymentCard
+                                key={ins.id}
+                                inscripcion={{
+                                    ...ins,
+                                    dia: ins.dia || '',
+                                    horario: ins.horario || '',
+                                    fase: ins.fase || '',
+                                    asiento: ins.asiento || 0
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="grid lg:grid-cols-2 gap-6">
                 {/* Próxima Clase / Evento */}
                 <div className="card">
@@ -210,7 +245,7 @@ export default async function PortalDashboard() {
                                                     <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                     </svg>
-                                                    <span>{activity.dia} {activity.date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</span>
+                                                    <span>{activity.dia.toUpperCase()} {activity.date.getDate()}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

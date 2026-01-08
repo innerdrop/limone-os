@@ -35,6 +35,7 @@ export default function RootLayout({
             <head>
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+                <link href="https://fonts.googleapis.com/css2?family=Gigi&display=swap" rel="stylesheet" />
             </head>
             <body className="min-h-screen bg-canvas-100 text-warm-800 antialiased">
                 <Providers>

@@ -501,7 +501,7 @@ function Footer() {
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-3 mb-4">
                             <Image
-                                src="/logo.png"
+                                src="/footerlogo.png"
                                 alt="Taller Limoné Logo"
                                 width={50}
                                 height={50}

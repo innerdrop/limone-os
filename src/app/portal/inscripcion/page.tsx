@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface Taller {
     id: string
@@ -26,6 +26,7 @@ const HORARIOS = [
 
 export default function EnrollmentPage() {
     const router = useRouter()
+    const pathname = usePathname()
     const [loading, setLoading] = useState(false)
     const [step, setStep] = useState(1)
     // New Steps:
@@ -37,6 +38,15 @@ export default function EnrollmentPage() {
     // State for Decision
     const [knowsLevel, setKnowsLevel] = useState<boolean | null>(null) // null = not decided
     const [isSummer, setIsSummer] = useState(false)
+
+    // Reset step if navigating to this page (ensure it always starts at step 1)
+    useEffect(() => {
+        setStep(1)
+        setKnowsLevel(null)
+        setIsSummer(false)
+        setSlots([])
+        setSelectedFase('')
+    }, [pathname])
 
     // State for Regular Enrollment
     const [selectedFase, setSelectedFase] = useState('')
@@ -135,7 +145,14 @@ export default function EnrollmentPage() {
                 throw new Error(data.error || 'Error al procesar la inscripción')
             }
 
-            router.push('/portal?inscripcion=exitosa')
+            const data = await response.json()
+
+            // Redirect to WhatsApp if URL is provided
+            if (data.whatsappUrl) {
+                window.location.href = data.whatsappUrl
+            } else {
+                router.push('/portal?inscripcion=exitosa')
+            }
         } catch (err: any) {
             setError(err.message)
             setProcessing(false)

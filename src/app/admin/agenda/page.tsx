@@ -20,7 +20,15 @@ export default async function AgendaPage() {
             orderBy: { fecha: 'asc' }
         }) : Promise.resolve([]),
         prisma.taller.findMany({
-            where: { activo: true }
+            where: {
+                activo: true,
+                inscripciones: {
+                    some: {
+                        estado: 'ACTIVA',
+                        pagado: true
+                    }
+                }
+            }
         })
     ])
 

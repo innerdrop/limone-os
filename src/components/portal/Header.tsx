@@ -296,6 +296,7 @@ export default function PortalHeader({ user }: { user: User }) {
                         <nav className="space-y-1">
                             {[
                                 { label: 'Dashboard', href: '/portal' },
+                                { label: 'Inscribirme', href: '/portal/inscripcion' },
                                 { label: 'Calendario', href: '/portal/calendario' },
                                 { label: 'Mis Pagos', href: '/portal/pagos' },
                                 { label: 'Mi Galería', href: '/portal/galeria' },

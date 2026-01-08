@@ -30,7 +30,7 @@ export default function CalendarioPage() {
                 const formatted = data.classes.map((c: any) => ({
                     ...c,
                     fecha: new Date(c.fecha),
-                    taller: c.tipo === 'nivelacion' ? c.taller : 'Taller de Arte'
+                    taller: c.tipo === 'nivelacion' || c.tipo === 'verano' ? c.taller : 'Taller de Arte'
                 }))
                 setClases(formatted)
                 setLoading(false)
@@ -152,11 +152,13 @@ export default function CalendarioPage() {
                                                 disabled={clase.tipo === 'nivelacion'}
                                                 className={`w-full text-[10px] sm:text-xs px-1 py-0.5 rounded truncate text-left ${clase.tipo === 'nivelacion'
                                                     ? 'bg-blue-100 text-blue-700 font-medium'
-                                                    : clase.estado === 'completada'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : clase.estado === 'ausente'
-                                                            ? 'bg-red-100 text-red-700'
-                                                            : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
+                                                    : clase.tipo === 'verano'
+                                                        ? 'bg-orange-100 text-orange-700 font-medium'
+                                                        : clase.estado === 'completada'
+                                                            ? 'bg-green-100 text-green-700'
+                                                            : clase.estado === 'ausente'
+                                                                ? 'bg-red-100 text-red-700'
+                                                                : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
                                                     }`}
                                             >
                                                 {clase.hora} {clase.taller}

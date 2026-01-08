@@ -76,13 +76,17 @@ export default function AdminSidebar({ user }: { user: User }) {
             <div className="flex flex-col flex-grow bg-warm-800 pt-5 pb-4 overflow-y-auto">
                 {/* Logo */}
                 <div className="flex items-center gap-3 px-6 mb-8">
-                    <Link href="/admin" className="flex items-center gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-lemon-400 flex items-center justify-center">
-                            <span className="text-xl">🍋</span>
+                    <Link href="/admin" className="flex items-center gap-3">
+                        <div className="w-12 h-12 flex items-center justify-center">
+                            <img
+                                src="/footerlogo.png"
+                                alt="Limoné Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
                         <div>
-                            <span className="font-serif text-lg font-bold text-white block">
-                                Taller Limoné
+                            <span className="font-gigi text-2xl font-bold text-white block">
+                                Limoné
                             </span>
                             <span className="text-xs text-warm-400">Panel Admin</span>
                         </div>

@@ -89,7 +89,7 @@ export default function PortalSidebar({ user }: { user: User }) {
                                     className="object-contain"
                                 />
                                 <span className="font-gigi text-xl font-bold text-warm-800">
-                                    Taller Limoné
+                                    Limoné
                                 </span>
                             </div>
                         </Link>
