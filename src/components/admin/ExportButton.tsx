@@ -2,44 +2,52 @@
 
 interface ExportButtonProps {
     data: any[]
+    filename?: string
+    headers?: string[]
 }
 
-export default function ExportButton({ data }: ExportButtonProps) {
+export default function ExportButton({ data, filename, headers }: ExportButtonProps) {
     const handleExport = () => {
         if (!data || data.length === 0) {
             alert('No hay datos para exportar')
             return
         }
 
-        // CSV Headers
-        const headers = [
-            'Nombre',
-            'Email',
-            'Sede/Taller',
-            'Nivel',
-            'Pago',
-            'Perfil',
-            'DNI',
-            'Teléfono',
-            'Fecha Inscripción'
-        ]
+        let csvHeaders = headers
+        let csvRows: any[][]
 
-        // CSV Rows
-        const rows = data.map(al => [
-            `"${al.nombre}"`,
-            `"${al.email}"`,
-            `"${al.tallerPrincipal}"`,
-            `"${al.nivel}"`,
-            `"${al.pagado ? 'PAGADO' : 'PENDIENTE'}"`,
-            `"${al.estado}"`,
-            `"${al.dni}"`,
-            `"${al.telefono}"`,
-            `"${al.inscripcionFecha}"`
-        ])
+        if (!csvHeaders) {
+            // Default (Legacy) behavior for AlumnosPage where data is Array of Objects
+            csvHeaders = [
+                'Nombre',
+                'Email',
+                'Sede/Taller',
+                'Nivel',
+                'Pago',
+                'Perfil',
+                'DNI',
+                'Teléfono',
+                'Fecha Inscripción'
+            ]
+            csvRows = data.map(al => [
+                `"${al.nombre || ''}"`,
+                `"${al.email || ''}"`,
+                `"${al.tallerPrincipal || ''}"`,
+                `"${al.nivel || ''}"`,
+                `"${al.pagado ? 'PAGADO' : 'PENDIENTE'}"`,
+                `"${al.estado || ''}"`,
+                `"${al.dni || ''}"`,
+                `"${al.telefono || ''}"`,
+                `"${al.inscripcionFecha || ''}"`
+            ])
+        } else {
+            // New behavior: data is already an Array of Arrays (Rows)
+            csvRows = data.map(row => row.map((val: any) => `"${val ?? ''}"`))
+        }
 
         const csvContent = [
-            headers.join(','),
-            ...rows.map(row => row.join(','))
+            csvHeaders.join(','),
+            ...csvRows.map(row => row.join(','))
         ].join('\n')
 
         // Create blob and download
@@ -47,7 +55,7 @@ export default function ExportButton({ data }: ExportButtonProps) {
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `alumnos_limone_${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute('download', `${filename || 'export'}_${new Date().toISOString().split('T')[0]}.csv`)
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()

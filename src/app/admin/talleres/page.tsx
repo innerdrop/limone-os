@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
+import DeleteWorkshopButton from '@/components/admin/DeleteWorkshopButton'
 
 export default async function TalleresPage() {
     const talleres = await prisma.taller.findMany({
@@ -46,15 +47,20 @@ export default async function TalleresPage() {
                     const ocupacion = (inscritos / taller.cupoMaximo) * 100
 
                     return (
-                        <div key={taller.id} className="card flex flex-col h-full">
+                        <div key={taller.id} className="card flex flex-col h-full relative group/card">
                             <div className="flex items-start justify-between mb-4">
-                                <div>
+                                <div className="flex-1 pr-10">
                                     <h3 className="text-lg font-semibold text-warm-800">{taller.nombre}</h3>
                                     <p className="text-sm text-warm-500 mt-1 line-clamp-2">{taller.descripcion || 'Sin descripción'}</p>
                                 </div>
-                                <span className={`badge ${taller.activo ? 'badge-success' : 'badge-warning'}`}>
-                                    {taller.activo ? 'Activo' : 'Pausado'}
-                                </span>
+                                <div className="flex flex-col items-end gap-2">
+                                    <span className={`badge ${taller.activo ? 'badge-success' : 'badge-warning'}`}>
+                                        {taller.activo ? 'Activo' : 'Pausado'}
+                                    </span>
+                                    <div className="mt-1">
+                                        <DeleteWorkshopButton workshopId={taller.id} workshopName={taller.nombre} />
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-3 mb-6 flex-1">
@@ -97,14 +103,17 @@ export default async function TalleresPage() {
                             {/* Actions */}
                             <div className="flex gap-2 pt-4 border-t border-canvas-200 mt-auto">
                                 <Link
-                                    href={`/admin/alumnos?taller=${taller.id}`}
+                                    href={`/admin/talleres/${taller.id}/alumnos`}
                                     className="flex-1 py-2 text-center text-sm font-medium text-lemon-600 hover:bg-lemon-50 rounded-lg transition-colors border border-lemon-200"
                                 >
                                     Ver Alumnos
                                 </Link>
-                                <button className="flex-1 py-2 text-sm font-medium text-warm-600 hover:bg-canvas-100 rounded-lg transition-colors">
+                                <Link
+                                    href={`/admin/talleres/${taller.id}/editar`}
+                                    className="flex-1 py-2 text-center text-sm font-medium text-warm-600 hover:bg-canvas-100 rounded-lg transition-colors border border-canvas-200"
+                                >
                                     Editar
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     )
