@@ -387,7 +387,7 @@ function ContactSection() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-warm-400">Teléfono</p>
-                                        <p className="font-medium text-warm-800">+54 9 2901 XXX-XXX</p>
+                                        <p className="font-medium text-warm-800">+54 9 2901 588969</p>
                                     </div>
                                 </div>
                             </div>
@@ -401,7 +401,7 @@ function ContactSection() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-warm-400">Email</p>
-                                        <p className="font-medium text-warm-800">hola@limone.usev.app</p>
+                                        <p className="font-medium text-warm-800">limonetaller@gmail.com</p>
                                     </div>
                                 </div>
                             </div>
@@ -429,7 +429,7 @@ function ContactSection() {
                                     </div>
                                     <div>
                                         <p className="text-sm text-warm-400">Horario</p>
-                                        <p className="font-medium text-warm-800">Lun - Sáb</p>
+                                        <p className="font-medium text-warm-800">Mar - Vie, 16:00 - 20:30</p>
                                     </div>
                                 </div>
                             </div>

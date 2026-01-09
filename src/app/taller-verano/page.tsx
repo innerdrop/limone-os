@@ -349,8 +349,8 @@ export default function TallerVeranoPage() {
                                 </svg>
                             </div>
                             <h3 className="font-bold text-warm-800 mb-2">Email</h3>
-                            <a href="mailto:contacto@tallerlimone.com" className="text-lemon-600 hover:text-lemon-700">
-                                contacto@tallerlimone.com
+                            <a href="mailto:limonetaller@gmail.com" className="text-lemon-600 hover:text-lemon-700">
+                                limonetaller@gmail.com
                             </a>
                         </div>
 
@@ -361,8 +361,8 @@ export default function TallerVeranoPage() {
                                 </svg>
                             </div>
                             <h3 className="font-bold text-warm-800 mb-2">WhatsApp</h3>
-                            <a href="https://wa.me/5492901234567" className="text-leaf-600 hover:text-leaf-700">
-                                +54 9 2901 123-4567
+                            <a href="https://wa.me/5492901588969" className="text-leaf-600 hover:text-leaf-700">
+                                +54 9 2901 588969
                             </a>
                         </div>
                     </div>
