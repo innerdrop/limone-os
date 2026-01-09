@@ -80,8 +80,14 @@ export async function POST(request: NextRequest) {
                 return NextResponse.json({ error: 'Faltan datos del taller de verano' }, { status: 400 })
             }
 
-            const taller = await prisma.taller.findFirst({ where: { activo: true } })
-            if (!taller) return NextResponse.json({ error: 'No hay talleres activos' }, { status: 500 })
+            // Buscar específicamente el Taller de Verano
+            const taller = await prisma.taller.findFirst({
+                where: {
+                    nombre: { contains: 'Verano', mode: 'insensitive' },
+                    activo: true
+                }
+            })
+            if (!taller) return NextResponse.json({ error: 'No se encontró el taller de verano configurado' }, { status: 500 })
 
             await prisma.$transaction(async (tx) => {
                 const inscripcion = await tx.inscripcion.create({
