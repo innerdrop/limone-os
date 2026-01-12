@@ -179,6 +179,17 @@ model Pago {
   mesCubierto    Int
   anioCubierto   Int
   concepto       String?
+  
+  // Datos de Facturación AFIP
+  cae            String?     // Código de Autorización Electrónico
+  caeVencimiento DateTime?   // Fecha de vencimiento del CAE
+  puntoVenta     Int?        // Punto de venta (ej: 1, 2...)
+  nroComprobante Int?        // Número correlativo de factura
+  tipoFactura    String?     // 'B' para monotributista a consumidor final
+  cuitEmisor     String?     // El CUIT con el que se emitió
+  emisorNombre   String?     // Para mayor claridad
+  facturadoEn    DateTime?   // Fecha de autorización ante AFIP
+
   creadoEn       DateTime    @default(now())
   actualizadoEn  DateTime    @updatedAt
   inscripcion    Inscripcion @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)

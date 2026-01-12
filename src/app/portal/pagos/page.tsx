@@ -181,26 +181,48 @@ export default function PagosPage() {
                                             </span>
                                         </td>
                                         <td className="py-4 px-4 text-right">
-                                            {pago.comprobantePdf ? (
-                                                <button className="inline-flex items-center gap-1 text-sm text-lemon-600 hover:text-lemon-700 font-medium">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                    </svg>
-                                                    Comprobante
-                                                </button>
-                                            ) : pago.estado === 'PENDIENTE' ? (
-                                                <button
-                                                    onClick={() => setShowPayModal(true)}
-                                                    className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                                    </svg>
-                                                    Pagar
-                                                </button>
-                                            ) : (
-                                                <span className="text-warm-400 text-sm">-</span>
-                                            )}
+                                            <div className="flex justify-end gap-2">
+                                                {pago.comprobantePdf ? (
+                                                    <>
+                                                        {/* Botón Ver */}
+                                                        <a
+                                                            href={pago.comprobantePdf}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            title="Ver Factura"
+                                                            className="p-2 rounded-lg bg-leaf-50 text-leaf-600 hover:bg-leaf-100 transition-colors border border-leaf-100"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </a>
+                                                        {/* Botón Descargar */}
+                                                        <a
+                                                            href={pago.comprobantePdf}
+                                                            download={`Factura-${pago.id}.pdf`}
+                                                            title="Descargar Factura"
+                                                            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors border border-blue-100"
+                                                        >
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                            </svg>
+                                                        </a>
+                                                    </>
+                                                ) : pago.estado === 'PENDIENTE' ? (
+                                                    <button
+                                                        onClick={() => setShowPayModal(true)}
+                                                        className="inline-flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700 font-medium px-3 py-2 rounded-lg bg-amber-50 border border-amber-100"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                        </svg>
+                                                        Pagar
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-warm-400 text-sm py-2 px-4">-</span>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

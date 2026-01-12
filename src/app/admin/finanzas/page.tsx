@@ -3,6 +3,7 @@ import { startOfMonth, subMonths, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import RegistrarPagoManual from '@/components/admin/RegistrarPagoManual'
+import GenerateInvoiceButton from '@/components/admin/GenerateInvoiceButton'
 
 export default async function FinanzasPage(props: {
     searchParams: Promise<{ busqueda?: string, estado?: string, mes?: string }>
@@ -19,7 +20,10 @@ export default async function FinanzasPage(props: {
         prisma.pago.aggregate({
             _sum: { monto: true },
             where: {
-                estado: 'APROBADO',
+                OR: [
+                    { estado: 'APROBADO' },
+                    { estado: 'CONFIRMADO' }
+                ],
                 fechaPago: { gte: monthStart }
             }
         }),
@@ -29,7 +33,7 @@ export default async function FinanzasPage(props: {
                     busqueda ? {
                         alumno: {
                             usuario: {
-                                nombre: { contains: busqueda, mode: 'insensitive' }
+                                nombre: { contains: busqueda }
                             }
                         }
                     } : {},
@@ -62,7 +66,10 @@ export default async function FinanzasPage(props: {
         const sum = await prisma.pago.aggregate({
             _sum: { monto: true },
             where: {
-                estado: 'APROBADO',
+                OR: [
+                    { estado: 'APROBADO' },
+                    { estado: 'CONFIRMADO' }
+                ],
                 fechaPago: { gte: start, lt: end }
             }
         })
@@ -194,33 +201,44 @@ export default async function FinanzasPage(props: {
                                         <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Fecha</th>
                                         <th className="text-right py-3 px-6 text-sm font-medium text-warm-500 italic">Monto</th>
                                         <th className="text-center py-3 px-6 text-sm font-medium text-warm-500 italic">Estado</th>
+                                        <th className="text-center py-3 px-6 text-sm font-medium text-warm-500 italic">Factura</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-canvas-100 italic">
-                                    {todosPagos.map((pago) => (
+                                    {(todosPagos as any[]).map((pago) => (
                                         <tr key={pago.id} className="hover:bg-canvas-50 transition-colors">
                                             <td className="py-4 px-6">
-                                                <div className="font-medium text-warm-800">{pago.alumno.usuario.nombre}</div>
-                                                <div className="text-xs text-warm-400">{pago.alumno.usuario.email}</div>
+                                                <div className="font-medium text-warm-800">{pago.alumno?.usuario?.nombre || 'Alumno'}</div>
+                                                <div className="text-xs text-warm-400">{pago.alumno?.usuario?.email || ''}</div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-warm-500">
-                                                {format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}
+                                                {format(pago.fechaPago as Date, 'dd/MM/yyyy HH:mm')}
                                             </td>
                                             <td className="py-4 px-6 text-right font-bold text-leaf-700">
-                                                {formatMoney(pago.monto)}
+                                                {formatMoney(pago.monto as number)}
                                             </td>
                                             <td className="py-4 px-6 text-center">
-                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${pago.estado === 'APROBADO' ? 'bg-green-100 text-green-700' :
-                                                        pago.estado === 'RECHAZADO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO')
+                                                    ? 'bg-green-100 text-green-700' :
+                                                    pago.estado === 'RECHAZADO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
                                                     }`}>
                                                     {pago.estado}
                                                 </span>
+                                            </td>
+                                            <td className="py-4 px-6 text-center">
+                                                {(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO') && (
+                                                    <GenerateInvoiceButton
+                                                        pagoId={pago.id}
+                                                        hasInvoice={!!(pago as any).cae}
+                                                        invoiceUrl={(pago as any).comprobantePdf}
+                                                    />
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
                                     {todosPagos.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} className="py-12 text-center text-warm-400">
+                                            <td colSpan={5} className="py-12 text-center text-warm-400">
                                                 No se encontraron pagos con los filtros aplicados.
                                             </td>
                                         </tr>
