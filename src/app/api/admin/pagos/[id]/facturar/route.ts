@@ -100,9 +100,9 @@ export async function POST(
 
         // 6. Actualizar el pago en la base de datos
         // Convertir caeVencimiento de AAAAMMDD a Date
-        const year = parseInt(fiscalData.caeVencimiento.slice(0, 4))
-        const month = parseInt(fiscalData.caeVencimiento.slice(4, 6)) - 1
-        const day = parseInt(fiscalData.caeVencimiento.slice(6, 8))
+        const year = parseInt(fiscalData.caeVencimiento.slice(0, 4), 10)
+        const month = parseInt(fiscalData.caeVencimiento.slice(4, 6), 10) - 1
+        const day = parseInt(fiscalData.caeVencimiento.slice(6, 8), 10)
 
         const pagoActualizado = await prisma.pago.update({
             where: { id: pagoId },
@@ -125,10 +125,11 @@ export async function POST(
             pdfUrl: pagoActualizado.comprobantePdf
         })
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error in Billing API:', error)
+        const message = error instanceof Error ? error.message : 'Error al procesar la facturación'
         return NextResponse.json(
-            { message: error.message || 'Error al procesar la facturación' },
+            { message },
             { status: 500 }
         )
     }
