@@ -31,10 +31,11 @@ export async function PATCH(
         })
 
         return NextResponse.json(taller)
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error updating workshop:', error)
+        const message = error instanceof Error ? error.message : 'Error al actualizar el taller';
         return NextResponse.json(
-            { message: error.message || 'Error al actualizar el taller' },
+            { message },
             { status: 500 }
         )
     }
@@ -57,10 +58,11 @@ export async function DELETE(
         })
 
         return NextResponse.json({ message: 'Taller eliminado con éxito' })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error deleting workshop:', error)
+        const message = error instanceof Error ? error.message : 'Error al eliminar el taller';
         return NextResponse.json(
-            { message: error.message || 'Error al eliminar el taller' },
+            { message },
             { status: 500 }
         )
     }

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
         })
 
         return NextResponse.json(talleres)
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error al obtener talleres:', error)
         return NextResponse.json(
             { error: 'Error al obtener los talleres' },

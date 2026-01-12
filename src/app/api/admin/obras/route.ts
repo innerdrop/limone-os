@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
         })
 
         return NextResponse.json({ success: true, obra })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error al subir obra:', error)
         return NextResponse.json({ error: 'Error al procesar la subida' }, { status: 500 })
     }

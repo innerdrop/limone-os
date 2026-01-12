@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
             }
         })
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error en inscripción:', error)
         return NextResponse.json(
             { error: 'Error al procesar la inscripción' },
