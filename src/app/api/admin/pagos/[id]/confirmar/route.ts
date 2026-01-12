@@ -53,7 +53,7 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, pago })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error al confirmar pago:', error)
         return NextResponse.json({ error: 'Error al confirmar el pago' }, { status: 500 })
     }

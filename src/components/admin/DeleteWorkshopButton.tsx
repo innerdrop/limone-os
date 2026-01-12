@@ -27,8 +27,9 @@ export default function DeleteWorkshopButton({ workshopId, workshopName }: Delet
             // Recargar la página para reflejar los cambios
             router.refresh()
             setShowConfirm(false)
-        } catch (error: any) {
-            alert(error.message)
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error al eliminar';
+            alert(message)
         } finally {
             setIsDeleting(false)
         }

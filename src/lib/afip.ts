@@ -72,7 +72,7 @@ export class AfipService {
                 'CbteTipo': 6,
                 'Concepto': concepto,
                 'DocTipo': 96,
-                'DocNro': parseInt(dni),
+                'DocNro': parseInt(dni, 10),
                 'CbteDesde': nextNumber,
                 'CbteHasta': nextNumber,
                 'CbteFch': today,
@@ -101,9 +101,10 @@ export class AfipService {
                 puntoVenta: puntoVenta,
                 tipoFactura: 'B',
             };
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error AFIP Create Voucher:', error);
-            throw new Error(error.message || 'Error al autorizar comprobante ante AFIP');
+            const message = error instanceof Error ? error.message : 'Error al autorizar comprobante ante AFIP';
+            throw new Error(message);
         }
     }
 }
