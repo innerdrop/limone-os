@@ -3,7 +3,8 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const params = await context.params
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -30,7 +31,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+    const params = await context.params
     try {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
