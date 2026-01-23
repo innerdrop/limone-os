@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
     try {
-        const users = await prisma.usuario.findMany({ select: { id: true, email: true, name: true } })
+        const users = await prisma.usuario.findMany({ select: { id: true, email: true, nombre: true } })
         const alumnos = await prisma.alumno.findMany({ include: { citasNivelacion: true } })
         const citas = await prisma.citaNivelacion.findMany()
         const notificaciones = await prisma.notificacion.findMany()

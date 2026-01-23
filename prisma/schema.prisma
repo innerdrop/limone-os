@@ -262,3 +262,68 @@ model Tarea {
 
   @@map("tareas")
 }
+
+model SliderImage {
+  id          String   @id @default(cuid())
+  imagenUrl   String
+  titulo      String?
+  descripcion String?
+  enlace      String?
+  orden       Int      @default(0)
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("slider_images")
+}
+
+// ==================== TIENDA / E-COMMERCE ====================
+
+model Producto {
+  id            String          @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  precio        Float
+  imagenUrl     String?
+  imagenes      String?         // JSON array de URLs adicionales
+  categoria     String          @default("OBRA") // "OBRA" | "MATERIAL"
+  stock         Int             @default(1)
+  activo        Boolean         @default(true)
+  destacado     Boolean         @default(false)
+  tecnica       String?         // Para obras: "Óleo", "Acuarela", etc.
+  dimensiones   String?         // "30x40 cm"
+  artista       String?         @default("Natalia Fusari")
+  creadoEn      DateTime        @default(now())
+  actualizadoEn DateTime        @updatedAt
+  ordenes       OrdenProducto[]
+
+  @@map("productos")
+}
+
+model OrdenTienda {
+  id              String          @id @default(cuid())
+  nombreCliente   String
+  emailCliente    String
+  telefonoCliente String
+  direccion       String?
+  total           Float
+  estado          String          @default("PENDIENTE") // PENDIENTE, CONFIRMADA, ENVIADA, ENTREGADA, CANCELADA
+  notas           String?
+  creadoEn        DateTime        @default(now())
+  actualizadoEn   DateTime        @updatedAt
+  productos       OrdenProducto[]
+
+  @@map("ordenes_tienda")
+}
+
+model OrdenProducto {
+  id          String      @id @default(cuid())
+  ordenId     String
+  productoId  String
+  cantidad    Int         @default(1)
+  precioUnit  Float
+  orden       OrdenTienda @relation(fields: [ordenId], references: [id], onDelete: Cascade)
+  producto    Producto    @relation(fields: [productoId], references: [id])
+
+  @@map("orden_productos")
+}

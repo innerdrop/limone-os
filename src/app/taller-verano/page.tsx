@@ -153,8 +153,7 @@ export default function TallerVeranoPage() {
                                 <h3 className="text-xl font-bold text-warm-800">Horarios</h3>
                             </div>
                             <div className="space-y-2 text-warm-600">
-                                <p><strong>Turno Mañana:</strong> 10:00 - 12:00 hs</p>
-                                <p><strong>Turno Tarde:</strong> 15:00 - 17:00 hs</p>
+                                <p><strong>Martes a Viernes:</strong> 16:00 - 20:30 hs</p>
                             </div>
                             <p className="text-sm text-warm-500 mt-2">
                                 Diferentes modalidades disponibles: 1x o 2x por semana

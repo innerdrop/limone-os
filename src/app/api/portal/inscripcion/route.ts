@@ -73,98 +73,116 @@ export async function POST(request: NextRequest) {
         }
 
         // --- ENROLLMENT FLOW ---
-        const { slots, fase, isSummer, summerModality, summerFrequency, summerStartDate } = body
+        const { slots, fase, isSummer, summerModality, summerDay, summerStartDate } = body
 
         if (isSummer) {
-            if (!summerModality || !summerFrequency || !summerStartDate) {
+            const { summerDays, summerTime, summerFrequency } = body
+
+            if (!summerModality || !summerDays || !summerDays.length || !summerStartDate || !summerTime) {
                 return NextResponse.json({ error: 'Faltan datos del taller de verano' }, { status: 400 })
             }
 
-            // Buscar específicamente el Taller de Verano
-            const taller = await prisma.taller.findFirst({
+            // Buscar o Crear el Taller de Verano
+            let taller = await prisma.taller.findFirst({
                 where: {
-                    nombre: { contains: 'Verano', mode: 'insensitive' },
+                    nombre: { contains: 'Verano' },
                     activo: true
                 }
             })
-            if (!taller) return NextResponse.json({ error: 'No se encontró el taller de verano configurado' }, { status: 500 })
+
+            if (!taller) {
+                console.log('Creando Taller de Verano...')
+                taller = await prisma.taller.create({
+                    data: {
+                        nombre: 'Taller de Verano 2026',
+                        descripcion: 'Taller artístico de temporada',
+                        precio: 75000,
+                        activo: true
+                    }
+                })
+            }
+
+            // Calculate Price (Matching Frontend Logic)
+            const SUMMER_END_DATE = new Date(2026, 1, 28) // Feb 28, 2026
+            const startDate = new Date(summerStartDate)
+
+            // Rates
+            const RATES: any = {
+                'BASE': { '1x': 75000, '2x': 130000 },
+                'EXTENDED': { '1x': 145000, '2x': 210000 }
+            }
+            const PROMOS: any = {
+                'BASE': { '1x': 150000, '2x': 260000 },
+                'EXTENDED': { '1x': 260000, '2x': 380000 }
+            }
+
+            const monthlyRate = RATES[summerModality][summerFrequency || '1x'] || 75000
+            const promoPrice = PROMOS[summerModality][summerFrequency || '1x'] || 150000
+
+            const msPerWeek = 7 * 24 * 60 * 60 * 1000
+            const weeksRemaining = Math.max(1, Math.ceil((SUMMER_END_DATE.getTime() - startDate.getTime()) / msPerWeek))
+
+            // Price calculation
+            // If full duration (starts near Jan 6), use promo price.
+            // approx 7 weeks threshold to be safe
+            let monto = 0
+            if (weeksRemaining >= 7) {
+                monto = promoPrice
+            } else {
+                const pricePerWeek = monthlyRate / 4
+                const calculatedPrice = Math.round(weeksRemaining * pricePerWeek)
+                monto = Math.min(calculatedPrice, promoPrice)
+            }
 
             await prisma.$transaction(async (tx) => {
-                const inscripcion = await tx.inscripcion.create({
-                    data: {
-                        alumnoId: alumno.id,
-                        tallerId: taller.id,
-                        fase: 'Colonia de Verano',
-                        dia: 'VERANO',
-                        horario: 'INTENSIVO',
-                        asiento: 0, // Dummy
-                        estado: 'ACTIVA',
-                        notas: `Modalidad: ${summerModality}, Frecuencia: ${summerFrequency}, Inicio: ${summerStartDate}`,
-                        pagado: false
-                    }
-                })
+                const createdInscriptions = []
 
-                // Pricing Matrix
-                let monto = 0
-                if (summerModality === 'BASE') {
-                    monto = summerFrequency === '1x' ? 75000 : 130000
-                } else {
-                    monto = summerFrequency === '1x' ? 145000 : 210000
+                // Create inscription for EACH day
+                for (const dia of summerDays) {
+                    const inscripcion = await tx.inscripcion.create({
+                        data: {
+                            alumnoId: alumno.id,
+                            tallerId: taller!.id,
+                            fase: 'Taller de Verano',
+                            dia: dia,
+                            horario: summerTime,
+                            asiento: 0, // Virtual seat
+                            estado: 'ACTIVA',
+                            notas: `Modalidad: ${summerModality}, Freq: ${summerFrequency}, Inicio: ${summerStartDate}`,
+                            pagado: false
+                        }
+                    })
+                    createdInscriptions.push(inscripcion)
                 }
 
-                await tx.pago.create({
-                    data: {
-                        alumnoId: alumno.id,
-                        inscripcionId: inscripcion.id,
-                        monto: monto,
-                        estado: 'PENDIENTE',
-                        mesCubierto: new Date().getMonth() + 1,
-                        anioCubierto: new Date().getFullYear(),
-                        concepto: `Taller de Verano - ${summerModality} (${summerFrequency})`
-                    }
-                })
+                // Create Payment linked to the FIRST inscription (covering all)
+                if (createdInscriptions.length > 0) {
+                    await tx.pago.create({
+                        data: {
+                            alumnoId: alumno.id,
+                            inscripcionId: createdInscriptions[0].id,
+                            monto: monto,
+                            estado: 'PENDIENTE',
+                            mesCubierto: new Date().getMonth() + 1,
+                            anioCubierto: new Date().getFullYear(),
+                            concepto: `Taller Verano (${summerFrequency}) - ${summerModality} - ${summerDays.join('+')}`
+                        }
+                    })
+                }
 
                 await tx.notificacion.create({
                     data: {
                         usuarioId: session.user.id,
-                        titulo: 'Inscripción Colonia de Verano',
-                        mensaje: `Te has inscrito en ${summerModality === 'BASE' ? 'Horario Base' : 'Horario Extendido'} (${summerFrequency}).`,
+                        titulo: 'Inscripción Taller de Verano',
+                        mensaje: `Inscripción exitosa. Modalidad ${summerModality}, Días: ${summerDays.join(', ')}. Valor total: $${monto}`,
                         tipo: 'SUCCESS',
                         leida: false
                     }
                 })
             })
 
-            // Generate WhatsApp message for Summer Workshop
-            const usuario = await prisma.usuario.findUnique({
-                where: { id: session.user.id }
-            })
-
-            const modalidStr = summerModality === 'BASE' ? 'Horario Base (17:00 a 19:30)' : 'Horario Extendido (17:00 a 22:00)'
-            const freqStr = summerFrequency === '1x' ? '1 semana' : '2 semanas'
-            const montoFinal = summerModality === 'BASE'
-                ? (summerFrequency === '1x' ? 75000 : 130000)
-                : (summerFrequency === '1x' ? 145000 : 210000)
-
-            const whatsappMessage = `Hola Natalia! 👋
-
-Quiero inscribirme a la *Colonia de Verano*:
-
-☀️ *Modalidad:* ${modalidStr}
-📅 *Duración:* ${freqStr}
-🗓️ *Fecha de Inicio:* ${summerStartDate}
-💰 *Total:* $${montoFinal.toLocaleString('es-AR')}
-
-👤 *Nombre:* ${usuario?.nombre}
-📧 *Email:* ${usuario?.email}
-
-¡Gracias!`
-
-            const whatsappUrl = `https://wa.me/5492901588969?text=${encodeURIComponent(whatsappMessage)}`
-
             return NextResponse.json({
-                success: true,
-                whatsappUrl
+                success: true
             })
         }
 
@@ -276,33 +294,9 @@ Quiero inscribirme a la *Colonia de Verano*:
             throw new Error(err.message)
         }
 
-        // Get user info for WhatsApp message
-        const usuario = await prisma.usuario.findUnique({
-            where: { id: session.user.id }
-        })
-
-        // Generate WhatsApp message
-        const diasStr = enrollmentSlots.map((s: any) => `${s.dia} ${s.horario} (Asiento ${s.asiento})`).join('\n')
-        const whatsappMessage = `Hola Natalia! 👋
-
-Quiero inscribirme al Taller de Arte:
-
-📚 *Fase:* ${fase}
-📅 *Turnos:*
-${diasStr}
-💰 *Total:* $${(25000 * enrollmentSlots.length).toLocaleString('es-AR')}
-
-👤 *Nombre:* ${usuario?.nombre}
-📧 *Email:* ${usuario?.email}
-
-¡Gracias!`
-
-        const whatsappUrl = `https://wa.me/5492901588969?text=${encodeURIComponent(whatsappMessage)}`
-
         return NextResponse.json({
             success: true,
-            inscripciones: inscriptionsResults,
-            whatsappUrl
+            inscripciones: inscriptionsResults
         })
 
     } catch (error: any) {

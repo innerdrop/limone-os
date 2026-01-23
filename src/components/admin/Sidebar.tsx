@@ -67,6 +67,16 @@ const menuItems = [
             </svg>
         ),
     },
+    {
+        label: 'Tienda',
+        href: '/admin/tienda',
+        icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+        ),
+        isNew: true,
+    },
 ]
 
 export default function AdminSidebar({ user }: { user: User }) {
@@ -104,7 +114,7 @@ export default function AdminSidebar({ user }: { user: User }) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all relative ${isActive
                                     ? 'bg-brand-yellow text-brand-charcoal shadow-glow-lemon'
                                     : 'text-warm-300 hover:bg-warm-700 hover:text-white'
                                     }`}
@@ -113,6 +123,11 @@ export default function AdminSidebar({ user }: { user: User }) {
                                     {item.icon}
                                 </span>
                                 {item.label}
+                                {(item as any).isNew && (
+                                    <span className="absolute top-1 right-2 bg-brand-purple text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                        NUEVO
+                                    </span>
+                                )}
                             </Link>
                         )
                     })}

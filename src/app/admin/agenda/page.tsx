@@ -78,7 +78,7 @@ export default async function AgendaPage() {
             color: 'bg-lemon-100 text-lemon-700',
             link: `/admin/alumnos/${cita.alumnoId}`
         })),
-        ...tareas.map(tarea => ({
+        ...tareas.map((tarea: any) => ({
             id: tarea.id,
             tipo: 'Tarea / Recordatorio',
             fecha: tarea.fecha,

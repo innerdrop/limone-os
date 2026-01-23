@@ -7,11 +7,11 @@ export async function GET(request: Request) {
 
     try {
         const alumnos = await prisma.alumno.findMany({
-            where: {
+            where: busqueda ? {
                 usuario: {
-                    nombre: { contains: busqueda, mode: 'insensitive' }
+                    nombre: { contains: busqueda }
                 }
-            },
+            } : undefined,
             include: {
                 usuario: {
                     select: {

@@ -45,49 +45,49 @@ export async function GET(request: NextRequest) {
             // Logic for regular classes
             const targetDay = DAYS_MAP[ins.dia || '']
 
-            if (ins.dia === 'VERANO' && ins.notas) {
-                // Parse Summer Workshop: "Modalidad: ..., Frecuencia: 1x, Inicio: YYYY-MM-DD"
+            // Summer Workshop: Now uses 'dia' field for the selected day of the week
+            // Check if this is a summer workshop enrollment (fase contains 'Verano' or dia is a valid weekday with verano notes)
+            if (ins.fase === 'Taller de Verano' && ins.notas && ins.dia) {
+                // Parse Summer Workshop: "Modalidad: ..., Dia: MARTES, Inicio: YYYY-MM-DD, Semanas: X"
                 const startDateMatch = ins.notas.match(/Inicio: (\d{4}-\d{2}-\d{2})/)
-                const frequencyMatch = ins.notas.match(/Frecuencia: (\d)x/)
+                const weeksMatch = ins.notas.match(/Semanas: (\d+)/)
+                const selectedDay = ins.dia // e.g., 'MARTES', 'MIERCOLES', etc.
 
-                if (startDateMatch) {
+                if (startDateMatch && DAYS_MAP[selectedDay] !== undefined) {
                     const [y, m, dNum] = startDateMatch[1].split('-').map(Number)
-                    const startDate = new Date(y, m - 1, dNum)
-                    const freq = frequencyMatch ? parseInt(frequencyMatch[1]) : 1
+                    const enrollmentStartDate = new Date(y, m - 1, dNum)
+                    const weeksRemaining = weeksMatch ? parseInt(weeksMatch[1]) : 8
+                    const targetDayOfWeek = DAYS_MAP[selectedDay]
 
-                    // Calculate how many days per week (1x = 1 day/week, 2x = 2 days/week)
-                    // For continuous days: if 1x per week, show 1 week of continuous days
-                    // if 2x per week, show 2 weeks of continuous days
-                    const weeksToShow = freq // 1x = 1 week, 2x = 2 weeks
-                    const daysToShow = weeksToShow * 5 // 5 days per week (Mon-Fri)
+                    // Generate one class per week on the selected day
+                    let d = new Date(enrollmentStartDate)
+                    let classesAdded = 0
 
-                    let d = new Date(startDate)
-                    let daysAdded = 0
-
-                    while (daysAdded < daysToShow) {
-                        // Check if current d is within the requested view range [start, end]
-                        if (d >= start && d <= end) {
-                            const dayOfWeek = d.getDay()
-
-                            // Skip weekends (0=Sun, 6=Sat)
-                            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-                                // Set time to 17:00 for summer workshop
-                                const safeDate = new Date(d)
-                                safeDate.setHours(17, 0, 0, 0)
-
-                                classes.push({
-                                    id: `${ins.id}-summer-${d.getTime()}`,
-                                    taller: 'Colonia de Verano',
-                                    dia: 'Verano',
-                                    hora: '17:00',
-                                    fecha: safeDate,
-                                    estado: 'programada',
-                                    tipo: 'verano'
-                                })
-                                daysAdded++
-                            }
-                        }
+                    // Find the first occurrence of the selected day from the start date
+                    while (d.getDay() !== targetDayOfWeek) {
                         d.setDate(d.getDate() + 1)
+                    }
+
+                    // Add classes for each week until end of summer or weeks remaining
+                    const SUMMER_END = new Date(2026, 1, 28) // Feb 28, 2026
+                    while (classesAdded < weeksRemaining && d <= SUMMER_END) {
+                        // Check if within the view range
+                        if (d >= start && d <= end) {
+                            const safeDate = new Date(d)
+                            safeDate.setHours(17, 0, 0, 0)
+
+                            classes.push({
+                                id: `${ins.id}-summer-${d.getTime()}`,
+                                taller: 'Taller de Verano',
+                                dia: selectedDay,
+                                hora: '17:00',
+                                fecha: safeDate,
+                                estado: 'programada',
+                                tipo: 'verano'
+                            })
+                        }
+                        classesAdded++
+                        d.setDate(d.getDate() + 7) // Move to next week
                     }
                 }
                 continue

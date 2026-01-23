@@ -36,9 +36,9 @@ export default function PendingPaymentCard({ inscripcion }: PendingPaymentCardPr
             <div className="bg-white/70 backdrop-blur-sm p-4 rounded-xl mb-4 space-y-2">
                 <div className="flex justify-between items-center">
                     <span className="text-sm text-warm-600">Taller:</span>
-                    <span className="font-semibold text-warm-800">{inscripcion.fase === 'Colonia de Verano' ? 'Colonia de Verano' : inscripcion.taller.nombre}</span>
+                    <span className="font-semibold text-warm-800">{(inscripcion.fase === 'Taller de Verano' || inscripcion.fase === 'Colonia de Verano') ? 'Taller de Verano' : inscripcion.taller.nombre}</span>
                 </div>
-                {inscripcion.dia === 'VERANO' ? (
+                {inscripcion.fase === 'Taller de Verano' || inscripcion.dia === 'VERANO' ? (
                     <>
                         <div className="flex justify-between items-center">
                             <span className="text-sm text-warm-600">Tipo:</span>

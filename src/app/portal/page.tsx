@@ -11,7 +11,8 @@ const DAYS_MAP: Record<string, number> = {
 
 export const dynamic = 'force-dynamic'
 
-export default async function PortalDashboard() {
+export default async function PortalDashboard({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+    const resolvedSearchParams = await searchParams
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return null
 
@@ -63,7 +64,7 @@ export default async function PortalDashboard() {
         const currentDay = now.getDay()
 
         enrollments.forEach(ins => {
-            if (ins.dia === 'VERANO' && ins.notas) {
+            if ((ins.fase === 'Taller de Verano' || ins.dia === 'VERANO') && ins.notas) {
                 // Handle Summer Workshop
                 const startDateMatch = ins.notas.match(/Inicio: (\d{4}-\d{2}-\d{2})/)
                 const frequencyMatch = ins.notas.match(/Frecuencia: (\d)x/)
@@ -96,7 +97,7 @@ export default async function PortalDashboard() {
                             upcomingClasses.push({
                                 type: 'class',
                                 id: `${ins.id}-${d.getTime()}`,
-                                taller: 'Colonia de Verano',
+                                taller: 'Taller de Verano',
                                 dia: 'Verano',
                                 horario: '17:00',
                                 date: sessionDate
@@ -169,6 +170,19 @@ export default async function PortalDashboard() {
 
     return (
         <div className="space-y-8 animate-fade-in">
+            {/* Success Alert */}
+            {resolvedSearchParams.inscripcion === 'exitosa' && (
+                <div className="p-4 rounded-xl bg-green-50 border border-green-200 flex items-center gap-3 text-green-700 animate-in fade-in slide-in-from-top-4">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl">
+                        ✨
+                    </div>
+                    <div>
+                        <h3 className="font-bold">¡Inscripción registrada con éxito!</h3>
+                        <p className="text-sm">Tu orden de pago ha sido generada. Podés verla abajo para completar la inscripción.</p>
+                    </div>
+                </div>
+            )}
+
             {/* Welcome Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>

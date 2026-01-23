@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma'
 export async function POST(request: Request) {
     try {
         const body = await request.json()
-        const { alumnoId, inscripcionId, monto, fecha, metodo, mes, anio } = body
+        const { alumnoId, inscripcionId, monto, fecha, mes, anio } = body
 
         if (!alumnoId || !inscripcionId || !monto) {
             return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 })
@@ -18,10 +18,9 @@ export async function POST(request: Request) {
                     inscripcionId,
                     monto,
                     fechaPago: new Date(fecha),
-                    metodo: metodo || 'MANUAL',
-                    estado: 'APROBADO',
-                    mes,
-                    anio
+                    estado: 'CONFIRMADO',
+                    mesCubierto: mes,
+                    anioCubierto: anio
                 }
             }),
             prisma.inscripcion.update({

@@ -3,12 +3,11 @@ import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id: citaId } = await params
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-
-        const citaId = params.id
 
         // Verify ownership
         const cita = await prisma.citaNivelacion.findUnique({
@@ -30,13 +29,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id: citaId } = await params
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
         const { date, time } = await request.json()
-        const citaId = params.id
 
         // Verify ownership
         const cita = await prisma.citaNivelacion.findUnique({

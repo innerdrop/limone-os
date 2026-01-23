@@ -5,9 +5,10 @@ import { authOptions } from '@/lib/auth'
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id: pagoId } = await params
         const session = await getServerSession(authOptions)
 
         // Check if user is admin
@@ -22,8 +23,6 @@ export async function POST(
         if (user?.rol !== 'ADMIN') {
             return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
         }
-
-        const pagoId = params.id
 
         // Update payment status
         const pago = await prisma.pago.update({

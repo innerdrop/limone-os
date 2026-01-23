@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import SignatureCanvas from 'react-signature-canvas'
 
 // ==================== TYPES ====================
@@ -79,13 +79,30 @@ interface AuthorizationData {
 }
 
 // ==================== MAIN COMPONENT ====================
-export default function InscripcionPage() {
+function InscripcionContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const initialModeParam = searchParams.get('mode')
+    const initialMode = (initialModeParam === 'inscripcion' || initialModeParam === 'nivelacion') ? initialModeParam : 'choice'
+    const initialStep = initialMode === 'inscripcion' ? 1 : 0
+
     const sigCanvas = useRef<SignatureCanvas>(null)
-    const [step, setStep] = useState(1)
+    const [step, setStep] = useState(initialStep) // 0 = choice, 1-4 = inscription steps
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [showRegulations, setShowRegulations] = useState(false)
+    const [mode, setMode] = useState<'choice' | 'inscripcion' | 'nivelacion'>(initialMode)
+
+    // Leveling form data
+    const [levelingData, setLevelingData] = useState({
+        nombreAlumno: '',
+        edadAlumno: '',
+        nombreTutor: '',
+        telefonoTutor: '',
+        emailTutor: '',
+        fechaPreferida: '',
+        horaPreferida: ''
+    })
 
     // Form data
     const [studentData, setStudentData] = useState<StudentData>({
@@ -220,7 +237,12 @@ export default function InscripcionPage() {
     }
 
     const handlePrevious = () => {
-        setStep(step - 1)
+        if (step === 1) {
+            setMode('choice')
+            setStep(0)
+        } else {
+            setStep(step - 1)
+        }
         setError('')
     }
 
@@ -273,20 +295,22 @@ export default function InscripcionPage() {
                             <span className="font-serif text-lg font-bold text-warm-800 hidden sm:block">Taller Limoné</span>
                         </Link>
                         <div className="text-sm font-medium text-warm-600">
-                            Paso {step} de 4
+                            {mode === 'nivelacion' ? 'Agendar Nivelación' : step > 0 ? `Paso ${step} de 4` : 'Elegí tu camino'}
                         </div>
                     </div>
                 </div>
             </header>
 
             <main className="max-w-3xl mx-auto px-4 py-8">
-                {/* Progress Bar */}
-                <div className="w-full bg-canvas-200 h-2 rounded-full mb-8 overflow-hidden shadow-inner">
-                    <div
-                        className="bg-brand-yellow h-full transition-all duration-500 ease-out shadow-glow-lemon"
-                        style={{ width: `${(step / 4) * 100}%` }}
-                    />
-                </div>
+                {/* Progress Bar - only show for inscription */}
+                {mode === 'inscripcion' && step > 0 && (
+                    <div className="w-full bg-canvas-200 h-2 rounded-full mb-8 overflow-hidden shadow-inner">
+                        <div
+                            className="bg-brand-yellow h-full transition-all duration-500 ease-out shadow-glow-lemon"
+                            style={{ width: `${(step / 4) * 100}%` }}
+                        />
+                    </div>
+                )}
 
                 <div className="card max-w-none">
                     {/* Error Message */}
@@ -297,8 +321,170 @@ export default function InscripcionPage() {
                         </div>
                     )}
 
+                    {/* STEP 0: Initial Choice */}
+                    {step === 0 && mode === 'choice' && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+                            <div className="text-center">
+                                <h2 className="text-3xl font-bold text-warm-800 mb-2">¡Bienvenido a Taller Limoné!</h2>
+                                <p className="text-warm-500">¿Qué te gustaría hacer?</p>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <button
+                                    onClick={() => { setMode('inscripcion'); setStep(1); }}
+                                    className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
+                                >
+                                    <div className="w-16 h-16 rounded-2xl bg-lemon-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">📝</div>
+                                    <h3 className="text-xl font-black text-warm-800 mb-2">Inscribirme</h3>
+                                    <p className="text-warm-500 text-sm">Ya sé en qué nivel quiero inscribir a mi hijo/a.</p>
+                                </button>
+
+                                <button
+                                    onClick={() => { setMode('nivelacion'); }}
+                                    className="p-8 rounded-3xl border-2 border-warm-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
+                                >
+                                    <div className="w-16 h-16 rounded-2xl bg-blue-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">🤔</div>
+                                    <h3 className="text-xl font-black text-warm-800 mb-2">Clase Gratuita Única</h3>
+                                    <p className="text-warm-500 text-sm">Quiero agendar una clase de prueba sin cargo para conocer el taller.</p>
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* NIVELACION FORM */}
+                    {mode === 'nivelacion' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
+                            <div className="text-center">
+                                <button onClick={() => { setMode('choice'); setError(''); }} className="text-sm text-lemon-600 hover:underline mb-4">← Volver</button>
+                                <h2 className="text-2xl font-bold text-warm-800">Agendar Clase de Prueba</h2>
+                                <p className="text-warm-500 mt-2">Completá el formulario y te contactaremos para coordinar tu clase gratuita.</p>
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Nombre del Alumno *</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={levelingData.nombreAlumno}
+                                        onChange={e => setLevelingData({ ...levelingData, nombreAlumno: e.target.value })}
+                                        placeholder="Nombre y apellido del niño/a"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Edad del Alumno *</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        value={levelingData.edadAlumno}
+                                        onChange={e => setLevelingData({ ...levelingData, edadAlumno: e.target.value })}
+                                        placeholder="Ej: 10"
+                                        min="5"
+                                        max="18"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="label">Nombre del Tutor *</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    value={levelingData.nombreTutor}
+                                    onChange={e => setLevelingData({ ...levelingData, nombreTutor: e.target.value })}
+                                    placeholder="Nombre y apellido del padre/madre/tutor"
+                                />
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Teléfono / WhatsApp *</label>
+                                    <input
+                                        type="tel"
+                                        className="input-field"
+                                        value={levelingData.telefonoTutor}
+                                        onChange={e => setLevelingData({ ...levelingData, telefonoTutor: e.target.value })}
+                                        placeholder="+54 9 2901 xxxxxx"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Email *</label>
+                                    <input
+                                        type="email"
+                                        className="input-field"
+                                        value={levelingData.emailTutor}
+                                        onChange={e => setLevelingData({ ...levelingData, emailTutor: e.target.value })}
+                                        placeholder="email@ejemplo.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Fecha Preferida (opcional)</label>
+                                    <input
+                                        type="date"
+                                        className="input-field"
+                                        value={levelingData.fechaPreferida}
+                                        onChange={e => setLevelingData({ ...levelingData, fechaPreferida: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label">Hora Preferida (opcional)</label>
+                                    <select
+                                        className="input-field"
+                                        value={levelingData.horaPreferida}
+                                        onChange={e => setLevelingData({ ...levelingData, horaPreferida: e.target.value })}
+                                    >
+                                        <option value="">Cualquier horario</option>
+                                        <option value="16:00">16:00 hs</option>
+                                        <option value="17:00">17:00 hs</option>
+                                        <option value="18:00">18:00 hs</option>
+                                        <option value="19:00">19:00 hs</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                <p className="text-sm text-blue-800">
+                                    <strong>¿Qué es la clase de prueba?</strong><br />
+                                    Es una clase única y gratuita donde el alumno participa de la actividad para conocer el taller y definimos su grupo ideal.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={() => {
+                                    // Validate required fields
+                                    if (!levelingData.nombreAlumno || !levelingData.edadAlumno || !levelingData.nombreTutor || !levelingData.telefonoTutor || !levelingData.emailTutor) {
+                                        setError('Por favor completá todos los campos obligatorios (*)')
+                                        return
+                                    }
+                                    setError('')
+                                    // Send to WhatsApp
+                                    const message = `Hola Natalia! 👋
+
+Quiero agendar una *Clase de Prueba Gratuita* para mi hijo/a:
+
+👧 *Alumno:* ${levelingData.nombreAlumno}
+📅 *Edad:* ${levelingData.edadAlumno} años
+👤 *Tutor:* ${levelingData.nombreTutor}
+📱 *Teléfono:* ${levelingData.telefonoTutor}
+📧 *Email:* ${levelingData.emailTutor}
+${levelingData.fechaPreferida ? `🗓️ *Fecha preferida:* ${levelingData.fechaPreferida}` : ''}
+${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferida}` : ''}
+
+¡Gracias!`
+                                    window.location.href = `https://wa.me/5492901588969?text=${encodeURIComponent(message)}`
+                                }}
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors shadow-lg"
+                            >
+                                Contactar por WhatsApp
+                            </button>
+                        </div>
+                    )}
+
                     {/* STEP 1: Alumno */}
-                    {step === 1 && (
+                    {mode === 'inscripcion' && step === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <h2 className="text-2xl font-bold text-warm-800">1. Datos del Alumno</h2>
 
@@ -374,7 +560,7 @@ export default function InscripcionPage() {
                     )}
 
                     {/* STEP 2: Tutor */}
-                    {step === 2 && (
+                    {mode === 'inscripcion' && step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <h2 className="text-2xl font-bold text-warm-800">2. Datos del Tutor</h2>
                             <p className="text-sm text-warm-600 -mt-4">Padre, Madre o Tutor Legal</p>
@@ -426,7 +612,7 @@ export default function InscripcionPage() {
                     )}
 
                     {/* STEP 3: Autorizaciones */}
-                    {step === 3 && (
+                    {mode === 'inscripcion' && step === 3 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <h2 className="text-2xl font-bold text-warm-800">3. Autorizaciones</h2>
 
@@ -496,7 +682,7 @@ export default function InscripcionPage() {
                     )}
 
                     {/* STEP 4: Firma */}
-                    {step === 4 && (
+                    {mode === 'inscripcion' && step === 4 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <h2 className="text-2xl font-bold text-warm-800">4. Confirmación y Firma</h2>
 
@@ -564,32 +750,28 @@ export default function InscripcionPage() {
                     )}
 
                     {/* BUTTONS */}
-                    <div className="flex justify-between gap-4 pt-8 border-t border-canvas-200 mt-8">
-                        {step > 1 ? (
+                    {mode === 'inscripcion' && step > 0 && (
+                        <div className="flex justify-between gap-4 pt-8 border-t border-canvas-200 mt-8">
                             <button type="button" onClick={handlePrevious} className="btn-outline">
                                 Volver
                             </button>
-                        ) : (
-                            <Link href="/" className="btn-outline">
-                                Cancelar
-                            </Link>
-                        )}
 
-                        {step < 4 ? (
-                            <button type="button" onClick={handleNext} className="btn-primary">
-                                Siguiente
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={handleSubmit}
-                                className="btn-primary bg-lemon-600 hover:bg-lemon-700"
-                                disabled={loading}
-                            >
-                                {loading ? 'Enviando...' : 'Finalizar Inscripción'}
-                            </button>
-                        )}
-                    </div>
+                            {step < 4 ? (
+                                <button type="button" onClick={handleNext} className="btn-primary">
+                                    Siguiente
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleSubmit}
+                                    className="btn-primary bg-lemon-600 hover:bg-lemon-700"
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Enviando...' : 'Finalizar Inscripción'}
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
 
@@ -682,5 +864,17 @@ export default function InscripcionPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+export default function InscripcionPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-lemon flex items-center justify-center">
+                <div className="text-xl font-bold text-warm-600 animate-pulse">Cargando...</div>
+            </div>
+        }>
+            <InscripcionContent />
+        </Suspense>
     )
 }
