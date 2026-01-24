@@ -35,7 +35,7 @@ export default function PromotionalPopup() {
             />
 
             {/* Content */}
-            <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-scale-up border border-lemon-100">
+            <div className="relative bg-white rounded-3xl shadow-2xl max-w-[min(384px,95vw)] w-full overflow-hidden animate-scale-up border border-lemon-100">
                 {/* Decorative background element */}
                 <div className="absolute top-0 right-0 w-32 h-32 bg-lemon-100/50 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
 

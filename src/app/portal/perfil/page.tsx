@@ -123,11 +123,11 @@ export default function PerfilPage() {
                     <div className="relative">
                         <div className="w-24 h-24 rounded-2xl bg-white border border-canvas-200 flex items-center justify-center overflow-hidden shadow-soft">
                             <Image
-                                src="/logo.jpg"
+                                src="/colores.png"
                                 alt="Avatar"
-                                width={96}
-                                height={96}
-                                className="object-cover"
+                                width={80}
+                                height={40}
+                                className="object-contain"
                             />
                         </div>
                     </div>

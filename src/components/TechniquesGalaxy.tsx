@@ -111,7 +111,7 @@ export default function TechniquesGalaxy() {
         { left: 65, top: 30, delay: 0.2, opacity: 0.6 },
         { left: 75, top: 70, delay: 2.5, opacity: 0.8 },
         { left: 85, top: 20, delay: 1.0, opacity: 0.5 },
-        { left: 92, top: 50, delay: 0.7, opacity: 0.9 },
+        { left: 90, top: 50, delay: 0.7, opacity: 0.9 },
         { left: 8, top: 80, delay: 1.8, opacity: 0.6 },
         { left: 20, top: 65, delay: 2.3, opacity: 0.7 },
         { left: 30, top: 90, delay: 0.4, opacity: 0.5 },
@@ -162,7 +162,7 @@ export default function TechniquesGalaxy() {
                     </div>
 
                     {/* Planets container - Organic Layout */}
-                    <div className="relative w-full max-w-5xl mx-auto min-h-[600px] flex flex-wrap justify-center items-center content-center gap-8 md:gap-12 p-8 md:p-12">
+                    <div className="relative w-full max-w-5xl mx-auto min-h-[600px] flex flex-wrap justify-center items-center content-center gap-8 md:gap-12 px-4 py-8 md:p-12">
                         {techniques.map((tech, index) => (
                             <button
                                 key={tech.name}
@@ -226,7 +226,7 @@ export default function TechniquesGalaxy() {
                         <div
                             className={`
                                 bg-gradient-to-br ${selectedTechnique.color}
-                                rounded-3xl p-6 md:p-8 max-w-md w-full
+                                rounded-3xl p-6 md:p-8 max-w-[min(448px,90vw)] w-full
                                 shadow-2xl transform animate-scale-up
                                 relative overflow-hidden
                             `}

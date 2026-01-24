@@ -251,14 +251,17 @@ model Configuracion {
 }
 
 model Tarea {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   titulo        String
   descripcion   String?
   fecha         DateTime
-  completada    Boolean  @default(false)
-  prioridad     String   @default("MEDIA")
-  creadoEn      DateTime @default(now())
-  actualizadoEn DateTime @updatedAt
+  hora          String?   // Hora opcional (ej: "09:00")
+  prioridad     String    @default("MEDIA") // BAJA, MEDIA, ALTA
+  categoria     String?   // TALLER, ALUMNO, COMPRAS, CONTACTO, OTRO
+  completada    Boolean   @default(false)
+  completadaEn  DateTime?
+  creadoEn      DateTime  @default(now())
+  actualizadoEn DateTime  @updatedAt
 
   @@map("tareas")
 }
@@ -326,4 +329,24 @@ model OrdenProducto {
   producto    Producto    @relation(fields: [productoId], references: [id])
 
   @@map("orden_productos")
+}
+
+// Slides del Hero principal - completamente administrables
+model Slide {
+  id            String   @id @default(cuid())
+  titulo        String   // Título principal grande
+  subtitulo     String?  // Subtítulo (ej: "Limoné | Edición 2026")
+  descripcion   String?  // Descripción/tagline
+  tags          String?  // JSON array de tags/badges (ej: ["📅 6 Ene", "🧒 5-12 años"])
+  badgeTexto    String?  // Badge superior opcional (ej: "¡Probá sin costo!")
+  textoBoton    String?  // Texto del botón CTA
+  enlace        String?  // URL del botón
+  imagenUrl     String   // Imagen de fondo
+  estiloOverlay String   @default("light") // "light" o "dark" para determinar colores
+  orden         Int      @default(0)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("slides")
 }

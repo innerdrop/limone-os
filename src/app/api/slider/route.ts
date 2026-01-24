@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Obtener todas las imágenes del slider activas
-export async function GET() {
+// GET - Obtener todas las imágenes del slider activas (o todas si admin=true)
+export async function GET(request: NextRequest) {
     try {
+        const { searchParams } = new URL(request.url)
+        const isAdmin = searchParams.get('admin') === 'true'
+
         const images = await prisma.sliderImage.findMany({
-            where: { activo: true },
+            where: isAdmin ? {} : { activo: true },
             orderBy: { orden: 'asc' }
         })
         return NextResponse.json(images)

@@ -291,8 +291,8 @@ function InscripcionContent() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <Link href="/" className="flex items-center gap-3">
-                            <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="rounded-lg" />
-                            <span className="font-serif text-lg font-bold text-warm-800 hidden sm:block">Taller Limoné</span>
+                            <Image src="/colores.png" alt="Logo" width={50} height={30} className="object-contain" />
+                            <span className="font-gigi text-xl font-bold text-warm-800">Limoné</span>
                         </Link>
                         <div className="text-sm font-medium text-warm-600">
                             {mode === 'nivelacion' ? 'Agendar Nivelación' : step > 0 ? `Paso ${step} de 4` : 'Elegí tu camino'}
@@ -726,11 +726,11 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
 
                             <div className="bg-white p-4 rounded-2xl shadow-sm border border-canvas-200">
                                 <Image
-                                    src="/logo.png"
+                                    src="/colores.png"
                                     alt="Taller Limoné Logo"
-                                    width={120}
-                                    height={120}
-                                    className="mx-auto"
+                                    width={80}
+                                    height={50}
+                                    className="mx-auto object-contain"
                                 />
                             </div>
 
