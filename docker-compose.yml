@@ -4,14 +4,47 @@ services:
   db:
     image: postgres:15-alpine
     container_name: limone-db
-    ports:
-      - "5435:5432"
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: limone
+      POSTGRES_USER: ${POSTGRES_USER:-limone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-limone_secure_2025}
+      POSTGRES_DB: ${POSTGRES_DB:-limone}
     volumes:
-      - limone_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-limone}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - limone-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: limone-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-limone}:${POSTGRES_PASSWORD:-limone_secure_2025}@db:5432/${POSTGRES_DB:-limone}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://limone.usev.app}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/public/uploads
+    networks:
+      - limone-network
 
 volumes:
-  limone_data:
+  postgres_data:
+    name: limone_postgres_data
+  uploads:
+    name: limone_uploads
+
+networks:
+  limone-network:
+    name: limone-network

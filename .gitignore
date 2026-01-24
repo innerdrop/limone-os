@@ -48,3 +48,9 @@ coverage/
 
 # Misc
 *.pem
+
+# Backup files (contain sensitive data)
+backup-sqlite.json
+
+# Production env template is OK, but not the actual env
+.env.production.local
