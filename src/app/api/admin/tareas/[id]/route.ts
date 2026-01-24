@@ -4,11 +4,12 @@ import prisma from '@/lib/prisma'
 // GET - Obtener una tarea por ID
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const tarea = await prisma.tarea.findUnique({
-            where: { id: params.id }
+            where: { id }
         })
 
         if (!tarea) {
@@ -25,9 +26,10 @@ export async function GET(
 // PUT - Actualizar tarea (incluyendo marcar como completada)
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const body = await request.json()
         const { titulo, descripcion, fecha, hora, prioridad, categoria, completada } = body
 
@@ -51,7 +53,7 @@ export async function PUT(
         }
 
         const tareaActualizada = await prisma.tarea.update({
-            where: { id: params.id },
+            where: { id },
             data: updateData
         })
 
@@ -65,11 +67,12 @@ export async function PUT(
 // DELETE - Eliminar tarea
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         await prisma.tarea.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ success: true })
