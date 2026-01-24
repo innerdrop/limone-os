@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
             .filter((asiento): asiento is number => asiento !== null)
 
         return NextResponse.json({ occupiedSeats })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error fetching availability:', error)
         return NextResponse.json({ error: 'Error al obtener disponibilidad' }, { status: 500 })
     }

@@ -289,9 +289,10 @@ export async function POST(request: NextRequest) {
                     }
                 })
             })
-        } catch (err: any) {
+        } catch (err) {
             // Rethrow to catch block below
-            throw new Error(err.message)
+            const message = err instanceof Error ? err.message : 'Error desconocido';
+            throw new Error(message)
         }
 
         return NextResponse.json({
@@ -299,8 +300,9 @@ export async function POST(request: NextRequest) {
             inscripciones: inscriptionsResults
         })
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error en inscripción:', error)
-        return NextResponse.json({ error: error.message || 'Error al procesar la inscripción' }, { status: 500 })
+        const message = error instanceof Error ? error.message : 'Error al procesar la inscripción';
+        return NextResponse.json({ error: message }, { status: 500 })
     }
 }

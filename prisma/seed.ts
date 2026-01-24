@@ -10,7 +10,9 @@ async function main() {
     const adminPassword = await hash('admin123', 12)
     const admin = await prisma.usuario.upsert({
         where: { email: 'natalia@limone.usev.app' },
-        update: {},
+        update: {
+            password: adminPassword, // Force password update
+        },
         create: {
             email: 'natalia@limone.usev.app',
             password: adminPassword,
@@ -25,7 +27,9 @@ async function main() {
     const docentePassword = await hash('docente123', 12)
     const docente = await prisma.usuario.upsert({
         where: { email: 'docente@limone.usev.app' },
-        update: {},
+        update: {
+            password: docentePassword,
+        },
         create: {
             email: 'docente@limone.usev.app',
             password: docentePassword,
@@ -93,7 +97,9 @@ async function main() {
     const alumnoPassword = await hash('alumno123', 12)
     const alumnoUser = await prisma.usuario.upsert({
         where: { email: 'alumno@demo.com' },
-        update: {},
+        update: {
+            password: alumnoPassword,
+        },
         create: {
             email: 'alumno@demo.com',
             password: alumnoPassword,

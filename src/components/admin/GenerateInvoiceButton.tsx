@@ -29,9 +29,10 @@ export default function GenerateInvoiceButton({ pagoId, hasInvoice, invoiceUrl }
 
             alert('Factura generada con éxito')
             router.refresh()
-        } catch (error: any) {
+        } catch (error) {
             console.error('Facturacion Error:', error)
-            alert(error.message)
+            const message = error instanceof Error ? error.message : 'Error al facturar';
+            alert(message)
         } finally {
             setIsLoading(false)
         }
@@ -58,8 +59,8 @@ export default function GenerateInvoiceButton({ pagoId, hasInvoice, invoiceUrl }
             onClick={handleFacturar}
             disabled={isLoading}
             className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${isLoading
-                    ? 'bg-canvas-100 text-warm-400 border-canvas-200 cursor-not-allowed'
-                    : 'bg-leaf-50 text-leaf-700 border-leaf-200 hover:bg-leaf-100'
+                ? 'bg-canvas-100 text-warm-400 border-canvas-200 cursor-not-allowed'
+                : 'bg-leaf-50 text-leaf-700 border-leaf-200 hover:bg-leaf-100'
                 }`}
         >
             {isLoading ? (

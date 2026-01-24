@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
             message: 'Perfil completado exitosamente'
         })
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error al completar perfil:', error)
         return NextResponse.json(
             { error: 'Error al completar el perfil' },

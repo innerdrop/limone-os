@@ -76,8 +76,9 @@ export default function UploadObraForm({ students }: { students: Student[] }) {
             } else {
                 throw new Error(result.error || 'Error al subir la obra')
             }
-        } catch (error: any) {
-            setMessage({ text: error.message, type: 'error' })
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error desconocido';
+            setMessage({ text: message, type: 'error' })
         } finally {
             setLoading(false)
         }

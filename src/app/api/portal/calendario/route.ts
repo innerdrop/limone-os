@@ -130,7 +130,7 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json({ classes })
-    } catch (error: any) {
+    } catch (error) {
         console.error('Error al obtener calendario:', error)
         return NextResponse.json({ error: 'Error al obtener el calendario' }, { status: 500 })
     }
