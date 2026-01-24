@@ -205,7 +205,7 @@ export default async function AgendaPage() {
                                     <div
                                         key={item.id}
                                         className={`card p-4 flex items-start gap-4 hover:shadow-soft transition-all border-l-4 ${item.completada ? 'opacity-60 bg-gray-50' : ''
-                                            } ${item.color.split(' ').find(c => c.startsWith('border-')) || 'border-warm-300'}`}
+                                            } ${item.color.split(' ').find((c: string) => c.startsWith('border-')) || 'border-warm-300'}`}
                                     >
                                         {/* Time */}
                                         <div className="flex-shrink-0 w-16 text-center">
