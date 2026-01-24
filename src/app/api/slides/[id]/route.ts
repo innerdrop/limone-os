@@ -6,11 +6,12 @@ import { authOptions } from '@/lib/auth'
 // GET - Obtener un slide por ID
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const slide = await prisma.slide.findUnique({
-            where: { id: params.id }
+            where: { id }
         })
 
         if (!slide) {
@@ -30,9 +31,10 @@ export async function GET(
 // PUT - Actualizar un slide
 export async function PUT(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const session = await getServerSession(authOptions)
         if (!session?.user || session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -68,7 +70,7 @@ export async function PUT(
         if (activo !== undefined) updateData.activo = activo
 
         const updatedSlide = await prisma.slide.update({
-            where: { id: params.id },
+            where: { id },
             data: updateData
         })
 
@@ -85,16 +87,17 @@ export async function PUT(
 // DELETE - Eliminar un slide
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params
         const session = await getServerSession(authOptions)
         if (!session?.user || session.user.role !== 'ADMIN') {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
         }
 
         await prisma.slide.delete({
-            where: { id: params.id }
+            where: { id }
         })
 
         return NextResponse.json({ success: true })
