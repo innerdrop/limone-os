@@ -34,3 +34,47 @@ export async function GET() {
         )
     }
 }
+
+export async function PUT(request: Request) {
+    try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+
+        const body = await request.json()
+        const {
+            nombre, dni, fechaNacimiento, domicilio,
+            tutorNombre, tutorEmail, tutorTelefonoPrincipal,
+            emergenciaNombre, emergenciaTelefono, alergias
+        } = body
+
+        // Update Usuario (Nombre)
+        if (nombre) {
+            await prisma.usuario.update({
+                where: { id: session.user.id },
+                data: { nombre }
+            })
+        }
+
+        // Update Alumno
+        const updatedAlumno = await prisma.alumno.update({
+            where: { usuarioId: session.user.id },
+            data: {
+                dni,
+                fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+                domicilio,
+                tutorNombre,
+                tutorEmail,
+                tutorTelefonoPrincipal,
+                emergenciaNombre,
+                emergenciaTelefono,
+                alergias,
+                perfilCompleto: true // We can mark as complete once saved manual for the first time
+            }
+        })
+
+        return NextResponse.json(updatedAlumno)
+    } catch (error) {
+        console.error('Error updating profile:', error)
+        return NextResponse.json({ error: 'Error al actualizar' }, { status: 500 })
+    }
+}

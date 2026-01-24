@@ -109,40 +109,46 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                     }
                 }
             } else {
-                // Regular Logic
-                const targetDay = DAYS_MAP[(ins.dia || '').toUpperCase()]
+                // Regular Logic (Split by comma if multiple days)
+                const diasInscripcion = (ins.dia || '').split(',').map(d => d.trim().toUpperCase())
 
-                if (targetDay !== undefined) {
-                    let daysUntil = (targetDay - currentDay + 7) % 7
+                for (const diaText of diasInscripcion) {
+                    const targetDay = DAYS_MAP[diaText]
 
-                    // If it's today, check time
-                    if (ins.horario) {
-                        const [startHour] = ins.horario.split('-')[0].split(':')
-                        if (daysUntil === 0 && now.getHours() >= parseInt(startHour)) {
-                            daysUntil = 7
-                        }
-                    }
+                    if (targetDay !== undefined) {
+                        let daysUntil = (targetDay - currentDay + 7) % 7
 
-                    // Generate next 2 occurrences for each enrollment
-                    for (let i = 0; i < 2; i++) {
-                        const classDate = new Date(now)
-                        classDate.setDate(now.getDate() + daysUntil + (i * 7))
-
-                        // Set time from horario (format: "16:00-17:20")
+                        // If it's today, check time
                         if (ins.horario) {
-                            const [startTime] = ins.horario.split('-')
-                            const [h, m] = startTime.split(':').map(Number)
-                            classDate.setHours(h, m, 0, 0)
+                            // Split multi-horario if exists, otherwise take first
+                            const firstHorario = ins.horario.split('/')[0].trim()
+                            const [startHour] = firstHorario.split('-')[0].split(':')
+                            if (daysUntil === 0 && now.getHours() >= parseInt(startHour)) {
+                                daysUntil = 7
+                            }
                         }
 
-                        upcomingClasses.push({
-                            type: 'class',
-                            id: `${ins.id}-${i}`,
-                            taller: 'Taller de Arte',
-                            dia: ins.dia!,
-                            horario: ins.horario!,
-                            date: classDate
-                        })
+                        // Generate next 2 occurrences for each day in this enrollment
+                        for (let i = 0; i < 2; i++) {
+                            const classDate = new Date(now)
+                            classDate.setDate(now.getDate() + daysUntil + (i * 7))
+
+                            if (ins.horario) {
+                                const horarioForSelf = ins.horario.includes('/') ? ins.horario.split('/')[diasInscripcion.indexOf(diaText)] || ins.horario.split('/')[0] : ins.horario
+                                const [startTime] = horarioForSelf.split('-')
+                                const [h, m] = startTime.split(':').map(Number)
+                                classDate.setHours(h, m, 0, 0)
+                            }
+
+                            upcomingClasses.push({
+                                type: 'class',
+                                id: `${ins.id}-${diaText}-${i}`,
+                                taller: 'Taller de Arte',
+                                dia: diaText,
+                                horario: ins.horario || '',
+                                date: classDate
+                            })
+                        }
                     }
                 }
             }

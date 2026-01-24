@@ -42,73 +42,75 @@ export async function GET(request: NextRequest) {
         const end = new Date(now.getFullYear(), now.getMonth() + 2, 0)
 
         for (const ins of enrollments) {
-            // Logic for regular classes
-            const targetDay = DAYS_MAP[ins.dia || '']
+            const isSummer = ins.fase === 'Taller de Verano'
+            const diasInscripcion = (ins.dia || '').split(',').map(d => d.trim().toUpperCase())
 
-            // Summer Workshop: Now uses 'dia' field for the selected day of the week
-            // Check if this is a summer workshop enrollment (fase contains 'Verano' or dia is a valid weekday with verano notes)
-            if (ins.fase === 'Taller de Verano' && ins.notas && ins.dia) {
-                // Parse Summer Workshop: "Modalidad: ..., Dia: MARTES, Inicio: YYYY-MM-DD, Semanas: X"
-                const startDateMatch = ins.notas.match(/Inicio: (\d{4}-\d{2}-\d{2})/)
-                const weeksMatch = ins.notas.match(/Semanas: (\d+)/)
-                const selectedDay = ins.dia // e.g., 'MARTES', 'MIERCOLES', etc.
+            for (const diaText of diasInscripcion) {
+                const targetDayOfWeek = DAYS_MAP[diaText]
+                if (targetDayOfWeek === undefined) continue
 
-                if (startDateMatch && DAYS_MAP[selectedDay] !== undefined) {
-                    const [y, m, dNum] = startDateMatch[1].split('-').map(Number)
-                    const enrollmentStartDate = new Date(y, m - 1, dNum)
-                    const weeksRemaining = weeksMatch ? parseInt(weeksMatch[1]) : 8
-                    const targetDayOfWeek = DAYS_MAP[selectedDay]
+                if (isSummer && ins.notas) {
+                    // Logic for Summer Workshop
+                    const startDateMatch = ins.notas.match(/Inicio: (\d{4}-\d{2}-\d{2})/)
+                    const startTime = ins.horario?.split('-')[0] || '17:00'
 
-                    // Generate one class per week on the selected day
-                    let d = new Date(enrollmentStartDate)
-                    let classesAdded = 0
+                    if (startDateMatch) {
+                        const [y, m, dNum] = startDateMatch[1].split('-').map(Number)
+                        const enrollmentStartDate = new Date(y, m - 1, dNum)
 
-                    // Find the first occurrence of the selected day from the start date
-                    while (d.getDay() !== targetDayOfWeek) {
-                        d.setDate(d.getDate() + 1)
+                        let d = new Date(enrollmentStartDate)
+                        // Find first occurrence of this specific day
+                        while (d.getDay() !== targetDayOfWeek) {
+                            d.setDate(d.getDate() + 1)
+                        }
+
+                        // Add classes for each week until end of summer
+                        const SUMMER_END = new Date(2026, 1, 28)
+                        while (d <= SUMMER_END) {
+                            if (d >= start && d <= end) {
+                                const safeDate = new Date(d)
+                                const [h, min] = startTime.split(':').map(Number)
+                                safeDate.setHours(h || 17, min || 0, 0, 0)
+
+                                classes.push({
+                                    id: `${ins.id}-summer-${diaText}-${d.getTime()}`,
+                                    taller: 'Taller de Verano',
+                                    dia: diaText,
+                                    hora: startTime,
+                                    fecha: safeDate,
+                                    estado: 'programada',
+                                    tipo: 'verano'
+                                })
+                            }
+                            d.setDate(d.getDate() + 7)
+                        }
                     }
+                } else {
+                    // Logic for Regular Classes
+                    let current = new Date(start)
+                    const startTime = ins.horario?.includes('/') ?
+                        (ins.horario.split('/')[diasInscripcion.indexOf(diaText)] || ins.horario.split('/')[0]).trim().split('-')[0] :
+                        (ins.horario?.split('-')[0] || '16:00')
 
-                    // Add classes for each week until end of summer or weeks remaining
-                    const SUMMER_END = new Date(2026, 1, 28) // Feb 28, 2026
-                    while (classesAdded < weeksRemaining && d <= SUMMER_END) {
-                        // Check if within the view range
-                        if (d >= start && d <= end) {
-                            const safeDate = new Date(d)
-                            safeDate.setHours(17, 0, 0, 0)
+                    while (current <= end) {
+                        if (current.getDay() === targetDayOfWeek) {
+                            const classDate = new Date(current)
+                            const [h, min] = startTime.split(':').map(Number)
+                            classDate.setHours(h || 16, min || 0, 0, 0)
 
                             classes.push({
-                                id: `${ins.id}-summer-${d.getTime()}`,
-                                taller: 'Taller de Verano',
-                                dia: selectedDay,
-                                hora: '17:00',
-                                fecha: safeDate,
+                                id: `${ins.id}-${diaText}-${current.getTime()}`,
+                                taller: ins.taller.nombre,
+                                dia: diaText,
+                                hora: startTime,
+                                fecha: classDate,
                                 estado: 'programada',
-                                tipo: 'verano'
+                                tipo: 'clase'
                             })
                         }
-                        classesAdded++
-                        d.setDate(d.getDate() + 7) // Move to next week
+                        current.setDate(current.getDate() + 1)
                     }
                 }
-                continue
-            }
-
-            if (targetDay === undefined) continue
-
-            let current = new Date(start)
-            while (current <= end) {
-                if (current.getDay() === targetDay) {
-                    classes.push({
-                        id: `${ins.id}-${current.getTime()}`,
-                        taller: ins.taller.nombre,
-                        dia: ins.dia,
-                        hora: ins.horario?.split('-')[0] || '00:00',
-                        fecha: new Date(current),
-                        estado: 'programada',
-                        tipo: 'clase'
-                    })
-                }
-                current.setDate(current.getDate() + 1)
             }
         }
 

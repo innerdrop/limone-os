@@ -71,7 +71,12 @@ export default function TiendaPage() {
 
                 const response = await fetch(`/api/tienda/productos?${params}`)
                 const data = await response.json()
-                setProductos(data)
+                if (Array.isArray(data)) {
+                    setProductos(data)
+                } else {
+                    console.error('API error or invalid response:', data)
+                    setProductos([])
+                }
             } catch (error) {
                 console.error('Error fetching products:', error)
             } finally {
@@ -156,12 +161,12 @@ export default function TiendaPage() {
                     <>
                         {/* Featured Products */}
                         {destacados.length > 0 && !filterCategoria && (
-                            <section className="py-12 bg-gradient-to-b from-lemon-50 to-white">
+                            <section className="py-8 bg-gradient-to-b from-lemon-50/50 to-white">
                                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                                    <h2 className="text-2xl md:text-3xl font-bold text-warm-800 mb-8 text-center">
-                                        ⭐ Destacados
+                                    <h2 className="text-xl md:text-2xl font-bold text-warm-800 mb-6 flex items-center gap-2">
+                                        <span className="text-brand-yellow text-xl">⭐</span> Destacados de la Semana
                                     </h2>
-                                    <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                         {destacados.map((producto) => (
                                             <ProductCard
                                                 key={producto.id}
@@ -263,9 +268,9 @@ function ProductCard({
     }
 
     return (
-        <div className={`group bg-white rounded-2xl overflow-hidden border-2 border-warm-100 hover:border-lemon-300 hover:shadow-xl transition-all ${featured ? 'ring-2 ring-lemon-400' : ''}`}>
+        <div className={`group bg-white rounded-xl overflow-hidden border border-warm-100 hover:border-lemon-400 hover:shadow-lg transition-all ${featured ? 'bg-lemon-50/20' : ''}`}>
             <Link href={`/tienda/${producto.id}`}>
-                <div className={`relative ${featured ? 'aspect-[4/5]' : 'aspect-square'} bg-warm-100 overflow-hidden`}>
+                <div className="relative aspect-square bg-warm-100 overflow-hidden">
                     {producto.imagenUrl ? (
                         <Image
                             src={producto.imagenUrl}
@@ -274,47 +279,49 @@ function ProductCard({
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl md:text-5xl text-warm-300">
+                        <div className="w-full h-full flex items-center justify-center text-3xl text-warm-300">
                             🖼️
                         </div>
                     )}
                     {producto.destacado && (
-                        <span className="absolute top-2 left-2 md:top-3 md:left-3 bg-brand-yellow text-warm-800 text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full">
-                            ⭐ Destacado
+                        <span className="absolute top-2 left-2 bg-brand-yellow text-warm-800 text-[9px] md:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
+                            ⭐
                         </span>
                     )}
-                    <span className={`absolute top-2 right-2 md:top-3 md:right-3 text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${producto.categoria === 'OBRA'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-blue-100 text-blue-700'
+                    <span className={`absolute top-2 right-2 text-[9px] md:text-xs font-bold px-2 py-0.5 rounded-full shadow-sm ${producto.categoria === 'OBRA'
+                        ? 'bg-purple-100/90 text-purple-700 backdrop-blur-sm'
+                        : 'bg-blue-100/90 text-blue-700 backdrop-blur-sm'
                         }`}>
-                        {producto.categoria === 'OBRA' ? 'Obra' : 'Material'}
+                        {producto.categoria === 'OBRA' ? 'Obra' : 'Mat.'}
                     </span>
                 </div>
             </Link>
 
-            <div className="p-3 md:p-4">
+            <div className="p-2.5">
                 <Link href={`/tienda/${producto.id}`}>
-                    <h3 className="font-bold text-sm md:text-base text-warm-800 hover:text-lemon-600 transition-colors line-clamp-2 min-h-[2.5em]">
+                    <h3 className="font-bold text-sm text-warm-800 hover:text-lemon-600 transition-colors line-clamp-1 leading-tight">
                         {producto.nombre}
                     </h3>
                 </Link>
-                {producto.artista && (
-                    <p className="text-xs text-warm-400 mt-1 truncate">{producto.artista}</p>
-                )}
-                {producto.tecnica && (
-                    <p className="text-[10px] md:text-xs text-warm-400 truncate">{producto.tecnica}</p>
-                )}
+                <div className="flex flex-col mt-0.5 mb-2">
+                    {producto.artista && (
+                        <p className="text-[10px] md:text-xs text-warm-500 truncate leading-none mb-0.5">{producto.artista}</p>
+                    )}
+                    {producto.tecnica && (
+                        <p className="text-[9px] md:text-[10px] text-warm-400 truncate italic leading-none">{producto.tecnica}</p>
+                    )}
+                </div>
 
-                <div className="flex flex-wrap items-center justify-between mt-3 md:mt-4 pt-3 md:pt-4 border-t border-warm-100 gap-2">
-                    <span className="text-lg md:text-2xl font-bold text-lemon-600">
+                <div className="flex items-center justify-between pt-2 border-t border-warm-100/50 gap-2">
+                    <span className="text-sm md:text-lg font-bold text-lemon-600 leading-none">
                         ${producto.precio.toLocaleString('es-AR')}
                     </span>
                     <button
                         onClick={handleAdd}
                         disabled={added}
-                        className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all whitespace-nowrap ${added
+                        className={`px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-semibold transition-all whitespace-nowrap ${added
                             ? 'bg-green-500 text-white'
-                            : 'bg-brand-purple text-white hover:bg-brand-purple/90'
+                            : 'bg-brand-purple text-white hover:bg-brand-purple/90 shrink-0'
                             }`}
                     >
                         {added ? '✓' : 'Agregar'}

@@ -58,11 +58,29 @@ export default function PerfilPage() {
         }
     }, [session])
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Aquí iría la lógica para guardar
-        alert('¡Perfil actualizado!')
-        setIsEditing(false)
+        setLoading(true)
+        try {
+            const res = await fetch('/api/perfil', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            if (res.ok) {
+                const data = await res.json()
+                setAlumnoData(data)
+                alert('¡Perfil actualizado con éxito!')
+                setIsEditing(false)
+            } else {
+                alert('Error al actualizar el perfil')
+            }
+        } catch (error) {
+            console.error(error)
+            alert('Error de conexión')
+        } finally {
+            setLoading(false)
+        }
     }
 
     if (loading) {

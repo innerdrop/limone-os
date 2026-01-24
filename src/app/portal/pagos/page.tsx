@@ -37,6 +37,7 @@ export default function PagosPage() {
     }, [])
 
     const cuotaPendiente = pagos.find(p => p.estado === 'PENDIENTE')
+    const avisoPendiente = pagos.find(p => p.estado === 'PENDIENTE_VERIFICACION')
     const pagosAprobados = pagos.filter(p => p.estado === 'CONFIRMADO' || p.estado === 'APROBADO')
     const totalPagado = pagosAprobados.reduce((sum, p) => sum + p.monto, 0)
 
@@ -129,7 +130,7 @@ export default function PagosPage() {
                             </svg>
                         </div>
                         <div>
-                            <p className="text-2xl font-bold text-warm-800">{cuotaPendiente ? 1 : 0}</p>
+                            <p className="text-2xl font-bold text-warm-800">{(cuotaPendiente ? 1 : 0) + (avisoPendiente ? 1 : 0)}</p>
                             <p className="text-sm text-warm-500">Cuotas pendientes</p>
                         </div>
                     </div>
@@ -172,12 +173,12 @@ export default function PagosPage() {
                                         <td className="py-4 px-4 text-center">
                                             <span className={`badge ${(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO')
                                                 ? 'badge-success'
-                                                : pago.estado === 'PENDIENTE'
+                                                : (pago.estado === 'PENDIENTE' || pago.estado === 'PENDIENTE_VERIFICACION')
                                                     ? 'badge-warning'
                                                     : 'badge-error'
                                                 }`}>
                                                 {(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO') ? 'Pagado' :
-                                                    pago.estado === 'PENDIENTE' ? 'Pendiente' : 'Rechazado'}
+                                                    (pago.estado === 'PENDIENTE' || pago.estado === 'PENDIENTE_VERIFICACION') ? 'Pendiente' : 'Rechazado'}
                                             </span>
                                         </td>
                                         <td className="py-4 px-4 text-right">
@@ -219,6 +220,10 @@ export default function PagosPage() {
                                                         </svg>
                                                         Pagar
                                                     </button>
+                                                ) : pago.estado === 'PENDIENTE_VERIFICACION' ? (
+                                                    <span className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded-lg border border-green-100 font-bold">
+                                                        Aviso enviado
+                                                    </span>
                                                 ) : (
                                                     <span className="text-warm-400 text-sm py-2 px-4">-</span>
                                                 )}

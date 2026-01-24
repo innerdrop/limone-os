@@ -19,8 +19,6 @@ export async function POST(request: NextRequest) {
         })
 
         if (!alumno) {
-            // Auto-create Alumno if not exists (Robustness fix)
-            console.log('Alumno no encontrado, creando perfil automático para:', session.user.id)
             alumno = await prisma.alumno.create({
                 data: {
                     usuarioId: session.user.id,
@@ -31,7 +29,6 @@ export async function POST(request: NextRequest) {
 
         // --- PLACEMENT TEST FLOW ---
         if (type === 'placement') {
-            // SINGLETON CHECK: Verify if user already has a pending test
             const existingCita = await prisma.citaNivelacion.findFirst({
                 where: {
                     alumnoId: alumno.id,
@@ -46,7 +43,6 @@ export async function POST(request: NextRequest) {
             const { date, time } = body
             if (!date || !time) return NextResponse.json({ error: 'Faltan fecha u hora' }, { status: 400 })
 
-            // Create Date object directly from input
             const fechaCita = new Date(`${date}T${time}`)
 
             const cita = await prisma.citaNivelacion.create({
@@ -58,7 +54,6 @@ export async function POST(request: NextRequest) {
                 }
             })
 
-            // Create notification
             await prisma.notificacion.create({
                 data: {
                     usuarioId: session.user.id,
@@ -73,40 +68,23 @@ export async function POST(request: NextRequest) {
         }
 
         // --- ENROLLMENT FLOW ---
-        const { slots, fase, isSummer, summerModality, summerDay, summerStartDate } = body
+        const { slots, fase, isSummer, summerModality, summerDays, summerTime, summerFrequency, summerStartDate } = body
 
         if (isSummer) {
-            const { summerDays, summerTime, summerFrequency } = body
-
             if (!summerModality || !summerDays || !summerDays.length || !summerStartDate || !summerTime) {
                 return NextResponse.json({ error: 'Faltan datos del taller de verano' }, { status: 400 })
             }
 
-            // Buscar o Crear el Taller de Verano
-            let taller = await prisma.taller.findFirst({
-                where: {
-                    nombre: { contains: 'Verano' },
-                    activo: true
-                }
+            const taller = await prisma.taller.findFirst({
+                where: { nombre: 'Taller de Verano', activo: true }
             })
 
-            if (!taller) {
-                console.log('Creando Taller de Verano...')
-                taller = await prisma.taller.create({
-                    data: {
-                        nombre: 'Taller de Verano 2026',
-                        descripcion: 'Taller artístico de temporada',
-                        precio: 75000,
-                        activo: true
-                    }
-                })
-            }
+            if (!taller) return NextResponse.json({ error: 'Taller de Verano no configurado' }, { status: 500 })
 
-            // Calculate Price (Matching Frontend Logic)
-            const SUMMER_END_DATE = new Date(2026, 1, 28) // Feb 28, 2026
+            // Calculate Price
+            const SUMMER_END_DATE = new Date(2026, 1, 28)
             const startDate = new Date(summerStartDate)
 
-            // Rates
             const RATES: any = {
                 'BASE': { '1x': 75000, '2x': 130000 },
                 'EXTENDED': { '1x': 145000, '2x': 210000 }
@@ -122,9 +100,6 @@ export async function POST(request: NextRequest) {
             const msPerWeek = 7 * 24 * 60 * 60 * 1000
             const weeksRemaining = Math.max(1, Math.ceil((SUMMER_END_DATE.getTime() - startDate.getTime()) / msPerWeek))
 
-            // Price calculation
-            // If full duration (starts near Jan 6), use promo price.
-            // approx 7 weeks threshold to be safe
             let monto = 0
             if (weeksRemaining >= 7) {
                 monto = promoPrice
@@ -135,170 +110,119 @@ export async function POST(request: NextRequest) {
             }
 
             await prisma.$transaction(async (tx) => {
-                const createdInscriptions = []
+                const diasCombinados = summerDays.join(', ')
+                const inscripcion = await tx.inscripcion.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        tallerId: taller.id,
+                        fase: 'Taller de Verano',
+                        dia: diasCombinados,
+                        horario: summerTime,
+                        asiento: 0,
+                        estado: 'ACTIVA',
+                        notas: `Modalidad: ${summerModality}, Freq: ${summerFrequency}, Inicio: ${summerStartDate}`,
+                        pagado: false
+                    }
+                })
 
-                // Create inscription for EACH day
-                for (const dia of summerDays) {
-                    const inscripcion = await tx.inscripcion.create({
-                        data: {
-                            alumnoId: alumno.id,
-                            tallerId: taller!.id,
-                            fase: 'Taller de Verano',
-                            dia: dia,
-                            horario: summerTime,
-                            asiento: 0, // Virtual seat
-                            estado: 'ACTIVA',
-                            notas: `Modalidad: ${summerModality}, Freq: ${summerFrequency}, Inicio: ${summerStartDate}`,
-                            pagado: false
-                        }
-                    })
-                    createdInscriptions.push(inscripcion)
-                }
-
-                // Create Payment linked to the FIRST inscription (covering all)
-                if (createdInscriptions.length > 0) {
-                    await tx.pago.create({
-                        data: {
-                            alumnoId: alumno.id,
-                            inscripcionId: createdInscriptions[0].id,
-                            monto: monto,
-                            estado: 'PENDIENTE',
-                            mesCubierto: new Date().getMonth() + 1,
-                            anioCubierto: new Date().getFullYear(),
-                            concepto: `Taller Verano (${summerFrequency}) - ${summerModality} - ${summerDays.join('+')}`
-                        }
-                    })
-                }
+                await tx.pago.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        inscripcionId: inscripcion.id,
+                        monto: monto,
+                        estado: 'PENDIENTE',
+                        mesCubierto: new Date().getMonth() + 1,
+                        anioCubierto: new Date().getFullYear(),
+                        concepto: `Taller Verano (${summerFrequency}) - ${summerModality} - ${diasCombinados}`
+                    }
+                })
 
                 await tx.notificacion.create({
                     data: {
                         usuarioId: session.user.id,
                         titulo: 'Inscripción Taller de Verano',
-                        mensaje: `Inscripción exitosa. Modalidad ${summerModality}, Días: ${summerDays.join(', ')}. Valor total: $${monto}`,
+                        mensaje: `Inscripción exitosa. Modalidad ${summerModality}, Días: ${diasCombinados}. Valor total: $${monto}`,
                         tipo: 'SUCCESS',
                         leida: false
                     }
                 })
             })
 
-            return NextResponse.json({
-                success: true
-            })
+            return NextResponse.json({ success: true })
         }
 
         // --- REGULAR FLOW ---
-        // slots: { dia, horario, asiento }[]
-
-        // Simplify payload check: if 'slots' is present, use new flow. Fallback to single slot if legacy fields provided?
-        // Let's enforce 'slots' array for the new UI.
         const enrollmentSlots = slots || (body.dia ? [{ dia: body.dia, horario: body.horario, asiento: body.asiento }] : [])
 
         if (!fase || enrollmentSlots.length === 0) {
             return NextResponse.json({ error: 'Faltan datos de inscripción' }, { status: 400 })
         }
 
-        // 1) Validate Max Slots (2 Days)
-        // Check existing active enrollments to enforce strict global limit if needed.
-        const activeEnrollmentsCount = await prisma.inscripcion.count({
-            where: {
-                alumnoId: alumno.id,
-                estado: 'ACTIVA'
-            }
+        const taller = await prisma.taller.findFirst({
+            where: { nombre: 'Taller Regular', activo: true }
         })
+        if (!taller) return NextResponse.json({ error: 'Taller Regular no configurado' }, { status: 500 })
 
-        if (activeEnrollmentsCount + enrollmentSlots.length > 2) {
-            return NextResponse.json({ error: 'El máximo es de 2 días de cursada por alumno.' }, { status: 400 })
-        }
-
-        // 2) Validate Each Slot
-        const diasValidos = ['MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES']
-        const horariosValidos = ['16:00-17:20', '17:30-18:50', '19:10-20:30']
-
-        // We need to fetch Taller ID.
-        const taller = await prisma.taller.findFirst({ where: { activo: true } })
-        if (!taller) return NextResponse.json({ error: 'No hay talleres activos configurados' }, { status: 500 })
-
-        // 3) Process Inscriptions Transactionally
-        const inscriptionsResults: any[] = []
-
-        // Use an interactive transaction or sequential checks + create to assume consistency. 
-        // Prisma transaction is safer.
-        try {
-            await prisma.$transaction(async (tx) => {
-                for (const slot of enrollmentSlots) {
-                    const { dia, horario, asiento } = slot
-
-                    // Val: Day/Time
-                    if (!diasValidos.includes(dia.toUpperCase())) throw new Error(`Día no válido: ${dia}`)
-                    if (!horariosValidos.includes(horario)) throw new Error(`Horario no válido: ${horario}`)
-                    if (!asiento) throw new Error('Falta seleccionar asiento')
-
-                    // Val: Seat Occupied?
-                    const asientoOcupado = await tx.inscripcion.findFirst({
-                        where: {
-                            dia,
-                            horario,
-                            asiento,
-                            estado: 'ACTIVA'
-                        }
-                    })
-                    if (asientoOcupado) throw new Error(`El asiento ${asiento} del ${dia} ${horario} ya está ocupado.`)
-
-                    // Val: Turn Capacity (redundant if seats map is 1-10, but good safety)
-                    const inscritos = await tx.inscripcion.count({ where: { dia, horario, estado: 'ACTIVA' } })
-                    if (inscritos >= 10) throw new Error(`El turno del ${dia} ${horario} está completo.`)
-
-                    // Create
-                    const newInsc = await tx.inscripcion.create({
-                        data: {
-                            alumnoId: alumno.id,
-                            tallerId: taller.id,
-                            dia,
-                            horario,
-                            fase,
-                            asiento,
-                            pagado: false, // Payment pending
-                            estado: 'ACTIVA'
-                        }
-                    })
-                    inscriptionsResults.push(newInsc)
-
-                    // Create Payment (PENDIENTE)
-                    await tx.pago.create({
-                        data: {
-                            alumnoId: alumno.id,
-                            inscripcionId: newInsc.id,
-                            monto: 25000,
-                            estado: 'PENDIENTE',
-                            mesCubierto: new Date().getMonth() + 1,
-                            anioCubierto: new Date().getFullYear(),
-                            concepto: `Inscripción - ${fase}, ${dia} ${horario}, Asiento: ${asiento}`
-                        }
-                    })
-                }
-
-                // Notification (Single summary notification)
-                const diasStr = enrollmentSlots.map((s: any) => `${s.dia} ${s.horario} (A${s.asiento})`).join(', ')
-                await tx.notificacion.create({
-                    data: {
-                        usuarioId: session.user.id,
-                        titulo: 'Inscripción Registrada',
-                        mensaje: `Tu inscripción en ${fase} ha sido registrada. Turnos: ${diasStr}. Realizá la transferencia para confirmar.`,
-                        tipo: 'INFO',
-                        leida: false
+        await prisma.$transaction(async (tx) => {
+            // 1) Validate seats
+            for (const slot of enrollmentSlots) {
+                const asientoOcupado = await tx.inscripcion.findFirst({
+                    where: {
+                        dia: { contains: slot.dia },
+                        horario: slot.horario,
+                        asiento: slot.asiento,
+                        estado: 'ACTIVA'
                     }
                 })
-            })
-        } catch (err) {
-            // Rethrow to catch block below
-            const message = err instanceof Error ? err.message : 'Error desconocido';
-            throw new Error(message)
-        }
+                if (asientoOcupado) throw new Error(`El asiento ${slot.asiento} del ${slot.dia} ya está ocupado.`)
+            }
 
-        return NextResponse.json({
-            success: true,
-            inscripciones: inscriptionsResults
+            // 2) Create SINGLE Inscription
+            const diasStr = enrollmentSlots.map((s: any) => s.dia).join(', ')
+            const horariosStr = enrollmentSlots.map((s: any) => s.horario).join(' / ')
+            const asientosStr = enrollmentSlots.map((s: any) => `A${s.asiento}`).join(' / ')
+
+            const newInsc = await tx.inscripcion.create({
+                data: {
+                    alumnoId: alumno.id,
+                    tallerId: taller.id,
+                    dia: diasStr,
+                    horario: horariosStr,
+                    fase,
+                    asiento: enrollmentSlots[0].asiento,
+                    pagado: false,
+                    estado: 'ACTIVA',
+                    notas: `Asientos: ${asientosStr}`
+                }
+            })
+
+            // 3) Create SINGLE Payment
+            const totalAmount = 25000 * enrollmentSlots.length
+            await tx.pago.create({
+                data: {
+                    alumnoId: alumno.id,
+                    inscripcionId: newInsc.id,
+                    monto: totalAmount,
+                    estado: 'PENDIENTE',
+                    mesCubierto: new Date().getMonth() + 1,
+                    anioCubierto: new Date().getFullYear(),
+                    concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${diasStr})`
+                }
+            })
+
+            // 4) Notify
+            await tx.notificacion.create({
+                data: {
+                    usuarioId: session.user.id,
+                    titulo: 'Inscripción Registrada',
+                    mensaje: `Inscripción exitosa en ${fase}. Días: ${diasStr}. Valor mensual: $${totalAmount}`,
+                    tipo: 'INFO',
+                    leida: false
+                }
+            })
         })
+
+        return NextResponse.json({ success: true })
 
     } catch (error) {
         console.error('Error en inscripción:', error)

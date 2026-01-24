@@ -4,6 +4,8 @@ import { signOut } from 'next-auth/react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { menuItems } from './Sidebar'
 import QuickTaskForm from './QuickTaskForm'
 
 interface User {
@@ -16,6 +18,7 @@ interface User {
 export default function AdminHeader({ user }: { user: User }) {
     const [showMenu, setShowMenu] = useState(false)
     const [showMobileNav, setShowMobileNav] = useState(false)
+    const pathname = usePathname()
 
     return (
         <header className="sticky top-0 z-40 bg-white border-b border-canvas-200">
@@ -108,28 +111,95 @@ export default function AdminHeader({ user }: { user: User }) {
                 </div>
             </div>
 
-            {/* Mobile Navigation */}
+            {/* Mobile Navigation Overlay */}
             {showMobileNav && (
-                <div className="lg:hidden border-t border-canvas-200 bg-white py-4 px-4">
-                    <nav className="space-y-1">
-                        {[
-                            { label: 'Dashboard', href: '/admin' },
-                            { label: 'Alumnos', href: '/admin/alumnos' },
-                            { label: 'Talleres', href: '/admin/talleres' },
-                            { label: 'Cupos', href: '/admin/cupos' },
-                            { label: 'Finanzas', href: '/admin/finanzas' },
-                            { label: 'Contenido', href: '/admin/contenido' },
-                        ].map((item) => (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className="block px-4 py-2 rounded-lg text-warm-600 hover:bg-canvas-100"
+                <div className="lg:hidden fixed inset-0 z-50 flex">
+                    {/* Backdrop */}
+                    <div
+                        className="fixed inset-0 bg-warm-900/60 backdrop-blur-sm"
+                        onClick={() => setShowMobileNav(false)}
+                    />
+
+                    {/* Sidebar container */}
+                    <div className="relative flex-1 flex flex-col max-w-xs w-full bg-warm-800 shadow-xl transition-transform duration-300 ease-in-out">
+                        <div className="absolute top-0 right-0 -mr-12 pt-4">
+                            <button
                                 onClick={() => setShowMobileNav(false)}
+                                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                             >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
+                            <div className="flex-shrink-0 flex items-center px-6 mb-8">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 flex items-center justify-center">
+                                        <Image
+                                            src="/colores.png"
+                                            alt="Limoné Logo"
+                                            width={40}
+                                            height={40}
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </div>
+                                    <div>
+                                        <span className="font-gigi text-xl font-bold text-white block">
+                                            Limoné
+                                        </span>
+                                        <span className="text-[10px] text-warm-400">Panel Admin</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <nav className="px-4 space-y-1">
+                                {menuItems.map((item) => {
+                                    const isActive = pathname === item.href
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all relative ${isActive
+                                                ? 'bg-brand-yellow text-brand-charcoal'
+                                                : 'text-warm-300 hover:bg-warm-700 hover:text-white'
+                                                }`}
+                                            onClick={() => setShowMobileNav(false)}
+                                        >
+                                            <span className={isActive ? 'text-brand-charcoal' : ''}>
+                                                {item.icon}
+                                            </span>
+                                            {item.label}
+                                            {item.isNew && (
+                                                <span className="ml-auto bg-brand-purple text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                                    NUEVO
+                                                </span>
+                                            )}
+                                        </Link>
+                                    )
+                                })}
+                            </nav>
+                        </div>
+
+                        <div className="flex-shrink-0 flex bg-warm-700 p-4 mx-4 mb-4 rounded-xl">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-brand-purple flex items-center justify-center">
+                                    <span className="text-white font-semibold text-xs">
+                                        {user.name?.charAt(0) || 'A'}
+                                    </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-white truncate">
+                                        {user.name}
+                                    </p>
+                                    <Link href="/" className="text-[10px] text-warm-400 hover:text-white">
+                                        Volver al sitio
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </header>

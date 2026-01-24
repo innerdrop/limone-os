@@ -4,6 +4,7 @@ import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import RegistrarPagoManual from '@/components/admin/RegistrarPagoManual'
 import GenerateInvoiceButton from '@/components/admin/GenerateInvoiceButton'
+import ConfirmarPagoButton from '@/components/admin/ConfirmarPagoButton'
 
 export default async function FinanzasPage(props: {
     searchParams: Promise<{ busqueda?: string, estado?: string, mes?: string }>
@@ -43,15 +44,16 @@ export default async function FinanzasPage(props: {
             include: { alumno: { include: { usuario: true } } },
             orderBy: { fechaPago: 'desc' }
         }),
-        prisma.inscripcion.findMany({
+        // UNIFICADO: Buscar directamente los registros de PAGO pendientes
+        prisma.pago.findMany({
             where: {
-                pagado: false,
-                estado: 'ACTIVA'
+                estado: 'PENDIENTE'
             },
             include: {
                 alumno: { include: { usuario: true } },
-                taller: true
-            }
+                inscripcion: { include: { taller: true } }
+            },
+            orderBy: { creadoEn: 'desc' }
         })
     ])
 
@@ -197,7 +199,7 @@ export default async function FinanzasPage(props: {
                             <table className="w-full">
                                 <thead className="bg-canvas-50">
                                     <tr>
-                                        <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Alumno</th>
+                                        <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Alumno / Concepto</th>
                                         <th className="text-left py-3 px-6 text-sm font-medium text-warm-500 italic">Fecha</th>
                                         <th className="text-right py-3 px-6 text-sm font-medium text-warm-500 italic">Monto</th>
                                         <th className="text-center py-3 px-6 text-sm font-medium text-warm-500 italic">Estado</th>
@@ -209,7 +211,7 @@ export default async function FinanzasPage(props: {
                                         <tr key={pago.id} className="hover:bg-canvas-50 transition-colors">
                                             <td className="py-4 px-6">
                                                 <div className="font-medium text-warm-800">{pago.alumno?.usuario?.nombre || 'Alumno'}</div>
-                                                <div className="text-xs text-warm-400">{pago.alumno?.usuario?.email || ''}</div>
+                                                <div className="text-[10px] text-warm-400 uppercase font-bold tracking-tight">{pago.concepto || 'Cuota Mensual'}</div>
                                             </td>
                                             <td className="py-4 px-6 text-sm text-warm-500">
                                                 {format(pago.fechaPago as Date, 'dd/MM/yyyy HH:mm')}
@@ -220,17 +222,24 @@ export default async function FinanzasPage(props: {
                                             <td className="py-4 px-6 text-center">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO')
                                                     ? 'bg-green-100 text-green-700' :
-                                                    pago.estado === 'RECHAZADO' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                                                    pago.estado === 'RECHAZADO' ? 'bg-red-100 text-red-700' :
+                                                        pago.estado === 'PENDIENTE_VERIFICACION' ? 'bg-amber-100 text-amber-700 animate-pulse border border-amber-300' :
+                                                            'bg-yellow-100 text-yellow-700'
                                                     }`}>
-                                                    {pago.estado}
+                                                    {pago.estado === 'PENDIENTE_VERIFICACION' ? 'VERIFICAR' : pago.estado}
                                                 </span>
                                             </td>
-                                            <td className="py-4 px-6 text-center">
-                                                {(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO') && (
+                                            <td className="py-4 px-6 text-center space-y-2">
+                                                {(pago.estado === 'APROBADO' || pago.estado === 'CONFIRMADO') ? (
                                                     <GenerateInvoiceButton
                                                         pagoId={pago.id}
                                                         hasInvoice={!!(pago as any).cae}
                                                         invoiceUrl={(pago as any).comprobantePdf}
+                                                    />
+                                                ) : (
+                                                    <ConfirmarPagoButton
+                                                        pagoId={pago.id}
+                                                        isWaitingVerification={pago.estado === 'PENDIENTE_VERIFICACION'}
                                                     />
                                                 )}
                                             </td>
@@ -259,15 +268,25 @@ export default async function FinanzasPage(props: {
                             </h2>
                         </div>
                         <div className="p-4 space-y-3">
-                            {morososRaw.length > 0 ? morososRaw.map((insc) => (
-                                <div key={insc.id} className="flex flex-col p-3 rounded-lg bg-red-50 hover:bg-red-100 transition-colors group italic">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <span className="font-bold text-warm-800">{insc.alumno.usuario.nombre}</span>
-                                        <span className="text-red-600 font-bold">{formatMoney(insc.taller.precio)}</span>
+                            {morososRaw.length > 0 ? (morososRaw as any[]).map((pagoRegistro) => {
+                                const isWaiting = pagoRegistro.estado === 'PENDIENTE_VERIFICACION'
+                                return (
+                                    <div key={pagoRegistro.id} className={`flex flex-col p-3 rounded-lg border-2 transition-colors group italic ${isWaiting ? 'bg-amber-50 border-amber-300 animate-pulse' : 'bg-red-50 border-transparent hover:bg-red-100'}`}>
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="font-bold text-warm-800">{pagoRegistro.alumno.usuario.nombre}</span>
+                                            <span className={`${isWaiting ? 'text-amber-600' : 'text-red-600'} font-bold`}>{formatMoney(pagoRegistro.monto)}</span>
+                                        </div>
+                                        <div className="text-[10px] text-warm-500 uppercase font-bold">
+                                            {pagoRegistro.concepto || `${pagoRegistro.inscripcion.taller.nombre} - ${pagoRegistro.inscripcion.dia}`}
+                                        </div>
+                                        {isWaiting && (
+                                            <div className="mt-2 pt-2 border-t border-amber-200">
+                                                <ConfirmarPagoButton pagoId={pagoRegistro.id} isWaitingVerification={true} />
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="text-xs text-warm-500">{insc.taller.nombre}</div>
-                                </div>
-                            )) : (
+                                )
+                            }) : (
                                 <p className="text-center py-6 text-warm-400">Todo al día ✨</p>
                             )}
                         </div>

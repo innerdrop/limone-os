@@ -11,7 +11,7 @@ interface User {
     image?: string | null
 }
 
-const menuItems = [
+export const menuItems = [
     {
         label: 'Tablero',
         href: '/admin',
