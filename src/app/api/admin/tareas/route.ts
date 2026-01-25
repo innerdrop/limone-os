@@ -24,6 +24,7 @@ export async function GET(request: Request) {
             where,
             orderBy: [
                 { fecha: 'asc' },
+                { hora: 'asc' },
                 { prioridad: 'desc' }
             ]
         })
