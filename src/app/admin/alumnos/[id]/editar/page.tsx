@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -44,7 +44,8 @@ interface AlumnoData {
     notas: string | null
 }
 
-export default function EditarAlumnoPage({ params }: { params: { id: string } }) {
+export default function EditarAlumnoPage({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params)
     const router = useRouter()
     const [alumno, setAlumno] = useState<AlumnoData | null>(null)
     const [loading, setLoading] = useState(true)
@@ -57,7 +58,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
 
     const fetchAlumno = async () => {
         try {
-            const res = await fetch(`/api/admin/alumnos/${params.id}`)
+            const res = await fetch(`/api/admin/alumnos/${resolvedParams.id}`)
             if (!res.ok) throw new Error('Error al cargar datos')
             const data = await res.json()
             setAlumno(data)
@@ -126,7 +127,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
         data.notas = formData.get('notas')
 
         try {
-            const res = await fetch(`/api/admin/alumnos/${params.id}`, {
+            const res = await fetch(`/api/admin/alumnos/${resolvedParams.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -139,7 +140,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
                 throw new Error(errorData.error || 'Error al guardar')
             }
 
-            router.push(`/admin/alumnos/${params.id}`)
+            router.push(`/admin/alumnos/${resolvedParams.id}`)
             router.refresh()
         } catch (err: any) {
             setError(err.message || 'Error al guardar los cambios')
@@ -181,7 +182,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
                     <div className="flex items-center gap-2 text-sm text-warm-500 mb-2">
                         <Link href="/admin/alumnos" className="hover:text-warm-800">Alumnos</Link>
                         <span>/</span>
-                        <Link href={`/admin/alumnos/${params.id}`} className="hover:text-warm-800">
+                        <Link href={`/admin/alumnos/${resolvedParams.id}`} className="hover:text-warm-800">
                             {alumno.usuario.nombre}
                         </Link>
                         <span>/</span>
@@ -582,7 +583,7 @@ export default function EditarAlumnoPage({ params }: { params: { id: string } })
                     {/* Botones de acción */}
                     <div className="flex gap-4 justify-end">
                         <Link
-                            href={`/admin/alumnos/${params.id}`}
+                            href={`/admin/alumnos/${resolvedParams.id}`}
                             className="btn-outline"
                         >
                             Cancelar
