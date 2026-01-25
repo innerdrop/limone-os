@@ -42,7 +42,7 @@ services:
       - "${APP_PORT:-3006}:3000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-limone}:${POSTGRES_PASSWORD:-limone_dev_2025}@db:5432/${POSTGRES_DB:-limone}
+      DATABASE_URL: ${DATABASE_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
       # Mercado Pago (opcional)
