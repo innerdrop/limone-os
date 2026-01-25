@@ -4,8 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { afipService } from '@/lib/afip'
 import { generateInvoicePDF } from '@/lib/invoice-generator'
-import fs from 'fs/promises'
-import path from 'path'
+import cloudinary from '@/lib/cloudinary'
 import { startOfMonth, endOfMonth, format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -86,17 +85,23 @@ export async function POST(
             tallerNombre: pago.inscripcion?.taller.nombre || 'Taller Limoné'
         })
 
-        // 5. Guardar el PDF en el servidor
-        const fileName = `factura_${fiscalData.puntoVenta}_${fiscalData.nroComprobante}.pdf`
-        const dirPath = path.join(process.cwd(), 'public', 'comprobantes')
-        const publicPath = path.join(dirPath, fileName)
-
-        // Asegurar que el directorio existe
-        await fs.mkdir(dirPath, { recursive: true })
-
+        // 5. Guardar el PDF en Cloudinary
         const arrayBuffer = await pdfBlob.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        await fs.writeFile(publicPath, buffer)
+
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    folder: 'comprobantes',
+                    resource_type: 'auto',
+                    public_id: `factura_${fiscalData.puntoVenta}_${fiscalData.nroComprobante}`
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
+        }) as any
 
         // 6. Actualizar el pago en la base de datos
         // Convertir caeVencimiento de AAAAMMDD a Date
@@ -115,7 +120,7 @@ export async function POST(
                 cuitEmisor: process.env.AFIP_CUIT || '27-12345678-9',
                 emisorNombre: 'Taller Limoné',
                 facturadoEn: new Date(),
-                comprobantePdf: `/comprobantes/${fileName}`
+                comprobantePdf: uploadResponse.secure_url
             }
         })
 

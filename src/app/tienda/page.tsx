@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getOptimizedUrl } from '@/utils/cloudinary-helper'
 import { useCart } from '@/components/tienda/CartProvider'
 
 interface Producto {
@@ -273,10 +274,12 @@ function ProductCard({
                 <div className="relative aspect-square bg-warm-100 overflow-hidden">
                     {producto.imagenUrl ? (
                         <Image
-                            src={producto.imagenUrl}
+                            src={getOptimizedUrl(producto.imagenUrl, 500, 500)}
                             alt={producto.nombre}
                             fill
+                            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 15vw"
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            unoptimized
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-3xl text-warm-300">

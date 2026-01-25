@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import path from 'path'
-import { randomUUID } from 'crypto'
+import cloudinary from '@/lib/cloudinary'
 
 export async function POST(request: NextRequest) {
     try {
@@ -30,37 +27,39 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Validate file size (2MB max)
-        const maxSize = 2 * 1024 * 1024
+        // Validate file size (5MB max for Cloudinary is fine, but keeping some limit)
+        const maxSize = 5 * 1024 * 1024
         if (file.size > maxSize) {
             return NextResponse.json(
-                { error: 'La imagen es demasiado grande. Máximo 2MB.' },
+                { error: 'La imagen es demasiado grande. Máximo 5MB.' },
                 { status: 400 }
             )
         }
 
-        // Create uploads/slider directory if it doesn't exist
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'slider')
-        if (!existsSync(uploadDir)) {
-            await mkdir(uploadDir, { recursive: true })
-        }
-
-        // Generate unique filename
-        const extension = file.name.split('.').pop() || 'jpg'
-        const filename = `${randomUUID()}.${extension}`
-        const filepath = path.join(uploadDir, filename)
-
-        // Convert file to buffer and save
+        // Convert file to buffer
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
-        await writeFile(filepath, buffer)
 
-        // Return the public URL
-        const url = `/uploads/slider/${filename}`
+        // Upload to Cloudinary
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    folder: 'slider',
+                    resource_type: 'image'
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
+        }) as any
 
-        return NextResponse.json({ url, filename })
+        return NextResponse.json({
+            url: uploadResponse.secure_url,
+            public_id: uploadResponse.public_id
+        })
     } catch (error) {
-        console.error('Error uploading slider image:', error)
+        console.error('Error uploading slider image to Cloudinary:', error)
         return NextResponse.json(
             { error: 'Error al subir la imagen' },
             { status: 500 }

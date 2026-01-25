@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import cloudinary from '@/lib/cloudinary'
 
 export async function POST(request: Request) {
     try {
@@ -22,24 +20,23 @@ export async function POST(request: Request) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        // Ensure directory exists
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'productos')
-        await mkdir(uploadDir, { recursive: true })
+        // Upload to Cloudinary
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    folder: 'productos',
+                    resource_type: 'auto'
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
+        }) as any
 
-        // Generate unique filename
-        const extension = file.name.split('.').pop() || 'jpg'
-        const filename = `${uuidv4()}.${extension}`
-        const filepath = join(uploadDir, filename)
-
-        // Write file
-        await writeFile(filepath, buffer)
-
-        // Return public URL
-        const url = `/uploads/productos/${filename}`
-
-        return NextResponse.json({ url })
+        return NextResponse.json({ url: uploadResponse.secure_url })
     } catch (error) {
-        console.error('Error uploading file:', error)
+        console.error('Error uploading file to Cloudinary:', error)
         return NextResponse.json({ error: 'Error al subir imagen' }, { status: 500 })
     }
 }

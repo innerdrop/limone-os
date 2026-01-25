@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
+import { getOptimizedUrl } from '@/utils/cloudinary-helper'
 import { useCart } from '@/components/tienda/CartProvider'
 
 interface Producto {
@@ -120,10 +121,13 @@ export default function ProductoDetallePage() {
                             <div className="aspect-square rounded-3xl overflow-hidden bg-warm-100 relative shadow-2xl">
                                 {producto.imagenUrl ? (
                                     <Image
-                                        src={producto.imagenUrl}
+                                        src={getOptimizedUrl(producto.imagenUrl, 800, 800)}
                                         alt={producto.nombre}
                                         fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
                                         className="object-cover"
+                                        priority
+                                        unoptimized
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-8xl text-warm-300">
@@ -138,8 +142,8 @@ export default function ProductoDetallePage() {
                             {/* Category badge */}
                             <div className="flex gap-3 mb-4">
                                 <span className={`text-sm font-bold px-4 py-1.5 rounded-full ${producto.categoria === 'OBRA'
-                                        ? 'bg-purple-100 text-purple-700'
-                                        : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-blue-100 text-blue-700'
                                     }`}>
                                     {producto.categoria === 'OBRA' ? '🎨 Obra de Arte' : '🎨 Material Artístico'}
                                 </span>
@@ -229,10 +233,10 @@ export default function ProductoDetallePage() {
                                     onClick={handleAddToCart}
                                     disabled={producto.stock === 0 || added}
                                     className={`w-full py-4 rounded-2xl font-bold text-lg transition-all ${added
-                                            ? 'bg-green-500 text-white'
-                                            : producto.stock === 0
-                                                ? 'bg-warm-200 text-warm-400 cursor-not-allowed'
-                                                : 'bg-brand-purple text-white hover:bg-brand-purple/90 shadow-lg hover:shadow-xl'
+                                        ? 'bg-green-500 text-white'
+                                        : producto.stock === 0
+                                            ? 'bg-warm-200 text-warm-400 cursor-not-allowed'
+                                            : 'bg-brand-purple text-white hover:bg-brand-purple/90 shadow-lg hover:shadow-xl'
                                         }`}
                                 >
                                     {added ? '✓ Agregado al carrito' : producto.stock === 0 ? 'Agotado' : `Agregar al carrito - $${(producto.precio * cantidad).toLocaleString('es-AR')}`}

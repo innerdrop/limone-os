@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { getOptimizedUrl } from '@/utils/cloudinary-helper'
 
 interface Producto {
     id: string
@@ -161,13 +162,22 @@ export default function AdminTiendaPage() {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de eliminar este producto?')) return
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este producto permanentemente?')) return
 
         try {
-            await fetch(`/api/admin/productos?id=${id}`, { method: 'DELETE' })
-            fetchProductos()
+            const response = await fetch(`/api/admin/productos?id=${id}`, {
+                method: 'DELETE'
+            })
+
+            if (response.ok) {
+                fetchProductos()
+            } else {
+                const errorData = await response.json()
+                alert(`Error al eliminar: ${errorData.error || 'Error desconocido'}`)
+            }
         } catch (error) {
             console.error('Error deleting product:', error)
+            alert('Error de red al intentar eliminar el producto')
         }
     }
 
@@ -257,10 +267,12 @@ export default function AdminTiendaPage() {
                             <div className="aspect-square relative bg-warm-100">
                                 {producto.imagenUrl ? (
                                     <Image
-                                        src={producto.imagenUrl}
+                                        src={getOptimizedUrl(producto.imagenUrl, 600, 600)}
                                         alt={producto.nombre}
                                         fill
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                         className="object-cover"
+                                        unoptimized
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-4xl text-warm-300">
@@ -460,10 +472,12 @@ export default function AdminTiendaPage() {
                                     {formData.imagenUrl && (
                                         <div className="relative w-32 h-32 rounded-lg overflow-hidden bg-warm-100 border border-warm-200">
                                             <Image
-                                                src={formData.imagenUrl}
+                                                src={getOptimizedUrl(formData.imagenUrl, 200, 200)}
                                                 alt="Preview"
                                                 fill
+                                                sizes="128px"
                                                 className="object-cover"
+                                                unoptimized
                                             />
                                             <button
                                                 type="button"

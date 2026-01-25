@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import UploadObraForm from '@/components/admin/UploadObraForm'
+import { getOptimizedUrl } from '@/utils/cloudinary-helper'
 
 export default async function ContenidoPage() {
     // Fetch alumnos with their obra counts
@@ -68,9 +69,10 @@ export default async function ContenidoPage() {
                                 {ultimasObras.map((obra) => (
                                     <div key={obra.id} className="relative aspect-square rounded-lg overflow-hidden group">
                                         <img
-                                            src={obra.imagenUrl}
+                                            src={getOptimizedUrl(obra.imagenUrl, 400, 400)}
                                             alt={obra.titulo || 'Obra'}
                                             className="w-full h-full object-cover"
+                                            loading="lazy"
                                         />
                                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                                             <p className="text-[10px] text-white font-bold truncate w-full">{obra.titulo}</p>

@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
-import { v4 as uuidv4 } from 'uuid'
+import cloudinary from '@/lib/cloudinary'
 
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions)
 
-        // Check if user is admin
+        // Check if user is admin or docente
         if (!session?.user?.id) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
         }
@@ -19,7 +17,7 @@ export async function POST(request: NextRequest) {
             where: { id: session.user.id }
         })
 
-        if (user?.rol !== 'ADMIN') {
+        if (user?.rol !== 'ADMIN' && user?.rol !== 'DOCENTE') {
             return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
         }
 
@@ -43,18 +41,24 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Alumno no encontrado' }, { status: 404 })
         }
 
-        // Handle file storage
+        // Handle file storage with Cloudinary
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        const fileExtension = file.name.split('.').pop()
-        const fileName = `${uuidv4()}.${fileExtension}`
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'obras')
-        const filePath = join(uploadDir, fileName)
+        const uploadResponse = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    folder: 'obras',
+                    resource_type: 'image'
+                },
+                (error, result) => {
+                    if (error) reject(error)
+                    else resolve(result)
+                }
+            ).end(buffer)
+        }) as any
 
-        await writeFile(filePath, buffer)
-
-        const imagenUrl = `/uploads/obras/${fileName}`
+        const imagenUrl = uploadResponse.secure_url
 
         // Create Obra record
         const obra = await prisma.obra.create({
@@ -70,7 +74,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, obra })
     } catch (error) {
-        console.error('Error al subir obra:', error)
+        console.error('Error al subir obra a Cloudinary:', error)
         return NextResponse.json({ error: 'Error al procesar la subida' }, { status: 500 })
     }
 }
