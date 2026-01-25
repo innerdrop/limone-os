@@ -91,25 +91,32 @@ export default async function AgendaPage() {
             link: `/admin/alumnos/${cita.alumnoId}`,
             completada: false
         })),
-        ...tareas.map((tarea: any) => ({
-            id: tarea.id,
-            tipo: 'TAREA',
-            tipoLabel: tarea.categoria ? getCategoriaLabel(tarea.categoria) : 'Tarea',
-            fecha: tarea.fecha,
-            hora: tarea.hora,
-            titulo: tarea.titulo,
-            detalle: tarea.descripcion || '',
-            color: tarea.completada
-                ? 'bg-gray-100 text-gray-500 border-gray-300'
-                : tarea.prioridad === 'ALTA'
-                    ? 'bg-red-100 text-red-700 border-red-300'
-                    : tarea.prioridad === 'BAJA'
-                        ? 'bg-green-100 text-green-700 border-green-300'
-                        : 'bg-blue-100 text-blue-700 border-blue-300',
-            link: '#',
-            completada: tarea.completada,
-            prioridad: tarea.prioridad
-        })),
+        ...tareas.map((tarea: any) => {
+            const fechaConHora = new Date(tarea.fecha)
+            if (tarea.hora) {
+                const [hours, minutes] = tarea.hora.split(':')
+                fechaConHora.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+            }
+            return {
+                id: tarea.id,
+                tipo: 'TAREA',
+                tipoLabel: tarea.categoria ? getCategoriaLabel(tarea.categoria) : 'Tarea',
+                fecha: fechaConHora,
+                hora: tarea.hora,
+                titulo: tarea.titulo,
+                detalle: tarea.descripcion || '',
+                color: tarea.completada
+                    ? 'bg-gray-100 text-gray-500 border-gray-300'
+                    : tarea.prioridad === 'ALTA'
+                        ? 'bg-red-100 text-red-700 border-red-300'
+                        : tarea.prioridad === 'BAJA'
+                            ? 'bg-green-100 text-green-700 border-green-300'
+                            : 'bg-blue-100 text-blue-700 border-blue-300',
+                link: '#',
+                completada: tarea.completada,
+                prioridad: tarea.prioridad
+            }
+        }),
         ...tallerSessions
     ]
 
