@@ -1,42 +1,52 @@
+require('dotenv').config()
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
+
 const prisma = new PrismaClient()
 
-async function main() {
-    const email = 'natalia@limone.usev.app'
-    const password = '123limone'
-    const hashedPassword = await bcrypt.hash(password, 10)
+async function createAdmin() {
+    console.log('🔐 Configurando usuario administrador...\n')
 
-    console.log(`Creando usuario administrador: ${email}`)
+    const email = 'natalia@tallerlimone.com'
+    const password = '2026Limon3*'
+    const nombre = 'Natalia Fusari'
 
-    const admin = await prisma.usuario.upsert({
-        where: { email: email },
-        update: {
-            password: hashedPassword,
-            rol: 'ADMIN',
-            debeCambiarPassword: false
-        },
-        create: {
-            email: email,
-            password: hashedPassword,
-            nombre: 'Natalia Fusari',
-            rol: 'ADMIN',
-            debeCambiarPassword: false
-        }
-    })
+    try {
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 12)
 
-    console.log('Administrador creado/actualizado correctamente:')
-    console.log(`ID: ${admin.id}`)
-    console.log(`Email: ${admin.email}`)
-    console.log(`Nombre: ${admin.nombre}`)
-    console.log(`Rol: ${admin.rol}`)
+        // Upsert the admin user
+        const admin = await prisma.usuario.upsert({
+            where: { email },
+            update: {
+                password: hashedPassword,
+                nombre,
+                rol: 'ADMIN',
+                activo: true,
+                debeCambiarPassword: false,
+            },
+            create: {
+                email,
+                password: hashedPassword,
+                nombre,
+                rol: 'ADMIN',
+                activo: true,
+                debeCambiarPassword: false,
+            },
+        })
+
+        console.log('✅ Usuario administrador configurado:')
+        console.log(`   📧 Email: ${admin.email}`)
+        console.log(`   👤 Nombre: ${admin.nombre}`)
+        console.log(`   🔑 Rol: ${admin.rol}`)
+        console.log(`   ✓ Activo: ${admin.activo}`)
+        console.log('\n🎉 ¡Listo para producción!')
+    } catch (error) {
+        console.error('❌ Error:', error.message)
+        process.exit(1)
+    } finally {
+        await prisma.$disconnect()
+    }
 }
 
-main()
-    .catch(e => {
-        console.error(e)
-        process.exit(1)
-    })
-    .finally(async () => {
-        await prisma.$disconnect()
-    })
+createAdmin()

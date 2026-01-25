@@ -39,7 +39,7 @@ services:
     container_name: limone-app
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-3006}:3000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-limone}:${POSTGRES_PASSWORD:-limone_dev_2025}@db:5432/${POSTGRES_DB:-limone}
@@ -48,9 +48,9 @@ services:
       # Mercado Pago (opcional)
       MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
       MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
-    depends_on:
-      db:
-        condition: service_healthy
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
     volumes:
       # Persistencia de archivos subidos
       - uploads_data:/app/public/uploads
