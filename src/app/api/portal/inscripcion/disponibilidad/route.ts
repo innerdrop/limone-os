@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
         // Get all active enrollments for the given day and time
         const enrollments = await prisma.inscripcion.findMany({
             where: {
-                dia: dia,
-                horario: horario,
+                dia: { contains: dia },
+                horario: { contains: horario },
                 estado: 'ACTIVA'
             },
             select: {
@@ -31,8 +31,10 @@ export async function GET(request: NextRequest) {
         })
 
         const occupiedSeats = enrollments
-            .map(e => e.asiento)
-            .filter((asiento): asiento is number => asiento !== null)
+            .flatMap((e: any) =>
+                e.asiento ? e.asiento.toString().split(',').map((s: string) => parseInt(s.trim())) : []
+            )
+            .filter((num: number): num is number => !isNaN(num))
 
         return NextResponse.json({ occupiedSeats })
     } catch (error) {

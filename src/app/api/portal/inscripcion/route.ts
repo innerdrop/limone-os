@@ -118,11 +118,11 @@ export async function POST(request: NextRequest) {
                         fase: 'Taller de Verano',
                         dia: diasCombinados,
                         horario: summerTime,
-                        asiento: 0,
+                        asiento: '0',
                         estado: 'ACTIVA',
                         notas: `Modalidad: ${summerModality}, Freq: ${summerFrequency}, Inicio: ${summerStartDate}`,
                         pagado: false
-                    }
+                    } as any
                 })
 
                 await tx.pago.create({
@@ -164,58 +164,66 @@ export async function POST(request: NextRequest) {
         if (!taller) return NextResponse.json({ error: 'Taller Regular no configurado' }, { status: 500 })
 
         await prisma.$transaction(async (tx) => {
-            // 1) Validate seats
-            for (const slot of enrollmentSlots) {
+            let firstInscId = '';
+            const allDays = enrollmentSlots.map((s: any) => s.dia).join(', ');
+
+            // 1) Create Inscriptions and Validate
+            for (let i = 0; i < enrollmentSlots.length; i++) {
+                const slot = enrollmentSlots[i];
+
                 const asientoOcupado = await tx.inscripcion.findFirst({
                     where: {
                         dia: { contains: slot.dia },
-                        horario: slot.horario,
-                        asiento: slot.asiento,
+                        horario: { contains: slot.horario },
+                        asiento: { contains: slot.asiento.toString() } as any,
                         estado: 'ACTIVA'
                     }
                 })
-                if (asientoOcupado) throw new Error(`El asiento ${slot.asiento} del ${slot.dia} ya está ocupado.`)
+
+                if (asientoOcupado) {
+                    // Check if it's the SAME seat number (not just contains, e.g. "1" in "10")
+                    const seats = (asientoOcupado.asiento as unknown as string)?.split(',') || [];
+                    if (seats.includes(slot.asiento.toString())) {
+                        throw new Error(`El asiento ${slot.asiento} del ${slot.dia} ya está ocupado.`);
+                    }
+                }
+
+                const newInsc = await tx.inscripcion.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        tallerId: taller.id,
+                        dia: slot.dia,
+                        horario: slot.horario,
+                        fase,
+                        asiento: slot.asiento.toString(),
+                        pagado: false,
+                        estado: 'ACTIVA'
+                    } as any
+                })
+
+                if (i === 0) firstInscId = newInsc.id;
             }
 
-            // 2) Create SINGLE Inscription
-            const diasStr = enrollmentSlots.map((s: any) => s.dia).join(', ')
-            const horariosStr = enrollmentSlots.map((s: any) => s.horario).join(' / ')
-            const asientosStr = enrollmentSlots.map((s: any) => `A${s.asiento}`).join(' / ')
-
-            const newInsc = await tx.inscripcion.create({
-                data: {
-                    alumnoId: alumno.id,
-                    tallerId: taller.id,
-                    dia: diasStr,
-                    horario: horariosStr,
-                    fase,
-                    asiento: enrollmentSlots[0].asiento,
-                    pagado: false,
-                    estado: 'ACTIVA',
-                    notas: `Asientos: ${asientosStr}`
-                }
-            })
-
-            // 3) Create SINGLE Payment
+            // 2) Create SINGLE Payment for the whole set
             const totalAmount = 25000 * enrollmentSlots.length
             await tx.pago.create({
                 data: {
                     alumnoId: alumno.id,
-                    inscripcionId: newInsc.id,
+                    inscripcionId: firstInscId,
                     monto: totalAmount,
                     estado: 'PENDIENTE',
                     mesCubierto: new Date().getMonth() + 1,
                     anioCubierto: new Date().getFullYear(),
-                    concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${diasStr})`
+                    concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${allDays})`
                 }
             })
 
-            // 4) Notify
+            // 3) Notify
             await tx.notificacion.create({
                 data: {
                     usuarioId: session.user.id,
                     titulo: 'Inscripción Registrada',
-                    mensaje: `Inscripción exitosa en ${fase}. Días: ${diasStr}. Valor mensual: $${totalAmount}`,
+                    mensaje: `Inscripción exitosa en ${fase}. Días: ${allDays}. Valor mensual: $${totalAmount}`,
                     tipo: 'INFO',
                     leida: false
                 }

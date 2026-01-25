@@ -45,6 +45,20 @@ const GRADES = [
     '4° Año Secundaria', '5° Año Secundaria', '6° Año Secundaria'
 ]
 
+const COUNTRY_CODES = [
+    { code: '+54', country: '🇦🇷 AR' },
+    { code: '+56', country: '🇨🇱 CL' },
+    { code: '+55', country: '🇧🇷 BR' },
+    { code: '+598', country: '🇺🇾 UY' },
+    { code: '+591', country: '🇧🇴 BO' },
+    { code: '+51', country: '🇵🇪 PE' },
+    { code: '+57', country: '🇨🇴 CO' },
+    { code: '+58', country: '🇻🇪 VE' },
+    { code: '+52', country: '🇲🇽 MX' },
+    { code: '+34', country: '🇪🇸 ES' },
+    { code: '+1', country: '🇺🇸 US' },
+]
+
 // ==================== TYPES ====================
 interface StudentData {
     nombre: string
@@ -53,15 +67,27 @@ interface StudentData {
     fechaNacimiento: string
     edad: string
     domicilio: string
+    domicilioCalle: string
+    domicilioNumero: string
+    domicilioTira: string
+    domicilioPiso: string
+    domicilioDepto: string
     colegio: string
     grado: string
 }
 
 interface GuardianData {
     tutorNombre: string
+    tutorApellido: string
     tutorDni: string
     tutorRelacion: string
     tutorDomicilio: string
+    tutorDomicilioCalle: string
+    tutorDomicilioNumero: string
+    tutorDomicilioTira: string
+    tutorDomicilioPiso: string
+    tutorDomicilioDepto: string
+    tutorTelefonoPrincipalCod: string
     tutorTelefonoPrincipal: string
     tutorTelefonoAlternativo: string
     tutorEmail: string
@@ -112,15 +138,27 @@ function InscripcionContent() {
         fechaNacimiento: '',
         edad: '',
         domicilio: '',
+        domicilioCalle: '',
+        domicilioNumero: '',
+        domicilioTira: '',
+        domicilioPiso: '',
+        domicilioDepto: '',
         colegio: '',
         grado: ''
     })
 
     const [guardianData, setGuardianData] = useState<GuardianData>({
         tutorNombre: '',
+        tutorApellido: '',
         tutorDni: '',
         tutorRelacion: '',
         tutorDomicilio: '',
+        tutorDomicilioCalle: '',
+        tutorDomicilioNumero: '',
+        tutorDomicilioTira: '',
+        tutorDomicilioPiso: '',
+        tutorDomicilioDepto: '',
+        tutorTelefonoPrincipalCod: '+54',
         tutorTelefonoPrincipal: '',
         tutorTelefonoAlternativo: '',
         tutorEmail: '',
@@ -177,7 +215,8 @@ function InscripcionContent() {
 
     // VALIDATION
     const validateStep1 = () => {
-        if (!studentData.nombre || !studentData.apellido || !studentData.dni || !studentData.fechaNacimiento || !studentData.domicilio || !studentData.colegio || !studentData.grado) {
+        if (!studentData.nombre || !studentData.apellido || !studentData.dni || !studentData.fechaNacimiento ||
+            !studentData.domicilioCalle || !studentData.domicilioNumero || !studentData.colegio || !studentData.grado) {
             setError('Por favor completá todos los campos obligatorios (*)')
             return false
         }
@@ -186,8 +225,9 @@ function InscripcionContent() {
     }
 
     const validateStep2 = () => {
-        if (!guardianData.tutorNombre || !guardianData.tutorDni || !guardianData.tutorRelacion ||
-            !guardianData.tutorTelefonoPrincipal || !guardianData.tutorEmail) {
+        if (!guardianData.tutorNombre || !guardianData.tutorApellido || !guardianData.tutorDni || !guardianData.tutorRelacion ||
+            !guardianData.tutorTelefonoPrincipal || !guardianData.tutorEmail ||
+            !guardianData.tutorDomicilioCalle || !guardianData.tutorDomicilioNumero) {
             setError('Por favor completá todos los campos obligatorios (*)')
             return false
         }
@@ -257,13 +297,23 @@ function InscripcionContent() {
         const signatureImage = sigCanvas.current?.getCanvas().toDataURL('image/png')
 
         try {
+            // Format address
+            const fullAddress = `${studentData.domicilioCalle} ${studentData.domicilioNumero}${studentData.domicilioTira ? `, Tira ${studentData.domicilioTira}` : ''}${studentData.domicilioPiso ? `, Piso ${studentData.domicilioPiso}` : ''}${studentData.domicilioDepto ? `, Depto ${studentData.domicilioDepto}` : ''}`
+
+            const fullTutorAddress = `${guardianData.tutorDomicilioCalle} ${guardianData.tutorDomicilioNumero}${guardianData.tutorDomicilioTira ? `, Tira ${guardianData.tutorDomicilioTira}` : ''}${guardianData.tutorDomicilioPiso ? `, Piso ${guardianData.tutorDomicilioPiso}` : ''}${guardianData.tutorDomicilioDepto ? `, Depto ${guardianData.tutorDomicilioDepto}` : ''}`
+
+            const fullTutorPhone = `${guardianData.tutorTelefonoPrincipalCod} ${guardianData.tutorTelefonoPrincipal}`
+
             const response = await fetch('/api/inscripcion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...studentData,
-                    nombre: `${studentData.nombre} ${studentData.apellido}`, // Combine name
+                    domicilio: fullAddress,
+                    nombre: `${studentData.nombre} ${studentData.apellido}`,
                     ...guardianData,
+                    tutorDomicilio: fullTutorAddress,
+                    tutorTelefonoPrincipal: fullTutorPhone,
                     ...authData,
                     firmaResponsable: signatureImage
                 })
@@ -486,7 +536,10 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                     {/* STEP 1: Alumno */}
                     {mode === 'inscripcion' && step === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-2xl font-bold text-warm-800">1. Datos del Alumno</h2>
+                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
+                                <h2 className="text-2xl font-bold text-warm-800">1. Datos del Alumno</h2>
+                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                            </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div>
@@ -517,12 +570,37 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="label">Edad</label>
-                                    <input type="text" className="input-field bg-gray-50" value={studentData.edad} readOnly />
+                                    <input type="text" className="input-field bg-canvas-50" value={studentData.edad} readOnly />
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 col-span-1">
+                                    <div className="col-span-2">
+                                        <label className="label">Calle *</label>
+                                        <input type="text" className="input-field"
+                                            value={studentData.domicilioCalle} onChange={e => handleStudentChange('domicilioCalle', e.target.value)} required />
+                                    </div>
+                                    <div>
+                                        <label className="label">N° *</label>
+                                        <input type="text" className="input-field"
+                                            value={studentData.domicilioNumero} onChange={e => handleStudentChange('domicilioNumero', e.target.value)} required />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="label">Tira</label>
+                                    <input type="text" className="input-field"
+                                        value={studentData.domicilioTira} onChange={e => handleStudentChange('domicilioTira', e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="label">Domicilio *</label>
+                                    <label className="label">Piso</label>
                                     <input type="text" className="input-field"
-                                        value={studentData.domicilio} onChange={e => handleStudentChange('domicilio', e.target.value)} required />
+                                        value={studentData.domicilioPiso} onChange={e => handleStudentChange('domicilioPiso', e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="label">Depto</label>
+                                    <input type="text" className="input-field"
+                                        value={studentData.domicilioDepto} onChange={e => handleStudentChange('domicilioDepto', e.target.value)} />
                                 </div>
                             </div>
 
@@ -562,13 +640,25 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                     {/* STEP 2: Tutor */}
                     {mode === 'inscripcion' && step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-2xl font-bold text-warm-800">2. Datos del Tutor</h2>
-                            <p className="text-sm text-warm-600 -mt-4">Padre, Madre o Tutor Legal</p>
+                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-warm-800">2. Datos del Tutor</h2>
+                                    <p className="text-sm text-warm-600">Padre, Madre o Tutor Legal</p>
+                                </div>
+                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                            </div>
 
-                            <div>
-                                <label className="label">Nombre y Apellido *</label>
-                                <input type="text" className="input-field"
-                                    value={guardianData.tutorNombre} onChange={e => handleGuardianChange('tutorNombre', e.target.value)} required />
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="label">Nombre *</label>
+                                    <input type="text" className="input-field"
+                                        value={guardianData.tutorNombre} onChange={e => handleGuardianChange('tutorNombre', e.target.value)} required />
+                                </div>
+                                <div>
+                                    <label className="label">Apellido *</label>
+                                    <input type="text" className="input-field"
+                                        value={guardianData.tutorApellido} onChange={e => handleGuardianChange('tutorApellido', e.target.value)} required />
+                                </div>
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">
@@ -591,10 +681,21 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
+                                <div className="space-y-2">
                                     <label className="label">Teléfono Principal *</label>
-                                    <input type="tel" className="input-field" placeholder="wsp/cel"
-                                        value={guardianData.tutorTelefonoPrincipal} onChange={e => handleGuardianChange('tutorTelefonoPrincipal', e.target.value)} required />
+                                    <div className="flex gap-2">
+                                        <select
+                                            className="input-field w-24 text-sm"
+                                            value={guardianData.tutorTelefonoPrincipalCod}
+                                            onChange={e => handleGuardianChange('tutorTelefonoPrincipalCod', e.target.value)}
+                                        >
+                                            {COUNTRY_CODES.map(c => (
+                                                <option key={c.code} value={c.code}>{c.country} ({c.code})</option>
+                                            ))}
+                                        </select>
+                                        <input type="tel" className="input-field flex-1" placeholder="Solo números"
+                                            value={guardianData.tutorTelefonoPrincipal} onChange={e => handleGuardianChange('tutorTelefonoPrincipal', e.target.value)} required />
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="label">Email *</label>
@@ -603,10 +704,38 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="label">Domicilio del Tutor ({'Igual al alumno'}?)</label>
-                                <input type="text" className="input-field"
-                                    value={guardianData.tutorDomicilio} onChange={e => handleGuardianChange('tutorDomicilio', e.target.value)} />
+                            <div className="pt-4 border-t border-canvas-100">
+                                <p className="text-sm font-bold text-warm-700 mb-4">Domicilio del Tutor</p>
+                                <div className="grid grid-cols-3 gap-2 mb-4">
+                                    <div className="col-span-2">
+                                        <label className="label">Calle *</label>
+                                        <input type="text" className="input-field"
+                                            value={guardianData.tutorDomicilioCalle} onChange={e => handleGuardianChange('tutorDomicilioCalle', e.target.value)} required />
+                                    </div>
+                                    <div>
+                                        <label className="label">N° *</label>
+                                        <input type="text" className="input-field"
+                                            value={guardianData.tutorDomicilioNumero} onChange={e => handleGuardianChange('tutorDomicilioNumero', e.target.value)} required />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="label">Tira</label>
+                                        <input type="text" className="input-field"
+                                            value={guardianData.tutorDomicilioTira} onChange={e => handleGuardianChange('tutorDomicilioTira', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="label">Piso</label>
+                                        <input type="text" className="input-field"
+                                            value={guardianData.tutorDomicilioPiso} onChange={e => handleGuardianChange('tutorDomicilioPiso', e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="label">Depto</label>
+                                        <input type="text" className="input-field"
+                                            value={guardianData.tutorDomicilioDepto} onChange={e => handleGuardianChange('tutorDomicilioDepto', e.target.value)} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -614,7 +743,10 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                     {/* STEP 3: Autorizaciones */}
                     {mode === 'inscripcion' && step === 3 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-2xl font-bold text-warm-800">3. Autorizaciones</h2>
+                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
+                                <h2 className="text-2xl font-bold text-warm-800">3. Autorizaciones</h2>
+                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                            </div>
 
                             <div className="space-y-4">
                                 <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
@@ -684,7 +816,10 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                     {/* STEP 4: Firma */}
                     {mode === 'inscripcion' && step === 4 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <h2 className="text-2xl font-bold text-warm-800">4. Confirmación y Firma</h2>
+                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
+                                <h2 className="text-2xl font-bold text-warm-800">4. Confirmación y Firma</h2>
+                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                            </div>
 
                             <button
                                 type="button"

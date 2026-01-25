@@ -33,12 +33,23 @@ model Alumno {
   fechaNacimiento           DateTime?
   edad                      Int?
   domicilio                 String?
+  domicilioCalle            String?
+  domicilioNumero           String?
+  domicilioTira             String?
+  domicilioPiso             String?
+  domicilioDepto            String?
   colegio                   String?
   grado                     String?
   tutorNombre               String?
+  tutorApellido             String?
   tutorDni                  String?
   tutorRelacion             String?
   tutorDomicilio            String?
+  tutorDomicilioCalle       String?
+  tutorDomicilioNumero      String?
+  tutorDomicilioTira        String?
+  tutorDomicilioPiso        String?
+  tutorDomicilioDepto       String?
   tutorTelefonoPrincipal    String?
   tutorTelefonoAlternativo  String?
   tutorEmail                String?
@@ -143,7 +154,7 @@ model Inscripcion {
   estado           String   @default("ACTIVA")
   notas            String?
   fase             String?
-  asiento          Int?
+  asiento          String?
   creadoEn         DateTime @default(now())
   actualizadoEn    DateTime @updatedAt
   taller           Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)

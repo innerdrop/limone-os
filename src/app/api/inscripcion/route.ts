@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest) {
     try {
@@ -15,13 +13,24 @@ export async function POST(request: NextRequest) {
             fechaNacimiento,
             edad,
             domicilio,
+            domicilioCalle,
+            domicilioNumero,
+            domicilioTira,
+            domicilioPiso,
+            domicilioDepto,
             colegio,
             grado,
             // Guardian data
             tutorNombre,
+            tutorApellido,
             tutorDni,
             tutorRelacion,
             tutorDomicilio,
+            tutorDomicilioCalle,
+            tutorDomicilioNumero,
+            tutorDomicilioTira,
+            tutorDomicilioPiso,
+            tutorDomicilioDepto,
             tutorTelefonoPrincipal,
             tutorTelefonoAlternativo,
             tutorEmail,
@@ -38,14 +47,14 @@ export async function POST(request: NextRequest) {
         } = body
 
         // Validate required fields
-        if (!nombre || !dni || !fechaNacimiento || !domicilio) {
+        if (!nombre || !dni || !fechaNacimiento || (!domicilio && !domicilioCalle)) {
             return NextResponse.json(
                 { error: 'Faltan datos del alumno' },
                 { status: 400 }
             )
         }
 
-        if (!tutorNombre || !tutorDni || !tutorRelacion || !tutorTelefonoPrincipal || !tutorEmail) {
+        if (!tutorNombre || !tutorApellido || !tutorDni || !tutorRelacion || !tutorTelefonoPrincipal || !tutorEmail) {
             return NextResponse.json(
                 { error: 'Faltan datos del tutor' },
                 { status: 400 }
@@ -90,13 +99,24 @@ export async function POST(request: NextRequest) {
                 fechaNacimiento: new Date(fechaNacimiento),
                 edad: parseInt(edad),
                 domicilio,
+                domicilioCalle,
+                domicilioNumero,
+                domicilioTira,
+                domicilioPiso,
+                domicilioDepto,
                 colegio,
                 grado,
                 // Guardian data
                 tutorNombre,
+                tutorApellido,
                 tutorDni,
                 tutorRelacion,
                 tutorDomicilio,
+                tutorDomicilioCalle,
+                tutorDomicilioNumero,
+                tutorDomicilioTira,
+                tutorDomicilioPiso,
+                tutorDomicilioDepto,
                 tutorTelefonoPrincipal,
                 tutorTelefonoAlternativo,
                 tutorEmail,
@@ -112,7 +132,7 @@ export async function POST(request: NextRequest) {
                 dniFirma,
                 // Profile
                 perfilCompleto: true // Since we are collecting everything now
-            }
+            } as any
         })
 
         // TODO: Send welcome email with credentials
