@@ -1,66 +1,147 @@
-# Dependencies
+# ============================================================
+# 🍋 Limone OS - Git Ignore
+# V Solutions
+# ============================================================
+
+# ------------------------------------------------------------
+# 📦 Dependencies
+# ------------------------------------------------------------
 node_modules/
 .pnp
 .pnp.js
+.yarn/
 
-# Next.js
+# ------------------------------------------------------------
+# 🔨 Next.js Build Output
+# ------------------------------------------------------------
 .next/
 out/
 build/
+.swc/
 
-# Database
+# ------------------------------------------------------------
+# 🐘 Database
+# ------------------------------------------------------------
+# SQLite (desarrollo legacy)
 prisma/dev.db
 prisma/dev.db-journal
 *.db
 *.db-journal
 
-# Environment files
+# PostgreSQL data (Docker local)
+postgres_data/
+
+# ------------------------------------------------------------
+# 🔐 Environment Files (CRÍTICO - nunca subir)
+# ------------------------------------------------------------
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
 
-# Debug logs
+# Nota: .env.example SÍ se sube como plantilla
+
+# ------------------------------------------------------------
+# 📝 Logs y Debug
+# ------------------------------------------------------------
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
+lerna-debug.log*
 
-# IDE
+# Archivos de output de debug
+*_output.txt
+debug_*.txt
+
+# ------------------------------------------------------------
+# 💻 IDE / Editor
+# ------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-workspace
+*.sublime-project
 
-# OS files
+# ------------------------------------------------------------
+# 🖥️ Sistema Operativo
+# ------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# Testing
-coverage/
-
-# Misc
-*.pem
-
-# Backup files (contain sensitive data)
-backup-sqlite.json
-
-# Production env template is OK, but not the actual env
-.env.production.local
-
-# Docker
+# ------------------------------------------------------------
+# 🐳 Docker
+# ------------------------------------------------------------
 .docker/
-# Ignora la carpeta donde Postgres guarda los datos físicos en tu PC
-postgres_data/
+docker-compose.override.yml
 
-# Prisma
-# Ignora los archivos de migración temporales pero NO la carpeta 'migrations' entera
-# (Queremos que las definiciones de las tablas sí se suban)
+# ------------------------------------------------------------
+# ☁️ Deployment / Cloud
+# ------------------------------------------------------------
+.vercel
+.netlify
+
+# ------------------------------------------------------------
+# 🧪 Testing
+# ------------------------------------------------------------
+coverage/
+.nyc_output/
+*.lcov
+
+# ------------------------------------------------------------
+# 📜 TypeScript
+# ------------------------------------------------------------
+*.tsbuildinfo
+
+# ------------------------------------------------------------
+# 🔒 Seguridad / Credenciales
+# ------------------------------------------------------------
+*.pem
+*.key
+*.cert
+*.p12
+secrets/
+credentials/
+
+# Backups con datos sensibles
+backup-*.json
+*-backup.json
+*.bak
+
+# ------------------------------------------------------------
+# 📁 Prisma
+# ------------------------------------------------------------
+# Mantener carpeta migrations/ para versionado de esquema
 prisma/migrations-lock.toml
+
+# ------------------------------------------------------------
+# 🗂️ Archivos temporales y misceláneos
+# ------------------------------------------------------------
+tmp/
+temp/
+*.tmp
+*.temp
+*.log
+
+# Scripts de desarrollo/debug individuales
+check-*.js
+debug-*.js
+delete*.js
+force-*.js
+list-*.js
+seed-*.js
+test-*.js
+update-*.js
+verify-*.ts
+
+# Pero mantener la carpeta scripts/
+!scripts/

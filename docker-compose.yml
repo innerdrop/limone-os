@@ -1,52 +1,82 @@
 version: '3.8'
 
 services:
+  # ===========================================
+  # PostgreSQL Database Service
+  # ===========================================
   db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: limone-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-limone}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-limone_secure_2025}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-limone_dev_2025}
       POSTGRES_DB: ${POSTGRES_DB:-limone}
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Persistencia local para desarrollo - cada dev tiene su propia data
+      - ./postgres_data:/var/lib/postgresql/data
+    ports:
+      # Puerto expuesto solo para desarrollo local (acceso directo a DB)
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-limone}" ]
-      interval: 5s
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-limone} -d ${POSTGRES_DB:-limone}" ]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - limone-network
 
+  # ===========================================
+  # Next.js Application Service
+  # ===========================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
     container_name: limone-app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-limone}:${POSTGRES_PASSWORD:-limone_secure_2025}@db:5432/${POSTGRES_DB:-limone}
+      NODE_ENV: ${NODE_ENV:-production}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-limone}:${POSTGRES_PASSWORD:-limone_dev_2025}@db:5432/${POSTGRES_DB:-limone}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      NEXTAUTH_URL: ${NEXTAUTH_URL:-https://limone.usev.app}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      # Mercado Pago (opcional)
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_PUBLIC_KEY: ${MP_PUBLIC_KEY:-}
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - uploads:/app/public/uploads
+      # Persistencia de archivos subidos
+      - uploads_data:/app/public/uploads
     networks:
       - limone-network
+    # Healthcheck para monitoreo
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
+# ===========================================
+# Volumes - Persistencia de datos
+# ===========================================
 volumes:
-  postgres_data:
-    name: limone_postgres_data
-  uploads:
+  uploads_data:
     name: limone_uploads
 
+# ===========================================
+# Networks - Red interna de Docker
+# ===========================================
 networks:
   limone-network:
+    driver: bridge
     name: limone-network
