@@ -1,0 +1,103 @@
+# ============================================================
+# 🚀 Limone OS - CI/CD Pipeline
+# V Solutions | Deploy automático al VPS
+# ============================================================
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+  # Permite ejecución manual desde GitHub
+  workflow_dispatch:
+
+env:
+  PROJECT_PATH: /var/www/limone
+
+jobs:
+  # ============================================
+  # Job: Deploy to Production VPS
+  # ============================================
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    
+    steps:
+      # ------------------------------------------
+      # 1. Checkout del código
+      # ------------------------------------------
+      - name: 📦 Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------------------
+      # 2. Configurar SSH
+      # ------------------------------------------
+      - name: 🔐 Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      # ------------------------------------------
+      # 3. Deploy al VPS
+      # ------------------------------------------
+      - name: 🚀 Deploy to VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            set -e
+            
+            echo "📂 Navegando al directorio del proyecto..."
+            cd ${{ env.PROJECT_PATH }}
+            
+            echo "📥 Obteniendo últimos cambios de Git..."
+            git fetch origin main
+            git reset --hard origin/main
+            
+            echo "🐳 Reconstruyendo contenedores Docker..."
+            docker-compose down
+            docker-compose up -d --build
+            
+            echo "⏳ Esperando a que la base de datos esté lista..."
+            sleep 10
+            
+            echo "🔄 Ejecutando migraciones de Prisma..."
+            docker-compose exec -T app npx prisma migrate deploy
+            
+            echo "🧹 Limpiando imágenes Docker no utilizadas..."
+            docker image prune -f
+            
+            echo "✅ Deploy completado exitosamente!"
+          ENDSSH
+
+      # ------------------------------------------
+      # 4. Verificar deploy
+      # ------------------------------------------
+      - name: ✅ Verify Deployment
+        run: |
+          sleep 15
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            echo "🔍 Verificando estado de los contenedores..."
+            docker-compose -f ${{ env.PROJECT_PATH }}/docker-compose.yml ps
+            
+            echo "📊 Logs recientes de la aplicación:"
+            docker-compose -f ${{ env.PROJECT_PATH }}/docker-compose.yml logs --tail=20 app
+          ENDSSH
+
+      # ------------------------------------------
+      # 5. Notificación de éxito
+      # ------------------------------------------
+      - name: 📢 Deployment Success
+        if: success()
+        run: |
+          echo "🎉 Deployment a producción completado!"
+          echo "🌐 URL: https://limone.usev.app"
+
+      # ------------------------------------------
+      # 6. Notificación de fallo
+      # ------------------------------------------
+      - name: ❌ Deployment Failed
+        if: failure()
+        run: |
+          echo "⚠️ El deployment ha fallado. Revisa los logs anteriores."

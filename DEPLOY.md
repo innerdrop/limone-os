@@ -1,236 +1,129 @@
-# 🚀 Guía de Despliegue - Limone OS
+# 🚀 Guía de Deploy - Limone OS
 
-Guía para desplegar Limone OS en VPS con Docker y PostgreSQL.
+## Configuración de GitHub Secrets
 
----
+Para que el pipeline de CI/CD funcione, debes configurar los siguientes secrets en tu repositorio de GitHub:
 
-## Requisitos del VPS
+### Pasos:
+1. Ve a tu repositorio en GitHub
+2. Settings → Secrets and variables → Actions
+3. Click en "New repository secret"
 
-- Docker Engine 20+
-- Docker Compose v2+
-- Git
-- 1GB RAM mínimo (2GB recomendado)
-- 10GB espacio en disco
+### Secrets requeridos:
 
----
+| Secret | Descripción | Ejemplo |
+|--------|-------------|---------|
+| `VPS_HOST` | IP o dominio del servidor | `123.45.67.89` o `vps.ejemplo.com` |
+| `VPS_USER` | Usuario SSH del servidor | `root` o `deploy` |
+| `SSH_PRIVATE_KEY` | Clave privada SSH completa | Ver instrucciones abajo |
 
-## 1. Preparación (en tu máquina local)
-
-### 1.1 Exportar datos actuales de SQLite
-
-Antes de cambiar el provider a PostgreSQL, exporta los datos:
+### Generar clave SSH:
 
 ```bash
-# Asegúrate que .env tenga DATABASE_URL="file:./dev.db"
-node scripts/migrate-to-postgres.js export
+# En tu máquina local, generar clave SSH
+ssh-keygen -t ed25519 -C "github-actions-limone" -f ~/.ssh/limone_deploy
+
+# Copiar la clave pública al servidor
+ssh-copy-id -i ~/.ssh/limone_deploy.pub usuario@tu-vps-ip
+
+# El contenido de ~/.ssh/limone_deploy (clave privada) es lo que va en SSH_PRIVATE_KEY
+cat ~/.ssh/limone_deploy
 ```
 
-Esto crea `backup-sqlite.json` con todos los datos.
+> ⚠️ **Importante**: Copia TODO el contenido del archivo de clave privada, incluyendo `-----BEGIN OPENSSH PRIVATE KEY-----` y `-----END OPENSSH PRIVATE KEY-----`
 
-### 1.2 Subir a Git
+---
+
+## Preparar el VPS (primera vez)
 
 ```bash
-git add .
-git commit -m "feat: Docker deployment configuration"
-git push origin main
+# Conectar al VPS
+ssh usuario@tu-vps-ip
+
+# Crear directorio del proyecto
+sudo mkdir -p /var/www/limone
+sudo chown -R $USER:$USER /var/www/limone
+
+# Clonar el repositorio
+cd /var/www/limone
+git clone https://github.com/tu-usuario/limone-os.git .
+
+# Crear archivo .env de producción
+cp .env.example .env
+nano .env  # Editar con valores de producción
+
+# Primer deploy manual
+docker-compose up -d --build
+docker-compose exec app npx prisma migrate deploy
 ```
 
 ---
 
-## 2. Despliegue en VPS
+## Flujo de trabajo
 
-### 2.1 Clonar repositorio
-
+### Desarrollo local (cada desarrollador):
 ```bash
-cd /opt  # o tu directorio preferido
-git clone https://github.com/TU_USUARIO/limone-os.git
+# 1. Clonar el repo
+git clone https://github.com/tu-usuario/limone-os.git
 cd limone-os
-```
 
-### 2.2 Configurar variables de entorno
+# 2. Crear tu .env local
+cp .env.example .env
 
-```bash
-# Crear archivo .env para producción
-cp .env.production .env
-
-# Editar con tus valores seguros
-nano .env
-```
-
-**Variables a configurar:**
-
-```env
-# Generar secret seguro:
-# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-NEXTAUTH_SECRET=TU_SECRET_GENERADO
-
-POSTGRES_PASSWORD=TU_PASSWORD_SEGURO
-DATABASE_URL=postgresql://limone:TU_PASSWORD_SEGURO@db:5432/limone
-```
-
-### 2.3 Subir archivo de backup
-
-Copia el `backup-sqlite.json` desde tu máquina local:
-
-```bash
-scp backup-sqlite.json usuario@tu-vps:/opt/limone-os/
-```
-
-### 2.4 Construir y levantar servicios
-
-```bash
-# Construir imagen (primera vez toma varios minutos)
-docker-compose build
-
-# Iniciar solo la base de datos primero
-docker-compose up -d db
-
-# Esperar que PostgreSQL esté listo (10-15 segundos)
-sleep 15
-
-# Aplicar schema a PostgreSQL
-docker-compose run --rm app npx prisma db push
-
-# Importar datos
-docker-compose run --rm app node scripts/migrate-to-postgres.js import
-
-# Levantar la aplicación
+# 3. Levantar Docker (cada uno tiene su propia DB local)
 docker-compose up -d
+
+# 4. Ejecutar migraciones
+docker-compose exec app npx prisma migrate dev
+
+# 5. Trabajar normalmente...
+npm run dev
 ```
 
-### 2.5 Verificar despliegue
+### Deploy a producción:
+```bash
+# Simplemente hacer push a main
+git add .
+git commit -m "Nueva funcionalidad"
+git push origin main
+
+# ¡El pipeline hace todo automáticamente! 🎉
+```
+
+---
+
+## Verificar deploy
 
 ```bash
+# Ver estado de contenedores en el VPS
+ssh usuario@tu-vps-ip "docker-compose -f /var/www/limone/docker-compose.yml ps"
+
 # Ver logs
-docker-compose logs -f app
+ssh usuario@tu-vps-ip "docker-compose -f /var/www/limone/docker-compose.yml logs -f app"
 
-# Verificar que responde
-curl http://localhost:3000
+# Verificar health check
+curl https://limone.usev.app/api/health
 ```
 
 ---
 
-## 3. Configurar Reverse Proxy (Nginx)
+## Troubleshooting
 
-### 3.1 Instalar Nginx (si no está instalado)
-
+### Error de permisos SSH
 ```bash
-apt update && apt install -y nginx certbot python3-certbot-nginx
+# En el VPS, verificar que la clave pública está configurada
+cat ~/.ssh/authorized_keys
 ```
 
-### 3.2 Configurar sitio
-
-```bash
-nano /etc/nginx/sites-available/limone
-```
-
-```nginx
-server {
-    listen 80;
-    server_name limone.usev.app;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    client_max_body_size 10M;
-}
-```
-
-```bash
-ln -s /etc/nginx/sites-available/limone /etc/nginx/sites-enabled/
-nginx -t
-systemctl reload nginx
-```
-
-### 3.3 Configurar SSL con Let's Encrypt
-
-```bash
-certbot --nginx -d limone.usev.app
-```
-
----
-
-## 4. Comandos Útiles
-
-```bash
-# Ver estado de contenedores
-docker-compose ps
-
-# Ver logs en tiempo real
-docker-compose logs -f
-
-# Reiniciar aplicación
-docker-compose restart app
-
-# Actualizar después de cambios
-git pull
-docker-compose build
-docker-compose up -d
-
-# Backup de PostgreSQL
-docker-compose exec db pg_dump -U limone limone > backup.sql
-
-# Restaurar backup
-docker-compose exec -T db psql -U limone limone < backup.sql
-
-# Acceder a Prisma Studio (desarrollo)
-docker-compose exec app npx prisma studio
-```
-
----
-
-## 5. Solución de Problemas
-
-### La app no inicia
+### Contenedor no inicia
 ```bash
 # Ver logs detallados
 docker-compose logs app
-
-# Verificar que la BD está corriendo
-docker-compose ps db
+docker-compose logs db
 ```
 
-### Error de conexión a base de datos
+### Migraciones fallan
 ```bash
-# Verificar que PostgreSQL está healthy
-docker-compose exec db pg_isready -U limone
-
-# Probar conexión manual
-docker-compose exec db psql -U limone -c "SELECT 1"
+# Ejecutar manualmente
+docker-compose exec app npx prisma migrate deploy --force
 ```
-
-### Reconstruir desde cero
-```bash
-docker-compose down -v  # ⚠️ Elimina volúmenes!
-docker-compose build --no-cache
-docker-compose up -d
-```
-
----
-
-## Estructura de Volúmenes
-
-| Volumen | Contenido | Persistencia |
-|---------|-----------|--------------|
-| `limone_postgres_data` | Base de datos PostgreSQL | ✅ Persistente |
-| `limone_uploads` | Archivos subidos | ✅ Persistente |
-
----
-
-## Credenciales por Defecto
-
-- **Admin**: `natalia@limone.usev.app`
-- **Password**: (el que tengas configurado en la BD)
-
----
-
-> ⚠️ **IMPORTANTE**: Cambia todas las contraseñas por defecto en producción.
