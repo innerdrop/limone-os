@@ -54,3 +54,13 @@ backup-sqlite.json
 
 # Production env template is OK, but not the actual env
 .env.production.local
+
+# Docker
+.docker/
+# Ignora la carpeta donde Postgres guarda los datos físicos en tu PC
+postgres_data/
+
+# Prisma
+# Ignora los archivos de migración temporales pero NO la carpeta 'migrations' entera
+# (Queremos que las definiciones de las tablas sí se suban)
+prisma/migrations-lock.toml
