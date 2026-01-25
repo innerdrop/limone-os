@@ -1,4 +1,8 @@
-require('dotenv').config()
+try {
+    require('dotenv').config()
+} catch (e) {
+    // dotenv not found, assuming env vars are provided by the environment
+}
 const { PrismaClient } = require('@prisma/client')
 const bcrypt = require('bcryptjs')
 
