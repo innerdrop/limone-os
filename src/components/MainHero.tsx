@@ -27,25 +27,6 @@ interface Slide {
 // Default slides for when database is empty
 const defaultSlides: Slide[] = [
     {
-        id: 'default-1',
-        titulo: 'Taller de Verano',
-        subtitulo: 'Limoné | Edición 2026',
-        descripcion: 'Más que una colonia, un taller de arte especializado para crear y divertirse.',
-        tags: ['📅 6 Ene - 28 Feb', '🧒 5 a 12 años', '🎨 Materiales Incluidos'],
-        badgeTexto: null,
-        textoBoton: 'Inscribirse Ahora',
-        enlace: '/taller-verano',
-        imagenUrl: '/slider-bg.png',
-        estiloOverlay: 'light',
-        colorTitulo: '#2D2D2D',
-        colorSubtitulo: '#8E44AD',
-        colorDescripcion: '#57534E',
-        colorBadge: '#FFFFFF',
-        colorBoton: '#2D2D2D',
-        colorFondoBoton: '#F1C40F',
-        orden: 0,
-    },
-    {
         id: 'default-2',
         titulo: 'Tu Primera Clase Es Gratis',
         subtitulo: null,
@@ -68,7 +49,7 @@ const defaultSlides: Slide[] = [
 
 export default function MainHero() {
     const [currentSlide, setCurrentSlide] = useState(0)
-    const [slides, setSlides] = useState<Slide[]>(defaultSlides)
+    const [slides, setSlides] = useState<Slide[]>([])
     const [loading, setLoading] = useState(true)
 
     // Fetch slides from API
@@ -79,11 +60,16 @@ export default function MainHero() {
                 const data = await res.json()
                 if (data.length > 0) {
                     setSlides(data)
+                } else {
+                    // Fallback to default slides if no slides are configured in admin
+                    setSlides(defaultSlides)
                 }
+            } else {
+                setSlides(defaultSlides)
             }
         } catch (error) {
             console.error('Error fetching slides:', error)
-            // Keep default slides on error
+            setSlides(defaultSlides)
         } finally {
             setLoading(false)
         }
@@ -228,6 +214,18 @@ export default function MainHero() {
                     </div>
                 </div>
             </div>
+        )
+    }
+
+    if (loading) {
+        return (
+            <section className="relative w-full h-[600px] md:h-[700px] lg:h-[80vh] flex items-center overflow-hidden bg-warm-100 animate-pulse">
+                <div className="w-full max-w-6xl mx-auto px-4 text-center">
+                    <div className="h-4 w-32 bg-warm-200 rounded-full mx-auto mb-4"></div>
+                    <div className="h-12 w-3/4 bg-warm-200 rounded-2xl mx-auto mb-6"></div>
+                    <div className="h-6 w-1/2 bg-warm-200 rounded-xl mx-auto"></div>
+                </div>
+            </section>
         )
     }
 
