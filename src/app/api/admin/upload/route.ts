@@ -20,6 +20,11 @@ export async function POST(request: Request) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
+        if (!process.env.CLOUDINARY_CLOUD_NAME) {
+            console.error('CRITICAL: Cloudinary environment variables are missing in production!');
+            return NextResponse.json({ error: 'Configuración de Cloudinary no encontrada' }, { status: 500 })
+        }
+
         // Upload to Cloudinary
         const uploadResponse = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(

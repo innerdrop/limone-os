@@ -75,7 +75,18 @@ jobs:
           ENDSSH
 
       # ------------------------------------------
-      # 4. Verificar deploy
+      # 4. Configurar Nginx (Aumentar límite de subida)
+      # ------------------------------------------
+      - name: 🌐 Configure Nginx Limits
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            echo "🔧 Ajustando límites de subida en Nginx..."
+            sudo sed -i '/server_name limone.usev.app;/a \    client_max_body_size 20M;' /etc/nginx/sites-available/limone.usev.app || true
+            sudo nginx -t && sudo systemctl reload nginx || echo "⚠️ No se pudo recargar Nginx automáticamente."
+          ENDSSH
+
+      # ------------------------------------------
+      # 5. Verificar deploy
       # ------------------------------------------
       - name: ✅ Verify Deployment
         run: |

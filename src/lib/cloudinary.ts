@@ -11,4 +11,9 @@ cloudinary.config({
     secure: true,
 });
 
+// Helper to check if configuration works
+export const isCloudinaryConfigured = () => {
+    return !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+};
+
 export default cloudinary;
