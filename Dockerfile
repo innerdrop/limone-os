@@ -36,6 +36,10 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 nextjs
 
+# Create home directory for nextjs user (required for npx/npm cache)
+RUN mkdir -p /home/nextjs && chown nextjs:nodejs /home/nextjs
+ENV HOME=/home/nextjs
+
 # Copy necessary files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
