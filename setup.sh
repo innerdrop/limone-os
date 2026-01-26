@@ -77,6 +77,7 @@ if [ -d "/etc/nginx/sites-available" ]; then
     $SUDO bash -c "cat > $NGINX_CONF" << EOL
 server {
     server_name limone.usev.app;
+    client_max_body_size 20M;
 
     location / {
         proxy_pass http://localhost:3006;
