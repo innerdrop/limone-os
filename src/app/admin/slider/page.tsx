@@ -554,7 +554,7 @@ export default function SliderAdminPage() {
                         <button
                             type="submit"
                             disabled={saving}
-                            className="flex-1 py-3 bg-gradient-to-r from-brand-purple to-brand-pink text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="flex-1 py-3 bg-brand-purple text-white font-semibold rounded-xl hover:bg-brand-purple/90 hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                             {saving ? (
                                 <>
@@ -585,7 +585,7 @@ export default function SliderAdminPage() {
                 {slides.length < MAX_SLIDES && (
                     <button
                         onClick={startCreate}
-                        className="px-6 py-3 bg-gradient-to-r from-brand-purple to-brand-pink text-white font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
+                        className="px-6 py-3 bg-brand-purple text-white font-semibold rounded-xl hover:bg-brand-purple/90 hover:shadow-lg transition-all flex items-center gap-2"
                     >
                         <span className="text-xl">+</span>
                         Nuevo Slide
