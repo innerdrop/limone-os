@@ -11,7 +11,14 @@ interface User {
     image?: string | null
 }
 
-export const menuItems = [
+interface MenuItem {
+    label: string;
+    href: string;
+    icon: React.ReactNode;
+    isNew?: boolean;
+}
+
+export const menuItems: MenuItem[] = [
     {
         label: 'Tablero',
         href: '/admin',
@@ -131,7 +138,7 @@ export default function AdminSidebar({ user }: { user: User }) {
                                     {item.icon}
                                 </span>
                                 {item.label}
-                                {(item as any).isNew && (
+                                {item.isNew && (
                                     <span className="absolute top-1 right-2 bg-brand-purple text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                                         NUEVO
                                     </span>
