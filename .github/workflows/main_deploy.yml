@@ -62,8 +62,8 @@ jobs:
             echo "⏳ Esperando a que la base de datos esté lista..."
             sleep 10
             
-            echo "🔄 Ejecutando migraciones de Prisma..."
-            docker-compose exec -T app npx prisma@5.22.0 migrate deploy
+            echo "🔄 Sincronizando esquema de base de datos..."
+            docker-compose exec -T app npx prisma@5.22.0 db push
             
             echo "🧹 Limpiando imágenes Docker no utilizadas..."
             docker image prune -f
