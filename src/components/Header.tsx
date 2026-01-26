@@ -30,7 +30,7 @@ export default function Header() {
                         <nav className="hidden md:flex items-center gap-8">
                             <Link href="/tienda" className="relative text-warm-600 hover:text-lemon-600 transition-colors">
                                 Tienda
-                                <span className="absolute -top-2 -right-8 bg-brand-purple text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                <span className="absolute -top-1 -right-7 bg-brand-purple text-white text-[7px] font-black px-1.5 py-0.5 rounded-full tracking-wider shadow-sm">
                                     NUEVO
                                 </span>
                             </Link>
@@ -108,7 +108,7 @@ export default function Header() {
                         >
                             <span className="text-2xl">🛍️</span>
                             Tienda
-                            <span className="bg-brand-purple text-white text-xs font-bold px-2 py-1 rounded-full group-hover:scale-110 transition-transform">
+                            <span className="bg-brand-purple text-white text-[9px] font-bold px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
                                 NUEVO
                             </span>
                         </Link>
