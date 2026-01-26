@@ -187,17 +187,21 @@ export default function GaleriaPage() {
             {/* Lightbox Modal */}
             {obraSeleccionada && (
                 <div
-                    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4"
                     onClick={() => setObraSeleccionada(null)}
                 >
                     <div
-                        className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden animate-slide-up"
+                        className="bg-white rounded-[2rem] max-w-5xl w-full max-h-[92vh] flex flex-col md:flex-row overflow-hidden animate-slide-up shadow-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Image */}
-                        <div className="aspect-video bg-canvas-200 relative">
+                        {/* Image Column */}
+                        <div className="md:w-3/5 bg-warm-900 flex items-center justify-center relative min-h-[300px] md:min-h-0">
                             {obraSeleccionada.imagenUrl ? (
-                                <img src={obraSeleccionada.imagenUrl} alt={obraSeleccionada.titulo} className="w-full h-full object-contain bg-black" />
+                                <img
+                                    src={obraSeleccionada.imagenUrl}
+                                    alt={obraSeleccionada.titulo}
+                                    className="max-w-full max-h-full object-contain"
+                                />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-lemon-100 to-leaf-100">
                                     <svg className="w-24 h-24 text-lemon-400/50" fill="currentColor" viewBox="0 0 24 24">
@@ -206,48 +210,69 @@ export default function GaleriaPage() {
                                 </div>
                             )}
 
+                            {/* Mobile Close Button */}
                             <button
                                 onClick={() => setObraSeleccionada(null)}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
+                                className="md:hidden absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white"
                             >
-                                <svg className="w-5 h-5 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
 
-                        {/* Content */}
-                        <div className="p-6">
-                            <div className="flex items-start justify-between gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-serif font-bold text-warm-800">
-                                        {obraSeleccionada.titulo}
-                                    </h2>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        {obraSeleccionada.tecnica && (
-                                            <span className="badge badge-lemon">{obraSeleccionada.tecnica}</span>
-                                        )}
-                                        <span className="text-sm text-warm-400">{new Date(obraSeleccionada.fechaCreacion).toLocaleDateString()}</span>
+                        {/* Content Column */}
+                        <div className="md:w-2/5 p-6 md:p-8 flex flex-col h-full bg-white relative">
+                            {/* Desktop Close Button */}
+                            <button
+                                onClick={() => setObraSeleccionada(null)}
+                                className="hidden md:flex absolute top-6 right-6 w-10 h-10 bg-canvas-50 rounded-full items-center justify-center hover:bg-canvas-100 transition-colors z-10"
+                            >
+                                <svg className="w-5 h-5 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
+                            <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <h2 className="text-2xl md:text-3xl font-serif font-bold text-warm-800 leading-tight">
+                                            {obraSeleccionada.titulo || 'Sin título'}
+                                        </h2>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {obraSeleccionada.tecnica && (
+                                                <span className="badge badge-lemon text-[10px] py-0">{obraSeleccionada.tecnica}</span>
+                                            )}
+                                            <span className="text-xs text-warm-400">
+                                                {new Date(obraSeleccionada.fechaCreacion).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {obraSeleccionada.destacada && (
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-lemon-50 text-lemon-700 rounded-full text-xs font-bold">
+                                            ⭐ Obra Destacada
+                                        </div>
+                                    )}
+
+                                    <div className="pt-4 border-t border-canvas-100">
+                                        <p className="text-warm-600 leading-relaxed">
+                                            {obraSeleccionada.descripcion || 'Sin descripción adicional.'}
+                                        </p>
                                     </div>
                                 </div>
-                                {obraSeleccionada.destacada && (
-                                    <span className="text-2xl">⭐</span>
-                                )}
                             </div>
 
-                            <p className="mt-4 text-warm-600">
-                                {obraSeleccionada.descripcion}
-                            </p>
-
-                            <div className="mt-6 flex gap-3">
-                                <button className="flex-1 btn-primary">
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {/* Actions */}
+                            <div className="mt-8 flex flex-col gap-3 pt-6 border-t border-canvas-100 shrink-0">
+                                <button className="btn-primary w-full py-4 text-base">
+                                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                     </svg>
-                                    Descargar
+                                    Descargar Obra
                                 </button>
-                                <button className="flex-1 btn-outline">
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button className="btn-outline w-full py-4 text-base border-canvas-200">
+                                    <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                     </svg>
                                     Compartir

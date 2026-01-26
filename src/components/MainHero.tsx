@@ -15,6 +15,12 @@ interface Slide {
     enlace: string | null
     imagenUrl: string
     estiloOverlay: string
+    colorTitulo?: string
+    colorSubtitulo?: string
+    colorDescripcion?: string
+    colorBadge?: string
+    colorBoton?: string
+    colorFondoBoton?: string
     orden: number
 }
 
@@ -31,6 +37,12 @@ const defaultSlides: Slide[] = [
         enlace: '/taller-verano',
         imagenUrl: '/slider-bg.png',
         estiloOverlay: 'light',
+        colorTitulo: '#2D2D2D',
+        colorSubtitulo: '#8E44AD',
+        colorDescripcion: '#57534E',
+        colorBadge: '#FFFFFF',
+        colorBoton: '#2D2D2D',
+        colorFondoBoton: '#F1C40F',
         orden: 0,
     },
     {
@@ -44,6 +56,12 @@ const defaultSlides: Slide[] = [
         enlace: '/inscripcion?mode=nivelacion',
         imagenUrl: '/taller-aula.png',
         estiloOverlay: 'dark',
+        colorTitulo: '#FFFFFF',
+        colorSubtitulo: '#FFFFFF',
+        colorDescripcion: '#FFFFFF',
+        colorBadge: '#FFFFFF',
+        colorBoton: '#2D2D2D',
+        colorFondoBoton: '#F1C40F',
         orden: 1,
     },
 ]
@@ -106,8 +124,8 @@ export default function MainHero() {
                     />
                     {/* Overlay based on style */}
                     <div className={`absolute inset-0 ${isDark
-                            ? 'bg-gradient-to-r from-emerald-900/40 to-teal-900/40 backdrop-blur-[3px]'
-                            : 'bg-white/30 backdrop-blur-[2px]'
+                        ? 'bg-gradient-to-r from-emerald-900/40 to-teal-900/40 backdrop-blur-[3px]'
+                        : 'bg-white/30 backdrop-blur-[2px]'
                         }`}></div>
                 </div>
 
@@ -116,7 +134,10 @@ export default function MainHero() {
                         {/* Badge */}
                         {slide.badgeTexto && (
                             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                                <div className="inline-block bg-lemon-400 text-lemon-900 font-black px-4 py-1.5 rounded-full uppercase tracking-wider text-xs md:text-sm mb-4 shadow-lg transform -rotate-2">
+                                <div
+                                    className="inline-block font-black px-4 py-1.5 rounded-full uppercase tracking-wider text-xs md:text-sm mb-4 shadow-lg transform -rotate-2"
+                                    style={{ backgroundColor: slide.colorBadge || '#F1C40F', color: slide.estiloOverlay === 'dark' ? '#000' : '#fff' }}
+                                >
                                     {slide.badgeTexto}
                                 </div>
                             </div>
@@ -124,25 +145,34 @@ export default function MainHero() {
 
                         {/* Title */}
                         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                            <h1 className={`text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight ${isDark
-                                    ? 'text-white drop-shadow-lg'
-                                    : 'text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-500 to-rose-500 drop-shadow-sm'
-                                }`}>
+                            <h1
+                                className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight drop-shadow-md"
+                                style={{ color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
+                            >
                                 {slide.titulo}
                             </h1>
                             {slide.subtitulo && (
                                 <div className="flex items-center justify-center gap-3">
                                     {slide.subtitulo.includes('|') ? (
                                         <>
-                                            <span className={`text-3xl md:text-4xl font-bold ${isDark ? 'text-white' : 'text-warm-800'}`}>
+                                            <span
+                                                className="text-3xl md:text-4xl font-bold"
+                                                style={{ color: slide.colorSubtitulo || (isDark ? '#FFFFFF' : '#8E44AD') }}
+                                            >
                                                 {slide.subtitulo.split('|')[0].trim()}
                                             </span>
-                                            <span className={`text-xl md:text-2xl font-medium border-l-2 pl-3 ${isDark ? 'text-white/80 border-white/30' : 'text-warm-600 border-warm-300'}`}>
+                                            <span
+                                                className={`text-xl md:text-2xl font-medium border-l-2 pl-3 ${isDark ? 'border-white/30' : 'border-warm-300'}`}
+                                                style={{ color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#57534E') }}
+                                            >
                                                 {slide.subtitulo.split('|')[1].trim()}
                                             </span>
                                         </>
                                     ) : (
-                                        <span className={`text-xl md:text-2xl font-medium ${isDark ? 'text-white/80' : 'text-warm-600'}`}>
+                                        <span
+                                            className="text-xl md:text-2xl font-medium"
+                                            style={{ color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#8E44AD') }}
+                                        >
                                             {slide.subtitulo}
                                         </span>
                                     )}
@@ -152,8 +182,10 @@ export default function MainHero() {
 
                         {/* Description */}
                         {slide.descripcion && (
-                            <p className={`text-lg md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed mt-4 mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 ${isDark ? 'text-white/90 drop-shadow-md' : 'text-warm-700'
-                                }`}>
+                            <p
+                                className="text-lg md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed mt-4 mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md"
+                                style={{ color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E') }}
+                            >
                                 {slide.descripcion}
                             </p>
                         )}
@@ -165,8 +197,8 @@ export default function MainHero() {
                                     <div
                                         key={tagIndex}
                                         className={`backdrop-blur-md px-4 py-2 rounded-xl shadow-sm ${isDark
-                                                ? 'bg-white/20 border border-white/30'
-                                                : 'bg-white/80 border border-white/50'
+                                            ? 'bg-white/20 border border-white/30'
+                                            : 'bg-white/80 border border-white/50'
                                             }`}
                                     >
                                         <span className={`block font-bold text-sm md:text-base ${isDark ? 'text-white' : 'text-warm-900'}`}>
@@ -182,10 +214,8 @@ export default function MainHero() {
                             <div className="animate-in fade-in zoom-in duration-700 delay-700">
                                 <Link
                                     href={slide.enlace}
-                                    className={`inline-flex items-center gap-2 px-8 py-3 font-bold text-lg md:text-xl rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all group/btn ${isDark
-                                            ? 'bg-lemon-400 text-lemon-900 hover:bg-lemon-300'
-                                            : 'bg-gradient-to-r from-amber-500 to-orange-600 text-white'
-                                        }`}
+                                    className="inline-flex items-center gap-2 px-8 py-3 font-bold text-lg md:text-xl rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all group/btn"
+                                    style={{ backgroundColor: slide.colorFondoBoton || '#F1C40F', color: slide.colorBoton || '#2D2D2D' }}
                                 >
                                     <span className="text-xl">{isDark ? '👩‍🎨' : '☀️'}</span>
                                     {slide.textoBoton}
@@ -234,8 +264,8 @@ export default function MainHero() {
                                 key={index}
                                 onClick={() => setCurrentSlide(index)}
                                 className={`h-2 rounded-full transition-all duration-500 shadow-sm ${currentSlide === index
-                                        ? 'w-12 bg-lemon-500'
-                                        : 'w-2 bg-warm-300/50 hover:bg-warm-300'
+                                    ? 'w-12 bg-lemon-500'
+                                    : 'w-2 bg-warm-300/50 hover:bg-warm-300'
                                     }`}
                                 aria-label={`Ver slide ${index + 1}`}
                             />

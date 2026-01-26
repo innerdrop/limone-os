@@ -46,6 +46,12 @@ export async function POST(request: NextRequest) {
             enlace,
             imagenUrl,
             estiloOverlay,
+            colorTitulo,
+            colorSubtitulo,
+            colorDescripcion,
+            colorBadge,
+            colorBoton,
+            colorFondoBoton,
             orden,
             activo
         } = body
@@ -74,6 +80,12 @@ export async function POST(request: NextRequest) {
                 enlace: enlace || null,
                 imagenUrl,
                 estiloOverlay: estiloOverlay || 'light',
+                colorTitulo: colorTitulo || '#2D2D2D',
+                colorSubtitulo: colorSubtitulo || '#8E44AD',
+                colorDescripcion: colorDescripcion || '#57534E',
+                colorBadge: colorBadge || '#FFFFFF',
+                colorBoton: colorBoton || '#2D2D2D',
+                colorFondoBoton: colorFondoBoton || '#F1C40F',
                 orden: slideOrder,
                 activo: activo !== false
             }

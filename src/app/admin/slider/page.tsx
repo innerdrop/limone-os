@@ -14,6 +14,12 @@ interface Slide {
     enlace: string | null
     imagenUrl: string
     estiloOverlay: string
+    colorTitulo: string
+    colorSubtitulo: string
+    colorDescripcion: string
+    colorBadge: string
+    colorBoton: string
+    colorFondoBoton: string
     orden: number
     activo: boolean
 }
@@ -28,6 +34,12 @@ const emptySlide = {
     enlace: '',
     imagenUrl: '',
     estiloOverlay: 'light',
+    colorTitulo: '#2D2D2D',
+    colorSubtitulo: '#8E44AD',
+    colorDescripcion: '#57534E',
+    colorBadge: '#FFFFFF',
+    colorBoton: '#2D2D2D',
+    colorFondoBoton: '#F1C40F',
     activo: true,
 }
 
@@ -125,6 +137,12 @@ export default function SliderAdminPage() {
             enlace: slide.enlace || '',
             imagenUrl: slide.imagenUrl,
             estiloOverlay: slide.estiloOverlay,
+            colorTitulo: slide.colorTitulo || '#2D2D2D',
+            colorSubtitulo: slide.colorSubtitulo || '#8E44AD',
+            colorDescripcion: slide.colorDescripcion || '#57534E',
+            colorBadge: slide.colorBadge || '#FFFFFF',
+            colorBoton: slide.colorBoton || '#2D2D2D',
+            colorFondoBoton: slide.colorFondoBoton || '#F1C40F',
             activo: slide.activo,
         })
         setPreviewUrl(slide.imagenUrl)
@@ -304,14 +322,37 @@ export default function SliderAdminPage() {
                                 }`}></div>
                             {/* Content preview */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className={`text-center p-4 ${formData.estiloOverlay === 'dark' ? 'text-white' : 'text-warm-900'}`}>
+                                <div className="text-center p-4">
                                     {formData.badgeTexto && (
-                                        <span className="inline-block bg-lemon-400 text-lemon-900 text-xs font-bold px-2 py-1 rounded-full mb-2">
+                                        <span
+                                            className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mb-2"
+                                            style={{ backgroundColor: formData.colorBadge, color: formData.estiloOverlay === 'dark' ? '#000' : '#fff' }}
+                                        >
                                             {formData.badgeTexto}
                                         </span>
                                     )}
-                                    <h3 className="text-xl md:text-2xl font-bold">{formData.titulo || 'Título del slide'}</h3>
-                                    {formData.subtitulo && <p className="text-sm opacity-80">{formData.subtitulo}</p>}
+                                    <h3
+                                        className="text-xl md:text-2xl font-bold"
+                                        style={{ color: formData.colorTitulo }}
+                                    >
+                                        {formData.titulo || 'Título del slide'}
+                                    </h3>
+                                    {formData.subtitulo && (
+                                        <p
+                                            className="text-xs opacity-90"
+                                            style={{ color: formData.colorSubtitulo }}
+                                        >
+                                            {formData.subtitulo}
+                                        </p>
+                                    )}
+                                    {formData.textoBoton && (
+                                        <div
+                                            className="mt-3 inline-block px-4 py-1.5 rounded-lg text-xs font-bold"
+                                            style={{ backgroundColor: formData.colorFondoBoton, color: formData.colorBoton }}
+                                        >
+                                            {formData.textoBoton}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -367,9 +408,20 @@ export default function SliderAdminPage() {
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Título Principal *
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-warm-700">
+                                        Título Principal *
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-warm-500 uppercase font-bold">Color:</span>
+                                        <input
+                                            type="color"
+                                            value={formData.colorTitulo}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, colorTitulo: e.target.value }))}
+                                            className="w-6 h-6 rounded cursor-pointer border-none p-0"
+                                        />
+                                    </div>
+                                </div>
                                 <input
                                     type="text"
                                     value={formData.titulo}
@@ -381,9 +433,17 @@ export default function SliderAdminPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Subtítulo
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-warm-700">
+                                        Subtítulo
+                                    </label>
+                                    <input
+                                        type="color"
+                                        value={formData.colorSubtitulo}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, colorSubtitulo: e.target.value }))}
+                                        className="w-5 h-5 rounded cursor-pointer border-none p-0"
+                                    />
+                                </div>
                                 <input
                                     type="text"
                                     value={formData.subtitulo}
@@ -394,9 +454,17 @@ export default function SliderAdminPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Badge Superior
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-warm-700">
+                                        Badge Superior
+                                    </label>
+                                    <input
+                                        type="color"
+                                        value={formData.colorBadge}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, colorBadge: e.target.value }))}
+                                        className="w-5 h-5 rounded cursor-pointer border-none p-0"
+                                    />
+                                </div>
                                 <input
                                     type="text"
                                     value={formData.badgeTexto}
@@ -407,9 +475,17 @@ export default function SliderAdminPage() {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Descripción
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-warm-700">
+                                        Descripción
+                                    </label>
+                                    <input
+                                        type="color"
+                                        value={formData.colorDescripcion}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, colorDescripcion: e.target.value }))}
+                                        className="w-5 h-5 rounded cursor-pointer border-none p-0"
+                                    />
+                                </div>
                                 <textarea
                                     value={formData.descripcion}
                                     onChange={(e) => setFormData(prev => ({ ...prev, descripcion: e.target.value }))}
@@ -473,9 +549,31 @@ export default function SliderAdminPage() {
 
                         <div className="grid md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Texto del Botón
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-medium text-warm-700">
+                                        Texto del Botón
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[9px] text-warm-500 uppercase font-bold">Texto:</span>
+                                            <input
+                                                type="color"
+                                                value={formData.colorBoton}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, colorBoton: e.target.value }))}
+                                                className="w-5 h-5 rounded cursor-pointer border-none p-0"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[9px] text-warm-500 uppercase font-bold">Fondo:</span>
+                                            <input
+                                                type="color"
+                                                value={formData.colorFondoBoton}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, colorFondoBoton: e.target.value }))}
+                                                className="w-5 h-5 rounded cursor-pointer border-none p-0"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                                 <input
                                     type="text"
                                     value={formData.textoBoton}

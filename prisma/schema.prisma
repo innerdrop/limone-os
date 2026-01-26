@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Usuario {
@@ -354,6 +355,12 @@ model Slide {
   enlace        String?  // URL del botón
   imagenUrl     String   // Imagen de fondo
   estiloOverlay String   @default("light") // "light" o "dark" para determinar colores
+  colorTitulo    String   @default("#2D2D2D")
+  colorSubtitulo String   @default("#8E44AD")
+  colorDescripcion String @default("#57534E")
+  colorBadge     String   @default("#FFFFFF")
+  colorBoton     String   @default("#2D2D2D")
+  colorFondoBoton String  @default("#F1C40F")
   orden         Int      @default(0)
   activo        Boolean  @default(true)
   creadoEn      DateTime @default(now())

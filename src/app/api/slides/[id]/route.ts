@@ -51,6 +51,12 @@ export async function PUT(
             enlace,
             imagenUrl,
             estiloOverlay,
+            colorTitulo,
+            colorSubtitulo,
+            colorDescripcion,
+            colorBadge,
+            colorBoton,
+            colorFondoBoton,
             orden,
             activo
         } = body
@@ -66,6 +72,12 @@ export async function PUT(
         if (enlace !== undefined) updateData.enlace = enlace
         if (imagenUrl !== undefined) updateData.imagenUrl = imagenUrl
         if (estiloOverlay !== undefined) updateData.estiloOverlay = estiloOverlay
+        if (colorTitulo !== undefined) updateData.colorTitulo = colorTitulo
+        if (colorSubtitulo !== undefined) updateData.colorSubtitulo = colorSubtitulo
+        if (colorDescripcion !== undefined) updateData.colorDescripcion = colorDescripcion
+        if (colorBadge !== undefined) updateData.colorBadge = colorBadge
+        if (colorBoton !== undefined) updateData.colorBoton = colorBoton
+        if (colorFondoBoton !== undefined) updateData.colorFondoBoton = colorFondoBoton
         if (orden !== undefined) updateData.orden = orden
         if (activo !== undefined) updateData.activo = activo
 
