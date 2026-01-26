@@ -238,7 +238,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                     dia: ins.dia || '',
                                     horario: ins.horario || '',
                                     fase: ins.fase || '',
-                                    asiento: ins.asiento || 0
+                                    asiento: ins.asiento || '0'
                                 }}
                             />
                         ))}

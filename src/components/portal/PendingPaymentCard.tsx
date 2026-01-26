@@ -7,7 +7,7 @@ interface PendingPaymentCardProps {
         dia: string
         horario: string
         fase: string
-        asiento: number
+        asiento: number | string
         pagos: Array<{
             id: string
             monto: number
