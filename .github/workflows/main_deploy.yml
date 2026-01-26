@@ -63,7 +63,7 @@ jobs:
             sleep 10
             
             echo "🔄 Ejecutando migraciones de Prisma..."
-            docker-compose exec -T app npx prisma migrate deploy
+            docker-compose exec -T app npx prisma@5.22.0 migrate deploy
             
             echo "🧹 Limpiando imágenes Docker no utilizadas..."
             docker image prune -f
