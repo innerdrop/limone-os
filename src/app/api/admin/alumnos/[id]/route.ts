@@ -164,3 +164,26 @@ export async function PUT(
         )
     }
 }
+
+export async function DELETE(
+    req: NextRequest,
+    context: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions)
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+        }
+
+        const params = await context.params
+        await prisma.alumno.delete({
+            where: { id: params.id }
+        })
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error('Error al eliminar alumno:', error)
+        return NextResponse.json({ error: 'Error al eliminar' }, { status: 500 })
+    }
+}
+

@@ -16,6 +16,9 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
 
     // Fetch alumnos with relations
     const alumnosRaw = await prisma.alumno.findMany({
+        where: {
+            perfilCompleto: true // Only show those who have completed their student profile
+        },
         include: {
             usuario: true,
             inscripciones: {
@@ -27,18 +30,16 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
                 orderBy: { fecha: 'desc' },
                 take: 1
             }
-        },
+        } as any,
         orderBy: {
-            usuario: {
-                nombre: 'asc'
-            }
-        }
-    })
+            nombre: 'asc'
+        } as any
+    }) as any[]
 
     // Map and filter
-    const alumnos = alumnosRaw.map(al => {
-        const activeInscripcion = al.inscripciones.find(ins => ins.estado === 'ACTIVA')
-        const hasCita = al.citasNivelacion.length > 0
+    const alumnos = alumnosRaw.map((al: any) => {
+        const activeInscripcion = (al.inscripciones || []).find((ins: any) => ins.estado === 'ACTIVA')
+        const hasCita = (al.citasNivelacion || []).length > 0
 
         let tallerPrincipal = 'Sin asignar'
         if (activeInscripcion) {
@@ -53,7 +54,8 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
 
         return {
             id: al.id,
-            nombre: al.usuario.nombre,
+            nombre: `${al.nombre || ''} ${al.apellido || ''}`.trim() || al.usuario.nombre,
+            tutorCuentaNombre: al.usuario.nombre,
             email: al.usuario.email,
             telefono: al.usuario.telefono || al.tutorTelefonoPrincipal || 'Sin registrar',
             dni: al.dni || 'Sin registrar',
@@ -154,6 +156,7 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
                         <thead className="bg-canvas-50">
                             <tr>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Alumno</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Tutor (Cuenta)</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Taller Principal</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-warm-500">Nivel</th>
                                 <th className="text-center py-3 px-4 text-sm font-medium text-warm-500">Pagado</th>
@@ -173,8 +176,14 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
                                             </div>
                                             <div>
                                                 <p className="font-medium text-warm-800">{alumno.nombre}</p>
-                                                <p className="text-sm text-warm-500">{alumno.email}</p>
+                                                <p className="text-xs text-warm-400">DNI: {alumno.dni}</p>
                                             </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                        <div className="text-sm">
+                                            <p className="text-warm-700 font-medium">{alumno.tutorCuentaNombre || '-'}</p>
+                                            <p className="text-warm-400 underline decoration-dotted">{alumno.email}</p>
                                         </div>
                                     </td>
                                     <td className="py-4 px-4 text-warm-600 font-medium">{alumno.tallerPrincipal}</td>

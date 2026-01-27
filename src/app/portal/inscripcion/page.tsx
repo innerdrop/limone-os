@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import SignatureCanvas from 'react-signature-canvas'
 
 interface Taller {
     id: string
@@ -22,6 +23,43 @@ const HORARIOS = [
     { label: '16:00 a 17:20', value: '16:00-17:20' },
     { label: '17:30 a 18:50', value: '17:30-18:50' },
     { label: '19:10 a 20:30', value: '19:10-20:30' }
+]
+
+const SCHOOLS = [
+    'Escuela N° 1 "Domingo Faustino Sarmiento"',
+    'Escuela N° 3 "Monseñor Fagnano"',
+    'Escuela N° 9 "Comandante Luis Piedrabuena"',
+    'Escuela N° 13 "Almirante Guillermo Brown"',
+    'Escuela N° 15 "Centenario de Ushuaia"',
+    'Escuela N° 16 "Dr. Arturo Mateo Bas"',
+    'Escuela N° 22 "Bahía Golondrina"',
+    'Escuela N° 24 "Juan Ruiz Galán"',
+    'Escuela N° 30 "Oshovia"',
+    'Escuela N° 31 "Juana Manso"',
+    'Escuela N° 39 "Mirador del Olivia"',
+    'Escuela N° 41 "Mario Benedetti"',
+    'Escuela N° 47',
+    'Escuela N° 48',
+    'Colegio Polivalente de Arte de Ushuaia',
+    'Colegio Provincial "José Martí"',
+    'Colegio Provincial "Klokedten"',
+    'Colegio Provincial "Los Andes"',
+    'Colegio Provincial de Educación Tecnológica (CPET)',
+    'Colegio Integral de Educación Ushuaia (CIEU)',
+    'Colegio del Sur',
+    'Colegio Julio Verne',
+    'Colegio Monseñor Aleman',
+    'Escuela Modelo de Educación Integral (EMEI)',
+    'Colegio Nacional de Ushuaia',
+    'Otro'
+]
+
+const GRADES = [
+    'Sala de 3', 'Sala de 4', 'Sala de 5',
+    '1° Grado Primaria', '2° Grado Primaria', '3° Grado Primaria',
+    '4° Grado Primaria', '5° Grado Primaria', '6° Grado Primaria',
+    '1° Año Secundaria', '2° Año Secundaria', '3° Año Secundaria',
+    '4° Año Secundaria', '5° Año Secundaria', '6° Año Secundaria'
 ]
 
 const SUMMER_HORARIOS_BASE = [
@@ -95,14 +133,98 @@ export default function EnrollmentPage() {
     const [knowsLevel, setKnowsLevel] = useState<boolean | null>(null) // null = not decided
     const [isSummer, setIsSummer] = useState(false)
 
+    // State for Student Profile Completion
+    const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null)
+    const [studentData, setStudentData] = useState({
+        nombre: '',
+        apellido: '',
+        dni: '',
+        fechaNacimiento: '',
+        edad: '',
+        domicilioCalle: '',
+        domicilioNumero: '',
+        domicilioTira: '',
+        domicilioPiso: '',
+        domicilioDepto: '',
+        colegio: '',
+        grado: ''
+    })
+
+    const [authData, setAuthData] = useState({
+        autorizacionParticipacion: false,
+        autorizacionMedica: false,
+        autorizacionRetiro: 'NO',
+        autorizacionImagenes: false,
+        aceptacionReglamento: false,
+        aclaracionFirma: '',
+        dniFirma: ''
+    })
+
+    const [showRules, setShowRules] = useState(false)
+    const [leavesAlone, setLeavesAlone] = useState<boolean | null>(null)
+    const [authorizedPerson, setAuthorizedPerson] = useState({
+        nombre: '',
+        apellido: '',
+        dni: ''
+    })
+
+    const sigCanvas = useRef<SignatureCanvas>(null)
+
+    // NEW: Multi-student support
+    const [existingStudents, setExistingStudents] = useState<any[]>([])
+    const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+
     // Reset step if navigating to this page (ensure it always starts at step 1)
     useEffect(() => {
-        setStep(1)
+        setLoading(true)
+        fetch('/api/portal/perfil')
+            .then(res => res.json())
+            .then(data => {
+                const alumnos = data.students || []
+                setExistingStudents(alumnos)
+
+                if (alumnos.length === 0) {
+                    setIsProfileComplete(false)
+                    setSelectedStudentId('new')
+                    setStep(-1) // Start at student data
+                } else {
+                    // Start at selection
+                    setIsProfileComplete(true) // We have profiles, even if they choose to add a new one later
+                    setStep(-2)
+                }
+            })
+            .catch(() => {
+                setIsProfileComplete(false)
+                setSelectedStudentId('new')
+                setStep(-1)
+            })
+            .finally(() => setLoading(false))
+
         setKnowsLevel(null)
         setIsSummer(false)
         setSlots([])
         setSelectedFase('')
     }, [pathname])
+
+    const calculateAge = (birthDate: string) => {
+        if (!birthDate) return ''
+        const today = new Date()
+        const birth = new Date(birthDate)
+        let age = today.getFullYear() - birth.getFullYear()
+        const monthDiff = today.getMonth() - birth.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--
+        }
+        return age.toString()
+    }
+
+    const handleStudentChange = (field: string, value: string) => {
+        setStudentData(prev => ({ ...prev, [field]: value }))
+        if (field === 'fechaNacimiento') {
+            const age = calculateAge(value)
+            setStudentData(prev => ({ ...prev, edad: age }))
+        }
+    }
 
     // State for Regular Enrollment
     const [selectedFase, setSelectedFase] = useState('')
@@ -208,7 +330,17 @@ export default function EnrollmentPage() {
                     summerFrequency,
                     summerTime,
                     summerStartDate,
-                    slots: isSummer ? [] : slots
+                    slots: isSummer ? [] : slots,
+                    studentId: selectedStudentId,
+                    studentData: selectedStudentId === 'new' ? studentData : null,
+                    // Construct final authData with latest values
+                    authData: selectedStudentId === 'new' ? {
+                        ...authData,
+                        autorizacionRetiro: leavesAlone
+                            ? 'SÍ, SE RETIRA SOLO'
+                            : `${authorizedPerson.nombre} ${authorizedPerson.apellido} (DNI: ${authorizedPerson.dni})`
+                    } : null,
+                    signature: selectedStudentId === 'new' ? sigCanvas.current?.getCanvas().toDataURL('image/png') : null
                 })
             })
 
@@ -241,6 +373,7 @@ export default function EnrollmentPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     type: 'placement',
+                    studentId: selectedStudentId,
                     date: placementDate,
                     time: placementTime
                 })
@@ -283,6 +416,10 @@ export default function EnrollmentPage() {
         return s === 1 ? 'Nivel' : s === 2 ? (isSummer ? 'Fecha' : 'Cursada') : 'Pago'
     }
 
+    if (isProfileComplete === null) {
+        return <div className="min-h-screen flex items-center justify-center">Cargando perfil...</div>
+    }
+
     // ... (Loading state remains same)
 
     return (
@@ -322,6 +459,333 @@ export default function EnrollmentPage() {
 
             {/* Main Content */}
             <main className="min-h-[400px]">
+
+                {/* STEP -2: Student Selection */}
+                {step === -2 && (
+                    <div className="card max-w-2xl mx-auto space-y-8 animate-slide-up">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold text-warm-800">¿A quién vas a inscribir?</h2>
+                            <p className="text-warm-500">Seleccioná uno de tus hijos o agregá uno nuevo.</p>
+                        </div>
+
+                        <div className="grid gap-4">
+                            {existingStudents.map((s: any) => (
+                                <button
+                                    key={s.id}
+                                    onClick={() => {
+                                        setSelectedStudentId(s.id)
+                                        setIsProfileComplete(true)
+                                        setStep(1)
+                                    }}
+                                    className="p-4 rounded-xl border-2 border-canvas-200 hover:border-lemon-400 hover:bg-lemon-50 transition-all flex items-center justify-between group"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-lemon-100 flex items-center justify-center text-xl">
+                                            👤
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-bold text-warm-800">{s.nombre} {s.apellido}</p>
+                                            <p className="text-sm text-warm-500">{s.perfilCompleto ? 'Perfil Completo' : 'Perfil Incompleto'}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-lemon-600 font-bold group-hover:translate-x-1 transition-transform">Elegir →</span>
+                                </button>
+                            ))}
+
+                            <button
+                                onClick={() => {
+                                    setSelectedStudentId('new')
+                                    setIsProfileComplete(false)
+                                    setStep(-1)
+                                }}
+                                className="p-4 rounded-xl border-2 border-dashed border-canvas-200 hover:border-leaf-400 hover:bg-leaf-50 transition-all flex items-center gap-4 group"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-leaf-100 flex items-center justify-center text-xl text-leaf-600">
+                                    +
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-bold text-warm-800">Inscribir a otro niño/a</p>
+                                    <p className="text-sm text-warm-500">Agregar un nuevo perfil a tu cuenta</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP -1: Student Data */}
+                {step === -1 && (
+                    <div className="card max-w-2xl mx-auto space-y-6 animate-slide-up">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold text-warm-800">1. Datos del Alumno</h2>
+                            <p className="text-warm-500">Completá los datos de tu hijo/a para comenzar.</p>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">Nombre *</label>
+                                <input type="text" className="input-field"
+                                    value={studentData.nombre} onChange={e => handleStudentChange('nombre', e.target.value)} required />
+                            </div>
+                            <div>
+                                <label className="label">Apellido *</label>
+                                <input type="text" className="input-field"
+                                    value={studentData.apellido} onChange={e => handleStudentChange('apellido', e.target.value)} required />
+                            </div>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">DNI *</label>
+                                <input type="text" className="input-field"
+                                    value={studentData.dni} onChange={e => handleStudentChange('dni', e.target.value)} required />
+                            </div>
+                            <div>
+                                <label className="label">Fecha de Nacimiento *</label>
+                                <input type="date" className="input-field"
+                                    value={studentData.fechaNacimiento} onChange={e => handleStudentChange('fechaNacimiento', e.target.value)} required />
+                            </div>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">Edad</label>
+                                <input type="text" className="input-field bg-canvas-50" value={studentData.edad} readOnly />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="label">Calle *</label>
+                                    <input type="text" className="input-field"
+                                        value={studentData.domicilioCalle} onChange={e => handleStudentChange('domicilioCalle', e.target.value)} required />
+                                </div>
+                                <div>
+                                    <label className="label">N° *</label>
+                                    <input type="text" className="input-field"
+                                        value={studentData.domicilioNumero} onChange={e => handleStudentChange('domicilioNumero', e.target.value)} required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">Colegio *</label>
+                                <select className="input-field"
+                                    value={studentData.colegio} onChange={e => handleStudentChange('colegio', e.target.value)} required>
+                                    <option value="">Seleccionar...</option>
+                                    {SCHOOLS.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="label">Grado/Año *</label>
+                                <select className="input-field"
+                                    value={studentData.grado} onChange={e => handleStudentChange('grado', e.target.value)} required>
+                                    <option value="">Seleccionar...</option>
+                                    {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="pt-6">
+                            <button
+                                onClick={() => {
+                                    if (!studentData.nombre || !studentData.apellido || !studentData.dni || !studentData.fechaNacimiento || !studentData.domicilioCalle || !studentData.domicilioNumero || !studentData.colegio || !studentData.grado) {
+                                        setError('Por favor completá todos los campos obligatorios (*)')
+                                        return
+                                    }
+                                    setError('')
+                                    setStep(0)
+                                }}
+                                className="w-full btn-primary py-4 text-lg"
+                            >
+                                Siguiente: Permisos y Firma
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 0: Authorizations */}
+                {step === 0 && (
+                    <div className="card max-w-2xl mx-auto space-y-6 animate-slide-up">
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold text-warm-800">2. Permisos y Firma</h2>
+                            <p className="text-warm-500">Necesitamos tu autorización legal como tutor.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" checked={authData.autorizacionParticipacion} onChange={e => setAuthData({ ...authData, autorizacionParticipacion: e.target.checked })} />
+                                <span className="text-sm">Autorizo la participación en el taller *</span>
+                            </label>
+                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" checked={authData.autorizacionMedica} onChange={e => setAuthData({ ...authData, autorizacionMedica: e.target.checked })} />
+                                <span className="text-sm">Autorizo atención médica de emergencia *</span>
+                            </label>
+                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" checked={authData.autorizacionImagenes} onChange={e => setAuthData({ ...authData, autorizacionImagenes: e.target.checked })} />
+                                <span className="text-sm">Autorizo uso de imágenes con fines educativos</span>
+                            </label>
+
+                            <div className="p-3 rounded-xl border border-canvas-200 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input type="checkbox" checked={authData.aceptacionReglamento} onChange={e => setAuthData({ ...authData, aceptacionReglamento: e.target.checked })} />
+                                        <span className="text-sm">Acepto el reglamento interno *</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowRules(true)}
+                                        className="text-xs font-bold text-lemon-600 hover:text-lemon-700 underline"
+                                    >
+                                        Leer Reglamento
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Rules Modal */}
+                            {showRules && (
+                                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-warm-900/60 backdrop-blur-sm animate-fade-in">
+                                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up">
+                                        <div className="p-8 border-b border-canvas-100 flex justify-between items-center bg-canvas-50">
+                                            <h3 className="text-xl font-serif font-black text-warm-800">Reglamento Interno</h3>
+                                            <button onClick={() => setShowRules(false)} className="text-warm-400 hover:text-red-500 transition-colors">✕</button>
+                                        </div>
+                                        <div className="p-8 max-h-[60vh] overflow-y-auto text-warm-700 space-y-4 text-sm leading-relaxed">
+                                            <p className="font-bold">1. Asistencia y Puntualidad</p>
+                                            <p>Se ruega puntualidad tanto en el ingreso como en el retiro de los niños. El taller no se responsabiliza por los niños fuera del horario de clase.</p>
+
+                                            <p className="font-bold">2. Materiales</p>
+                                            <p>Todos los materiales básicos están incluidos, a menos que se especifique lo contrario para proyectos especiales.</p>
+
+                                            <p className="font-bold">3. Comportamiento</p>
+                                            <p>Buscamos mantener un ambiente de respeto y creatividad. Comportamientos que afecten la integridad física o emocional de otros niños no serán tolerados.</p>
+
+                                            <p className="font-bold">4. Salud</p>
+                                            <p>Si el alumno presenta síntomas de malestar o enfermedad, se solicita no asistir a clase para preservar la salud del grupo.</p>
+
+                                            <p className="font-bold">5. Pagos</p>
+                                            <p>La cuota debe abonarse del 1 al 10 de cada mes. La falta de pago puede resultar en la pérdida de la vacante.</p>
+                                        </div>
+                                        <div className="p-6 bg-canvas-50 border-t border-canvas-100 flex justify-center">
+                                            <button
+                                                onClick={() => { setAuthData({ ...authData, aceptacionReglamento: true }); setShowRules(false); }}
+                                                className="btn-primary px-8"
+                                            >
+                                                Entendido y Acepto
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-4 pt-4 border-t border-canvas-100">
+                                <label className="label">¿El alumno se retira solo? *</label>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setLeavesAlone(true); setAuthData({ ...authData, autorizacionRetiro: 'SÍ, SE RETIRA SOLO' }); }}
+                                        className={`p-4 rounded-2xl border-2 font-bold transition-all ${leavesAlone === true ? 'border-lemon-500 bg-lemon-50 text-lemon-700' : 'border-canvas-200 text-warm-400'}`}
+                                    >
+                                        SÍ, se retira solo
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setLeavesAlone(false)}
+                                        className={`p-4 rounded-2xl border-2 font-bold transition-all ${leavesAlone === false ? 'border-lemon-500 bg-lemon-50 text-lemon-700' : 'border-canvas-200 text-warm-400'}`}
+                                    >
+                                        NO, lo retiran
+                                    </button>
+                                </div>
+
+                                {leavesAlone === false && (
+                                    <div className="animate-fade-in p-6 bg-canvas-50 rounded-3xl border-2 border-canvas-200 space-y-4">
+                                        <h4 className="text-sm font-bold text-warm-700">Persona autorizada a retirar al alumno</h4>
+                                        <div className="grid sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Nombre</label>
+                                                <input
+                                                    type="text"
+                                                    className="input-field"
+                                                    value={authorizedPerson.nombre}
+                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, nombre: e.target.value })}
+                                                    placeholder="Ej: María"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Apellido</label>
+                                                <input
+                                                    type="text"
+                                                    className="input-field"
+                                                    value={authorizedPerson.apellido}
+                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, apellido: e.target.value })}
+                                                    placeholder="Ej: Garcia"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">DNI</label>
+                                                <input
+                                                    type="text"
+                                                    className="input-field"
+                                                    value={authorizedPerson.dni}
+                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, dni: e.target.value })}
+                                                    placeholder="Número de documento"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="border-t border-canvas-100 pt-4">
+                                <h4 className="font-bold text-warm-800 mb-2">Firma Digital</h4>
+                                <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label className="label">Aclaración *</label>
+                                        <input type="text" className="input-field"
+                                            value={authData.aclaracionFirma} onChange={e => setAuthData({ ...authData, aclaracionFirma: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="label">DNI del Firmante *</label>
+                                        <input type="text" className="input-field"
+                                            value={authData.dniFirma} onChange={e => setAuthData({ ...authData, dniFirma: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="border border-warm-300 rounded-xl bg-white overflow-hidden">
+                                    <SignatureCanvas ref={sigCanvas} canvasProps={{ className: 'w-full h-40' }} />
+                                </div>
+                                <button type="button" onClick={() => sigCanvas.current?.clear()} className="text-xs text-lemon-600 mt-2">Limpiar Firma</button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-6">
+                            <button onClick={() => setStep(-1)} className="px-6 py-4 border border-canvas-300 rounded-xl text-warm-600 font-medium hover:bg-canvas-50">Volver</button>
+                            <button
+                                onClick={() => {
+                                    if (!authData.autorizacionParticipacion || !authData.autorizacionMedica || !authData.aceptacionReglamento || !authData.aclaracionFirma || !authData.dniFirma || sigCanvas.current?.isEmpty() || leavesAlone === null) {
+                                        setError('Por favor completá todos los campos obligatorios y firmá.')
+                                        return
+                                    }
+                                    if (leavesAlone === false && (!authorizedPerson.nombre || !authorizedPerson.apellido || !authorizedPerson.dni)) {
+                                        setError('Debes ingresar los datos de la persona autorizada.')
+                                        return
+                                    }
+
+                                    // Prepare autorizacionRetiro string if NOT leavesAlone
+                                    if (leavesAlone === false) {
+                                        setAuthData({
+                                            ...authData,
+                                            autorizacionRetiro: `${authorizedPerson.nombre} ${authorizedPerson.apellido} (DNI: ${authorizedPerson.dni})`
+                                        })
+                                    }
+
+                                    setError('')
+                                    setStep(1)
+                                }}
+                                className="flex-1 btn-primary py-4 text-lg"
+                            >
+                                Siguiente: Elegir Taller
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* STEP 1: Level Decision */}
                 {step === 1 && (

@@ -11,20 +11,42 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { type } = body
+        const { type, studentId } = body
 
-        // Find student
-        let alumno = await prisma.alumno.findUnique({
-            where: { usuarioId: session.user.id }
-        })
-
-        if (!alumno) {
+        // Find or Create student
+        let alumno;
+        if (studentId === 'new') {
             alumno = await prisma.alumno.create({
                 data: {
                     usuarioId: session.user.id,
-                    nivel: 'PRINCIPIANTE'
+                    nivel: 'PRINCIPIANTE',
+                    perfilCompleto: false
                 }
             })
+        } else if (studentId) {
+            alumno = await prisma.alumno.findUnique({
+                where: { id: studentId }
+            })
+        } else {
+            // Fallback: try to find any student for the user
+            alumno = await prisma.alumno.findFirst({
+                where: { usuarioId: session.user.id }
+            })
+
+            // If still no student AND we have data to create one, create it now
+            if (!alumno && body.studentData) {
+                alumno = await prisma.alumno.create({
+                    data: {
+                        usuarioId: session.user.id,
+                        nivel: 'PRINCIPIANTE',
+                        perfilCompleto: false
+                    }
+                })
+            }
+        }
+
+        if (!alumno) {
+            return NextResponse.json({ error: 'Alumno no encontrado' }, { status: 404 })
         }
 
         // --- PLACEMENT TEST FLOW ---
@@ -229,6 +251,46 @@ export async function POST(request: NextRequest) {
                 }
             })
         })
+
+        // --- PROFILE UPDATE (IF PROVIDED) ---
+        const { studentData, authData, signature } = body
+        if (studentData && !alumno.perfilCompleto) {
+            const {
+                nombre, apellido, dni, fechaNacimiento, edad,
+                domicilioCalle, domicilioNumero, domicilioTira, domicilioPiso, domicilioDepto,
+                colegio, grado
+            } = studentData
+
+            const fullAddress = `${domicilioCalle} ${domicilioNumero}${domicilioTira ? `, Tira ${domicilioTira}` : ''}${domicilioPiso ? `, Piso ${domicilioPiso}` : ''}${domicilioDepto ? `, Depto ${domicilioDepto}` : ''}`
+
+            await prisma.alumno.update({
+                where: { id: alumno.id },
+                data: {
+                    nombre,
+                    apellido,
+                    dni,
+                    fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+                    edad: edad ? parseInt(edad) : null,
+                    domicilio: fullAddress,
+                    domicilioCalle,
+                    domicilioNumero,
+                    domicilioTira,
+                    domicilioPiso,
+                    domicilioDepto,
+                    colegio,
+                    grado,
+                    autorizacionParticipacion: authData?.autorizacionParticipacion || false,
+                    autorizacionMedica: authData?.autorizacionMedica || false,
+                    autorizacionRetiro: authData?.autorizacionRetiro,
+                    autorizacionImagenes: authData?.autorizacionImagenes || false,
+                    aceptacionReglamento: authData?.aceptacionReglamento || false,
+                    firmaResponsable: signature,
+                    aclaracionFirma: authData?.aclaracionFirma,
+                    dniFirma: authData?.dniFirma,
+                    perfilCompleto: true
+                } as any
+            })
+        }
 
         return NextResponse.json({ success: true })
 

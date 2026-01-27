@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Usuario {
@@ -19,7 +20,7 @@ model Usuario {
   debeCambiarPassword Boolean        @default(true)
   creadoEn            DateTime       @default(now())
   actualizadoEn       DateTime       @updatedAt
-  alumno              Alumno?
+  alumnos             Alumno[]
   clasesDocente       Clase[]        @relation("DocenteClases")
   notificaciones      Notificacion[]
 
@@ -28,7 +29,9 @@ model Usuario {
 
 model Alumno {
   id                        String           @id @default(cuid())
-  usuarioId                 String           @unique
+  usuarioId                 String
+  nombre                    String?
+  apellido                  String?
   dni                       String?
   fechaNacimiento           DateTime?
   edad                      Int?

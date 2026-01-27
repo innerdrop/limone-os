@@ -162,7 +162,8 @@ export default function PagosPage() {
                                 {pagos.map((pago) => (
                                     <tr key={pago.id} className="border-b border-canvas-100 hover:bg-canvas-50">
                                         <td className="py-4 px-4">
-                                            <span className="font-medium text-warm-800">{pago.concepto}</span>
+                                            <p className="font-medium text-warm-800">{(pago as any).studentName}</p>
+                                            <p className="text-xs text-warm-500">{pago.concepto}</p>
                                         </td>
                                         <td className="py-4 px-4 text-warm-500">
                                             {pago.fechaPago ? new Date(pago.fechaPago).toLocaleDateString() : '-'}

@@ -1,16 +1,21 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signOut, useSession } from 'next-auth/react'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
 
-export default function PerfilPage() {
+function PerfilContent() {
     const { data: session } = useSession()
+    const searchParams = useSearchParams()
+    const studentIdParam = searchParams.get('studentId')
+
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(true)
     const [alumnoData, setAlumnoData] = useState<any>(null)
     const [formData, setFormData] = useState({
         nombre: '',
+        apellido: '',
         email: '',
         telefono: '',
         fechaNacimiento: '',
@@ -27,23 +32,27 @@ export default function PerfilPage() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const res = await fetch('/api/perfil')
+                const url = studentIdParam ? `/api/portal/perfil?studentId=${studentIdParam}` : '/api/perfil'
+                const res = await fetch(url)
                 if (res.ok) {
                     const data = await res.json()
-                    setAlumnoData(data)
+                    const student = data.students ? data.students[0] : data
+
+                    setAlumnoData(student)
                     setFormData({
-                        nombre: session?.user?.name || '',
+                        nombre: student?.nombre || '',
+                        apellido: student?.apellido || '',
                         email: session?.user?.email || '',
-                        telefono: data.tutorTelefonoPrincipal || '',
-                        fechaNacimiento: data.fechaNacimiento ? data.fechaNacimiento.split('T')[0] : '',
-                        dni: data.dni || '',
-                        domicilio: data.domicilio || '',
-                        tutorNombre: data.tutorNombre || '',
-                        tutorEmail: data.tutorEmail || '',
-                        tutorTelefonoPrincipal: data.tutorTelefonoPrincipal || '',
-                        emergenciaNombre: data.emergenciaNombre || '',
-                        emergenciaTelefono: data.emergenciaTelefono || '',
-                        alergias: data.alergias || '',
+                        telefono: student?.tutorTelefonoPrincipal || '',
+                        fechaNacimiento: student?.fechaNacimiento ? student?.fechaNacimiento.split('T')[0] : '',
+                        dni: student?.dni || '',
+                        domicilio: student?.domicilio || '',
+                        tutorNombre: student?.tutorNombre || '',
+                        tutorEmail: student?.tutorEmail || '',
+                        tutorTelefonoPrincipal: student?.tutorTelefonoPrincipal || '',
+                        emergenciaNombre: student?.emergenciaNombre || '',
+                        emergenciaTelefono: student?.emergenciaTelefono || '',
+                        alergias: student?.alergias || '',
                     })
                 }
             } catch (error) {
@@ -56,20 +65,23 @@ export default function PerfilPage() {
         if (session) {
             fetchProfile()
         }
-    }, [session])
+    }, [session, studentIdParam])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         try {
-            const res = await fetch('/api/perfil', {
+            const res = await fetch('/api/portal/perfil', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    ...formData,
+                    studentId: studentIdParam || alumnoData?.id
+                })
             })
             if (res.ok) {
                 const data = await res.json()
-                setAlumnoData(data)
+                setAlumnoData(data.student || data)
                 alert('¡Perfil actualizado con éxito!')
                 setIsEditing(false)
             } else {
@@ -97,7 +109,7 @@ export default function PerfilPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-serif font-bold text-warm-800">
-                        Mi Perfil
+                        {studentIdParam ? `Perfil de ${alumnoData?.nombre}` : 'Mi Perfil'}
                     </h1>
                     <p className="text-warm-500 mt-1">
                         Información completa del alumno y su inscripción
@@ -133,7 +145,7 @@ export default function PerfilPage() {
                     </div>
                     <div>
                         <h2 className="text-xl font-semibold text-warm-800">
-                            {session?.user?.name || 'Usuario'}
+                            {alumnoData?.nombre} {alumnoData?.apellido}
                         </h2>
                         <p className="text-warm-500">{session?.user?.email}</p>
                         <div className="flex gap-2 mt-2">
@@ -157,14 +169,24 @@ export default function PerfilPage() {
                             </div>
                             <h3 className="text-lg font-bold text-warm-800">Datos del Alumno</h3>
                         </div>
-                        <div className="grid md:grid-cols-3 gap-4">
-                            <div className="md:col-span-2">
-                                <label className="label">Nombre completo</label>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="label">Nombre</label>
                                 <input
                                     type="text"
                                     className="input-field"
                                     value={formData.nombre}
                                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                                    disabled={!isEditing}
+                                />
+                            </div>
+                            <div>
+                                <label className="label">Apellido</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    value={formData.apellido}
+                                    onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
@@ -188,16 +210,7 @@ export default function PerfilPage() {
                                     disabled={!isEditing}
                                 />
                             </div>
-                            <div>
-                                <label className="label">Edad</label>
-                                <input
-                                    type="number"
-                                    className="input-field bg-canvas-100"
-                                    value={alumnoData?.edad || ''}
-                                    disabled
-                                />
-                            </div>
-                            <div>
+                            <div className="md:col-span-2">
                                 <label className="label">Domicilio</label>
                                 <input
                                     type="text"
@@ -325,43 +338,6 @@ export default function PerfilPage() {
                         </section>
                     </div>
 
-                    {/* Authorizations & Payment Info */}
-                    <div className="grid md:grid-cols-2 gap-8 pt-6 border-t border-canvas-100">
-                        <section>
-                            <h3 className="text-sm font-bold text-warm-400 uppercase tracking-wider mb-4">Autorizaciones</h3>
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
-                                    <span className="text-sm text-warm-700">Participación</span>
-                                    <span className={alumnoData?.autorizacionParticipacion ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
-                                        {alumnoData?.autorizacionParticipacion ? 'SÍ' : 'NO'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
-                                    <span className="text-sm text-warm-700">Atención Médica</span>
-                                    <span className={alumnoData?.autorizacionMedica ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
-                                        {alumnoData?.autorizacionMedica ? 'SÍ' : 'NO'}
-                                    </span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-canvas-50">
-                                    <span className="text-sm text-warm-700">Uso de Imagen</span>
-                                    <span className={alumnoData?.autorizacionImagenes ? 'text-leaf-600 font-bold' : 'text-warm-400'}>
-                                        {alumnoData?.autorizacionImagenes ? 'SÍ' : 'NO'}
-                                    </span>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section>
-                            <h3 className="text-sm font-bold text-warm-400 uppercase tracking-wider mb-4">Información de Pago</h3>
-                            <div className="p-4 rounded-xl bg-lemon-50 border border-lemon-100">
-                                <p className="text-sm text-warm-600">Plan actual:</p>
-                                <p className="text-lg font-bold text-warm-800">{alumnoData?.planPago || 'No asignado'}</p>
-                                <p className="text-sm text-warm-600 mt-2">Forma de pago:</p>
-                                <p className="font-medium text-warm-700">{alumnoData?.formaPago || '-'}</p>
-                            </div>
-                        </section>
-                    </div>
-
                     {/* Actions */}
                     {isEditing && (
                         <div className="flex gap-3 pt-4">
@@ -383,22 +359,31 @@ export default function PerfilPage() {
                 </form>
             </div>
 
-            {/* Account Settings - No title as requested */}
-            <div className="p-4 rounded-2xl border border-canvas-200">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <p className="font-medium text-warm-800">Cerrar sesión</p>
-                        <p className="text-sm text-warm-500">Salir de tu cuenta en este dispositivo</p>
+            {/* Account Settings - Only if NOT editing a specific student */}
+            {!studentIdParam && (
+                <div className="p-4 rounded-2xl border border-canvas-200">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <p className="font-medium text-warm-800">Cerrar sesión</p>
+                            <p className="text-sm text-warm-500">Salir de tu cuenta en este dispositivo</p>
+                        </div>
+                        <button
+                            onClick={() => signOut({ callbackUrl: '/' })}
+                            className="px-4 py-2 border border-red-200 text-red-600 bg-red-50/30 rounded-lg font-medium hover:bg-red-50 transition-colors"
+                        >
+                            Cerrar sesión
+                        </button>
                     </div>
-                    <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
-                        className="px-4 py-2 border border-red-200 text-red-600 bg-red-50/30 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                    >
-                        Cerrar sesión
-                    </button>
                 </div>
-            </div>
+            )}
         </div>
     )
 }
 
+export default function PerfilPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lemon-500"></div></div>}>
+            <PerfilContent />
+        </Suspense>
+    )
+}

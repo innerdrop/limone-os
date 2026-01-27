@@ -8,6 +8,7 @@ interface PendingPaymentCardProps {
         horario: string
         fase: string
         asiento: number | string
+        studentName?: string
         pagos: Array<{
             id: string
             monto: number
@@ -24,14 +25,21 @@ export default function PendingPaymentCard({ inscripcion }: PendingPaymentCardPr
     return (
         <div className="card border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-orange-50">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
-                    <span className="text-2xl">⏳</span>
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
+                        <span className="text-2xl">⏳</span>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-warm-800">Pago Pendiente</h3>
+                        <p className="text-xs text-warm-500">Esperando confirmación</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="font-bold text-warm-800">Pago Pendiente</h3>
-                    <p className="text-xs text-warm-500">Esperando confirmación</p>
-                </div>
+                {inscripcion.studentName && (
+                    <span className="text-xs font-bold bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full border border-yellow-300">
+                        {inscripcion.studentName}
+                    </span>
+                )}
             </div>
 
             {/* Enrollment Details */}

@@ -19,12 +19,14 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                     }
                 }
             }
-        }
-    })
+        } as any
+    }) as any
 
     if (!alumno) {
         notFound()
     }
+
+    const studentName = `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim() || alumno.usuario.nombre
 
     return (
         <div className="min-h-screen bg-canvas-50 pb-12 print:bg-white print:pb-0">
@@ -56,9 +58,9 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                     <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-bold text-warm-800 flex items-center gap-3">
                             <span className="w-10 h-10 rounded-full bg-lemon-200 text-lemon-700 flex items-center justify-center text-lg">
-                                {alumno.usuario.nombre.charAt(0)}
+                                {studentName.charAt(0)}
                             </span>
-                            {alumno.usuario.nombre}
+                            {studentName}
                         </h1>
                         <div className="flex gap-3">
                             <Link
@@ -97,7 +99,7 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
                             <label className="label text-xs uppercase tracking-wide">Nombre Completo</label>
-                            <p className="font-medium text-lg">{alumno.usuario.nombre}</p>
+                            <p className="font-medium text-lg">{studentName}</p>
                         </div>
                         <div>
                             <label className="label text-xs uppercase tracking-wide">DNI</label>

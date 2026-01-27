@@ -57,7 +57,7 @@ export default function Header() {
                                 Iniciar sesión
                             </Link>
                             <Link href="/inscripcion" className="inline-flex btn-primary py-2.5 px-5 text-sm">
-                                Inscribirme
+                                Registrarme
                             </Link>
                         </div>
 
@@ -146,7 +146,7 @@ export default function Header() {
                                 className="w-full btn-primary py-3 px-5 text-lg shadow-lg hover:shadow-lemon-400/30"
                                 onClick={() => setIsMenuOpen(false)}
                             >
-                                Inscribirme
+                                Registrarme
                             </Link>
                         </div>
                     </nav>

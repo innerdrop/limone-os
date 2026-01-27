@@ -18,8 +18,8 @@ export const authOptions: NextAuthOptions = {
 
                 const usuario = await prisma.usuario.findUnique({
                     where: { email: credentials.email },
-                    include: { alumno: true }
-                })
+                    include: { alumnos: true } as any
+                }) as any
 
                 if (!usuario) {
                     throw new Error('Email no registrado')
@@ -31,15 +31,19 @@ export const authOptions: NextAuthOptions = {
                     throw new Error('Contraseña incorrecta')
                 }
 
+                // Consider profile complete if they have at least one student and ALL their students have complete profiles
+                const hasStudents = usuario.alumnos && usuario.alumnos.length > 0
+                const allComplete = hasStudents && usuario.alumnos.every((a: any) => a.perfilCompleto)
+
                 return {
                     id: usuario.id.toString(),
                     name: usuario.nombre,
                     email: usuario.email,
                     role: usuario.rol,
-                    image: usuario.imagen, // Preserving existing field not explicitly removed by the change
-                    perfilCompleto: usuario.alumno?.perfilCompleto || false,
+                    image: usuario.imagen,
+                    perfilCompleto: allComplete,
                     debeCambiarPassword: usuario.debeCambiarPassword
-                }
+                } as any
             }
         })
     ],

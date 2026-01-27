@@ -8,6 +8,7 @@ interface PlacementCardProps {
         id: string
         fecha: Date
         estado: string
+        studentName?: string
     }
 }
 
@@ -136,7 +137,12 @@ export default function PlacementCard({ cita }: PlacementCardProps) {
     return (
         <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-blue-900 group relative">
             <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-bold">Prueba de Nivelación</h3>
+                <div>
+                    <h3 className="text-xl font-bold">Prueba de Nivelación</h3>
+                    {cita.studentName && (
+                        <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">{cita.studentName}</span>
+                    )}
+                </div>
                 <span className="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">{cita.estado}</span>
             </div>
 

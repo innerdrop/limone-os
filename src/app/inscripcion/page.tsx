@@ -4,47 +4,8 @@ import { useState, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import SignatureCanvas from 'react-signature-canvas'
 
-// ==================== TYPES ====================
 // ==================== LISTS ====================
-const SCHOOLS = [
-    'Escuela N° 1 "Domingo Faustino Sarmiento"',
-    'Escuela N° 3 "Monseñor Fagnano"',
-    'Escuela N° 9 "Comandante Luis Piedrabuena"',
-    'Escuela N° 13 "Almirante Guillermo Brown"',
-    'Escuela N° 15 "Centenario de Ushuaia"',
-    'Escuela N° 16 "Dr. Arturo Mateo Bas"',
-    'Escuela N° 22 "Bahía Golondrina"',
-    'Escuela N° 24 "Juan Ruiz Galán"',
-    'Escuela N° 30 "Oshovia"',
-    'Escuela N° 31 "Juana Manso"',
-    'Escuela N° 39 "Mirador del Olivia"',
-    'Escuela N° 41 "Mario Benedetti"',
-    'Escuela N° 47',
-    'Escuela N° 48',
-    'Colegio Polivalente de Arte de Ushuaia',
-    'Colegio Provincial "José Martí"',
-    'Colegio Provincial "Klokedten"',
-    'Colegio Provincial "Los Andes"',
-    'Colegio Provincial de Educación Tecnológica (CPET)',
-    'Colegio Integral de Educación Ushuaia (CIEU)',
-    'Colegio del Sur',
-    'Colegio Julio Verne',
-    'Colegio Monseñor Aleman',
-    'Escuela Modelo de Educación Integral (EMEI)',
-    'Colegio Nacional de Ushuaia',
-    'Otro'
-]
-
-const GRADES = [
-    'Sala de 3', 'Sala de 4', 'Sala de 5',
-    '1° Grado Primaria', '2° Grado Primaria', '3° Grado Primaria',
-    '4° Grado Primaria', '5° Grado Primaria', '6° Grado Primaria',
-    '1° Año Secundaria', '2° Año Secundaria', '3° Año Secundaria',
-    '4° Año Secundaria', '5° Año Secundaria', '6° Año Secundaria'
-]
-
 const COUNTRY_CODES = [
     { code: '+54', country: '🇦🇷 AR' },
     { code: '+56', country: '🇨🇱 CL' },
@@ -59,51 +20,6 @@ const COUNTRY_CODES = [
     { code: '+1', country: '🇺🇸 US' },
 ]
 
-// ==================== TYPES ====================
-interface StudentData {
-    nombre: string
-    apellido: string
-    dni: string
-    fechaNacimiento: string
-    edad: string
-    domicilio: string
-    domicilioCalle: string
-    domicilioNumero: string
-    domicilioTira: string
-    domicilioPiso: string
-    domicilioDepto: string
-    colegio: string
-    grado: string
-}
-
-interface GuardianData {
-    tutorNombre: string
-    tutorApellido: string
-    tutorDni: string
-    tutorRelacion: string
-    tutorDomicilio: string
-    tutorDomicilioCalle: string
-    tutorDomicilioNumero: string
-    tutorDomicilioTira: string
-    tutorDomicilioPiso: string
-    tutorDomicilioDepto: string
-    tutorTelefonoPrincipalCod: string
-    tutorTelefonoPrincipal: string
-    tutorTelefonoAlternativo: string
-    tutorEmail: string
-    tutorProfesion: string
-}
-
-interface AuthorizationData {
-    autorizacionParticipacion: boolean
-    autorizacionMedica: boolean
-    autorizacionRetiro: string // "NO" or Name of person
-    autorizacionImagenes: boolean
-    aceptacionReglamento: boolean
-    aclaracionFirma: string
-    dniFirma: string
-}
-
 // ==================== MAIN COMPONENT ====================
 function InscripcionContent() {
     const router = useRouter()
@@ -112,12 +28,11 @@ function InscripcionContent() {
     const initialMode = (initialModeParam === 'inscripcion' || initialModeParam === 'nivelacion') ? initialModeParam : 'choice'
     const initialStep = initialMode === 'inscripcion' ? 1 : 0
 
-    const sigCanvas = useRef<SignatureCanvas>(null)
-    const [step, setStep] = useState(initialStep) // 0 = choice, 1-4 = inscription steps
+    const [step, setStep] = useState(initialStep) // 0 = choice, 1 = registration, 2 = success
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [showRegulations, setShowRegulations] = useState(false)
     const [mode, setMode] = useState<'choice' | 'inscripcion' | 'nivelacion'>(initialMode)
+    const [registrationResponse, setRegistrationResponse] = useState<{ email: string, tempPassword: string } | null>(null)
 
     // Leveling form data
     const [levelingData, setLevelingData] = useState({
@@ -130,104 +45,24 @@ function InscripcionContent() {
         horaPreferida: ''
     })
 
-    // Form data
-    const [studentData, setStudentData] = useState<StudentData>({
-        nombre: '',
-        apellido: '',
-        dni: '',
-        fechaNacimiento: '',
-        edad: '',
-        domicilio: '',
-        domicilioCalle: '',
-        domicilioNumero: '',
-        domicilioTira: '',
-        domicilioPiso: '',
-        domicilioDepto: '',
-        colegio: '',
-        grado: ''
-    })
-
-    const [guardianData, setGuardianData] = useState<GuardianData>({
+    // Registration data (Tutor focus)
+    const [guardianData, setGuardianData] = useState({
         tutorNombre: '',
         tutorApellido: '',
         tutorDni: '',
-        tutorRelacion: '',
-        tutorDomicilio: '',
-        tutorDomicilioCalle: '',
-        tutorDomicilioNumero: '',
-        tutorDomicilioTira: '',
-        tutorDomicilioPiso: '',
-        tutorDomicilioDepto: '',
         tutorTelefonoPrincipalCod: '+54',
         tutorTelefonoPrincipal: '',
-        tutorTelefonoAlternativo: '',
-        tutorEmail: '',
-        tutorProfesion: ''
+        tutorEmail: ''
     })
 
-    const [authData, setAuthData] = useState<AuthorizationData>({
-        autorizacionParticipacion: false,
-        autorizacionMedica: false,
-        autorizacionRetiro: 'NO',
-        autorizacionImagenes: false,
-        aceptacionReglamento: false,
-        aclaracionFirma: '',
-        dniFirma: '' // Defaults to tutor DNI usually
-    })
-
-    // Calculate age from birth date
-    const calculateAge = (birthDate: string) => {
-        if (!birthDate) return ''
-        const today = new Date()
-        const birth = new Date(birthDate)
-        let age = today.getFullYear() - birth.getFullYear()
-        const monthDiff = today.getMonth() - birth.getMonth()
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--
-        }
-        return age.toString()
-    }
-
-    // Handle inputs
-    const handleStudentChange = (field: keyof StudentData, value: string) => {
-        setStudentData(prev => ({ ...prev, [field]: value }))
-        if (field === 'fechaNacimiento') {
-            const age = calculateAge(value)
-            setStudentData(prev => ({ ...prev, edad: age }))
-        }
-    }
-
-    const handleGuardianChange = (field: keyof GuardianData, value: string) => {
+    const handleGuardianChange = (field: string, value: string) => {
         setGuardianData(prev => ({ ...prev, [field]: value }))
-        // Auto-fill DNI Firma if DNI Tutor changes and empty
-        if (field === 'tutorDni') {
-            setAuthData(prev => ({ ...prev, dniFirma: value }))
-        }
-    }
-
-    const handleAuthChange = (field: keyof AuthorizationData, value: any) => {
-        setAuthData(prev => ({ ...prev, [field]: value }))
-    }
-
-    const clearSignature = () => {
-        sigCanvas.current?.clear()
     }
 
     // VALIDATION
-    const validateStep1 = () => {
-        if (!studentData.nombre || !studentData.apellido || !studentData.dni || !studentData.fechaNacimiento ||
-            !studentData.domicilioCalle || !studentData.domicilioNumero || !studentData.colegio || !studentData.grado) {
-            setError('Por favor completá todos los campos obligatorios (*)')
-            return false
-        }
-        setError('')
-        return true
-    }
-
-    const validateStep2 = () => {
-        if (!guardianData.tutorNombre || !guardianData.tutorApellido || !guardianData.tutorDni || !guardianData.tutorRelacion ||
-            !guardianData.tutorTelefonoPrincipal || !guardianData.tutorEmail ||
-            !guardianData.tutorDomicilioCalle || !guardianData.tutorDomicilioNumero) {
+    const validateRegistration = () => {
+        if (!guardianData.tutorNombre || !guardianData.tutorApellido || !guardianData.tutorDni ||
+            !guardianData.tutorTelefonoPrincipal || !guardianData.tutorEmail) {
             setError('Por favor completá todos los campos obligatorios (*)')
             return false
         }
@@ -240,95 +75,43 @@ function InscripcionContent() {
         return true
     }
 
-    const validateStep3 = () => {
-        if (!authData.autorizacionParticipacion || !authData.autorizacionMedica) {
-            setError('Debes autorizar la participación y la atención médica de emergencia.')
-            return false
-        }
-        if (!authData.autorizacionRetiro) {
-            setError('Debes especificar quién retira al alumno.')
-            return false
-        }
-        setError('')
-        return true
-    }
-
-    const validateStep4 = () => {
-        if (!authData.aceptacionReglamento) {
-            setError('Debes aceptar el reglamento.')
-            return false
-        }
-        if (sigCanvas.current?.isEmpty()) {
-            setError('Por favor firmá en el recuadro.')
-            return false
-        }
-        if (!authData.aclaracionFirma || !authData.dniFirma) {
-            setError('Faltan datos de la firma.')
-            return false
-        }
-        return true
-    }
-
-    // Navigation
-    const handleNext = () => {
-        if (step === 1 && validateStep1()) setStep(2)
-        else if (step === 2 && validateStep2()) setStep(3)
-        else if (step === 3 && validateStep3()) setStep(4)
-    }
-
     const handlePrevious = () => {
-        if (step === 1) {
-            setMode('choice')
-            setStep(0)
-        } else {
-            setStep(step - 1)
-        }
+        setMode('choice')
+        setStep(0)
         setError('')
     }
 
-    // Submit
-    const handleSubmit = async () => {
-        if (!validateStep4()) return
+    // Submit Registration
+    const handleSubmitRegistration = async () => {
+        if (!validateRegistration()) return
 
         setLoading(true)
         setError('')
 
-        // Get signature image
-        const signatureImage = sigCanvas.current?.getCanvas().toDataURL('image/png')
-
         try {
-            // Format address
-            const fullAddress = `${studentData.domicilioCalle} ${studentData.domicilioNumero}${studentData.domicilioTira ? `, Tira ${studentData.domicilioTira}` : ''}${studentData.domicilioPiso ? `, Piso ${studentData.domicilioPiso}` : ''}${studentData.domicilioDepto ? `, Depto ${studentData.domicilioDepto}` : ''}`
-
-            const fullTutorAddress = `${guardianData.tutorDomicilioCalle} ${guardianData.tutorDomicilioNumero}${guardianData.tutorDomicilioTira ? `, Tira ${guardianData.tutorDomicilioTira}` : ''}${guardianData.tutorDomicilioPiso ? `, Piso ${guardianData.tutorDomicilioPiso}` : ''}${guardianData.tutorDomicilioDepto ? `, Depto ${guardianData.tutorDomicilioDepto}` : ''}`
-
             const fullTutorPhone = `${guardianData.tutorTelefonoPrincipalCod} ${guardianData.tutorTelefonoPrincipal}`
 
             const response = await fetch('/api/inscripcion', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...studentData,
-                    domicilio: fullAddress,
-                    nombre: `${studentData.nombre} ${studentData.apellido}`,
                     ...guardianData,
-                    tutorDomicilio: fullTutorAddress,
                     tutorTelefonoPrincipal: fullTutorPhone,
-                    ...authData,
-                    firmaResponsable: signatureImage
+                    registrationOnly: true
                 })
             })
 
             const data = await response.json()
 
             if (!response.ok) {
-                throw new Error(data.error || 'Error al procesar la inscripción')
+                throw new Error(data.error || 'Error al procesar el registro')
             }
 
             // Success
-            router.push('/login?inscripcion=exitosa')
+            setRegistrationResponse(data.data)
+            setStep(2)
         } catch (err: any) {
-            setError(err.message || 'Error al procesar la inscripción')
+            setError(err.message || 'Error al procesar el registro')
         } finally {
             setLoading(false)
         }
@@ -345,23 +128,13 @@ function InscripcionContent() {
                             <span className="font-gigi text-xl font-bold text-warm-800">Limoné</span>
                         </Link>
                         <div className="text-sm font-medium text-warm-600">
-                            {mode === 'nivelacion' ? 'Agendar Nivelación' : step > 0 ? `Paso ${step} de 4` : 'Elegí tu camino'}
+                            {mode === 'nivelacion' ? 'Agendar Nivelación' : step > 0 ? `Paso 1 de 1` : 'Elegí tu camino'}
                         </div>
                     </div>
                 </div>
             </header>
 
             <main className="max-w-3xl mx-auto px-4 py-8">
-                {/* Progress Bar - only show for inscription */}
-                {mode === 'inscripcion' && step > 0 && (
-                    <div className="w-full bg-canvas-200 h-2 rounded-full mb-8 overflow-hidden shadow-inner">
-                        <div
-                            className="bg-brand-yellow h-full transition-all duration-500 ease-out shadow-glow-lemon"
-                            style={{ width: `${(step / 4) * 100}%` }}
-                        />
-                    </div>
-                )}
-
                 <div className="card max-w-none">
                     {/* Error Message */}
                     {error && (
@@ -385,8 +158,8 @@ function InscripcionContent() {
                                     className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
                                 >
                                     <div className="w-16 h-16 rounded-2xl bg-lemon-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">📝</div>
-                                    <h3 className="text-xl font-black text-warm-800 mb-2">Inscribirme</h3>
-                                    <p className="text-warm-500 text-sm">Ya sé en qué nivel quiero inscribir a mi hijo/a.</p>
+                                    <h3 className="text-xl font-black text-warm-800 mb-2">Registrarme e Inscribirme</h3>
+                                    <p className="text-warm-500 text-sm">Crea tu cuenta para comenzar a inscribir a tus hijos.</p>
                                 </button>
 
                                 <button
@@ -401,7 +174,7 @@ function InscripcionContent() {
                         </div>
                     )}
 
-                    {/* NIVELACION FORM */}
+                    {/* NIVELACION FORM (Keeping existing) */}
                     {mode === 'nivelacion' && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <div className="text-center">
@@ -504,26 +277,12 @@ function InscripcionContent() {
 
                             <button
                                 onClick={() => {
-                                    // Validate required fields
                                     if (!levelingData.nombreAlumno || !levelingData.edadAlumno || !levelingData.nombreTutor || !levelingData.telefonoTutor || !levelingData.emailTutor) {
                                         setError('Por favor completá todos los campos obligatorios (*)')
                                         return
                                     }
                                     setError('')
-                                    // Send to WhatsApp
-                                    const message = `Hola Natalia! 👋
-
-Quiero agendar una *Clase de Prueba Gratuita* para mi hijo/a:
-
-👧 *Alumno:* ${levelingData.nombreAlumno}
-📅 *Edad:* ${levelingData.edadAlumno} años
-👤 *Tutor:* ${levelingData.nombreTutor}
-📱 *Teléfono:* ${levelingData.telefonoTutor}
-📧 *Email:* ${levelingData.emailTutor}
-${levelingData.fechaPreferida ? `🗓️ *Fecha preferida:* ${levelingData.fechaPreferida}` : ''}
-${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferida}` : ''}
-
-¡Gracias!`
+                                    const message = `Hola Natalia! 👋\n\nQuiero agendar una *Clase de Prueba Gratuita* para mi hijo/a:\n\n👧 *Alumno:* ${levelingData.nombreAlumno}\n📅 *Edad:* ${levelingData.edadAlumno} años\n👤 *Tutor:* ${levelingData.nombreTutor}\n📱 *Teléfono:* ${levelingData.telefonoTutor}\n📧 *Email:* ${levelingData.emailTutor}\n${levelingData.fechaPreferida ? `🗓️ *Fecha preferida:* ${levelingData.fechaPreferida}` : ''}\n${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferida}` : ''}\n\n¡Gracias!`
                                     window.location.href = `https://wa.me/5492901588969?text=${encodeURIComponent(message)}`
                                 }}
                                 className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors shadow-lg"
@@ -533,119 +292,63 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                         </div>
                     )}
 
-                    {/* STEP 1: Alumno */}
-                    {mode === 'inscripcion' && step === 1 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
-                                <h2 className="text-2xl font-bold text-warm-800">1. Datos del Alumno</h2>
-                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                    {/* STEP 2: Registration Success */}
+                    {step === 2 && registrationResponse && (
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                            <div className="text-center">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner ring-8 ring-green-50">
+                                    ✨
+                                </div>
+                                <h2 className="text-3xl font-black text-warm-800 mb-2">¡Registro Exitoso!</h2>
+                                <p className="text-warm-500">Tu cuenta ha sido creada correctamente.</p>
                             </div>
 
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Nombre *</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.nombre} onChange={e => handleStudentChange('nombre', e.target.value)} required />
-                                </div>
-                                <div>
-                                    <label className="label">Apellido *</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.apellido} onChange={e => handleStudentChange('apellido', e.target.value)} required />
-                                </div>
-                            </div>
-
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">DNI *</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.dni} onChange={e => handleStudentChange('dni', e.target.value)} required />
-                                </div>
-                                <div>
-                                    <label className="label">Fecha de Nacimiento *</label>
-                                    <input type="date" className="input-field"
-                                        value={studentData.fechaNacimiento} onChange={e => handleStudentChange('fechaNacimiento', e.target.value)} required />
-                                </div>
-                            </div>
-
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Edad</label>
-                                    <input type="text" className="input-field bg-canvas-50" value={studentData.edad} readOnly />
-                                </div>
-                                <div className="grid grid-cols-3 gap-2 col-span-1">
-                                    <div className="col-span-2">
-                                        <label className="label">Calle *</label>
-                                        <input type="text" className="input-field"
-                                            value={studentData.domicilioCalle} onChange={e => handleStudentChange('domicilioCalle', e.target.value)} required />
+                            <div className="bg-gradient-to-br from-warm-50 to-canvas-50 p-6 rounded-3xl border-2 border-canvas-200 space-y-4">
+                                <h3 className="font-bold text-warm-800 flex items-center gap-2">
+                                    <span className="text-lemon-500">🔑</span> Tus credenciales de acceso:
+                                </h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center py-2 border-b border-canvas-200">
+                                        <span className="text-sm text-warm-600">Email:</span>
+                                        <span className="font-mono font-bold text-warm-800">{registrationResponse.email}</span>
                                     </div>
-                                    <div>
-                                        <label className="label">N° *</label>
-                                        <input type="text" className="input-field"
-                                            value={studentData.domicilioNumero} onChange={e => handleStudentChange('domicilioNumero', e.target.value)} required />
+                                    <div className="flex justify-between items-center py-2">
+                                        <span className="text-sm text-warm-600">Contraseña temporal:</span>
+                                        <span className="font-mono font-bold text-warm-800 bg-lemon-200 px-3 py-1 rounded-lg">
+                                            {registrationResponse.tempPassword}
+                                        </span>
                                     </div>
                                 </div>
+                                <p className="text-[10px] text-warm-400 text-center uppercase tracking-widest font-bold">
+                                    (Son los primeros 4 dígitos de tu DNI)
+                                </p>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label className="label">Tira</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.domicilioTira} onChange={e => handleStudentChange('domicilioTira', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="label">Piso</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.domicilioPiso} onChange={e => handleStudentChange('domicilioPiso', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="label">Depto</label>
-                                    <input type="text" className="input-field"
-                                        value={studentData.domicilioDepto} onChange={e => handleStudentChange('domicilioDepto', e.target.value)} />
-                                </div>
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex gap-4">
+                                <span className="text-2xl">ℹ️</span>
+                                <p className="text-sm text-blue-800 leading-relaxed">
+                                    Al ingresar por primera vez, el sistema te pedirá <strong>cambiar tu contraseña</strong> por seguridad. Luego podrás inscribir a tus hijos desde el portal.
+                                </p>
                             </div>
 
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Colegio *</label>
-                                    <select
-                                        className="input-field"
-                                        value={studentData.colegio}
-                                        onChange={e => handleStudentChange('colegio', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Seleccionar...</option>
-                                        {SCHOOLS.map(school => (
-                                            <option key={school} value={school}>{school}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="label">Grado / Año *</label>
-                                    <select
-                                        className="input-field"
-                                        value={studentData.grado}
-                                        onChange={e => handleStudentChange('grado', e.target.value)}
-                                        required
-                                    >
-                                        <option value="">Seleccionar...</option>
-                                        {GRADES.map(grade => (
-                                            <option key={grade} value={grade}>{grade}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
+                            <button
+                                onClick={() => router.push('/login')}
+                                className="w-full py-4 btn-primary text-xl shadow-xl hover:shadow-lemon-400/30 transition-shadow"
+                            >
+                                Ir al Inicio de Sesión
+                            </button>
                         </div>
                     )}
 
-                    {/* STEP 2: Tutor */}
-                    {mode === 'inscripcion' && step === 2 && (
+                    {/* REGISTRATION FORM (TUTOR DATA ONLY) */}
+                    {mode === 'inscripcion' && step === 1 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
                             <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-warm-800">2. Datos del Tutor</h2>
-                                    <p className="text-sm text-warm-600">Padre, Madre o Tutor Legal</p>
+                                    <h2 className="text-2xl font-bold text-warm-800">Datos del Padre/Madre o Tutor</h2>
+                                    <p className="text-sm text-warm-600">Completa tus datos para crear tu perfil.</p>
                                 </div>
-                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
+                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Obligatorio</span>
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">
@@ -661,28 +364,15 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                                 </div>
                             </div>
 
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">DNI *</label>
-                                    <input type="text" className="input-field"
-                                        value={guardianData.tutorDni} onChange={e => handleGuardianChange('tutorDni', e.target.value)} required />
-                                </div>
-                                <div>
-                                    <label className="label">Relación *</label>
-                                    <select className="input-field"
-                                        value={guardianData.tutorRelacion} onChange={e => handleGuardianChange('tutorRelacion', e.target.value)} required>
-                                        <option value="">Seleccionar...</option>
-                                        <option value="Padre">Padre</option>
-                                        <option value="Madre">Madre</option>
-                                        <option value="Tutor">Tutor Legal</option>
-                                        <option value="Otro">Otro</option>
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="label">DNI *</label>
+                                <input type="text" className="input-field"
+                                    value={guardianData.tutorDni} onChange={e => handleGuardianChange('tutorDni', e.target.value)} required />
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="label">Teléfono Principal *</label>
+                                    <label className="label">Teléfono *</label>
                                     <div className="flex gap-2">
                                         <select
                                             className="input-field w-24 text-sm"
@@ -704,311 +394,32 @@ ${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferi
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-canvas-100">
-                                <p className="text-sm font-bold text-warm-700 mb-4">Domicilio del Tutor</p>
-                                <div className="grid grid-cols-3 gap-2 mb-4">
-                                    <div className="col-span-2">
-                                        <label className="label">Calle *</label>
-                                        <input type="text" className="input-field"
-                                            value={guardianData.tutorDomicilioCalle} onChange={e => handleGuardianChange('tutorDomicilioCalle', e.target.value)} required />
-                                    </div>
-                                    <div>
-                                        <label className="label">N° *</label>
-                                        <input type="text" className="input-field"
-                                            value={guardianData.tutorDomicilioNumero} onChange={e => handleGuardianChange('tutorDomicilioNumero', e.target.value)} required />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="label">Tira</label>
-                                        <input type="text" className="input-field"
-                                            value={guardianData.tutorDomicilioTira} onChange={e => handleGuardianChange('tutorDomicilioTira', e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label className="label">Piso</label>
-                                        <input type="text" className="input-field"
-                                            value={guardianData.tutorDomicilioPiso} onChange={e => handleGuardianChange('tutorDomicilioPiso', e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <label className="label">Depto</label>
-                                        <input type="text" className="input-field"
-                                            value={guardianData.tutorDomicilioDepto} onChange={e => handleGuardianChange('tutorDomicilioDepto', e.target.value)} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* STEP 3: Autorizaciones */}
-                    {mode === 'inscripcion' && step === 3 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
-                                <h2 className="text-2xl font-bold text-warm-800">3. Autorizaciones</h2>
-                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                                    <label className="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" className="mt-1 w-5 h-5 text-brand-purple rounded border-canvas-300 focus:ring-brand-purple"
-                                            checked={authData.autorizacionParticipacion}
-                                            onChange={e => handleAuthChange('autorizacionParticipacion', e.target.checked)} />
-                                        <span className="text-sm text-warm-800">
-                                            <strong>Participación:</strong> Autorizo a mi hijo/a a participar de las actividades en Taller Limoné.
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                                    <label className="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" className="mt-1 w-5 h-5 text-lemon-600 rounded"
-                                            checked={authData.autorizacionMedica}
-                                            onChange={e => handleAuthChange('autorizacionMedica', e.target.checked)} />
-                                        <span className="text-sm text-warm-800">
-                                            <strong>Atención Médica:</strong> En caso de urgencia, autorizo a realizar las consultas médicas necesarias.
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div className="bg-white p-4 rounded-lg border border-canvas-200">
-                                    <label className="flex items-start gap-3 cursor-pointer">
-                                        <input type="checkbox" className="mt-1 w-5 h-5 text-lemon-600 rounded"
-                                            checked={authData.autorizacionImagenes}
-                                            onChange={e => handleAuthChange('autorizacionImagenes', e.target.checked)} />
-                                        <span className="text-sm text-warm-800">
-                                            <strong>Uso de Imagen:</strong> Autorizo la publicación de fotos/videos de las actividades en redes sociales del taller.
-                                        </span>
-                                    </label>
-                                </div>
-
-                                <div className="pt-4 border-t border-canvas-200">
-                                    <label className="label mb-2">¿Quién retira al alumno?</label>
-                                    <div className="space-y-3">
-                                        <div className="flex items-center gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="radio" name="retiro" className="text-lemon-600"
-                                                    checked={authData.autorizacionRetiro === 'SOLO'}
-                                                    onChange={() => handleAuthChange('autorizacionRetiro', 'SOLO')} />
-                                                <span>Se retira solo/a</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input type="radio" name="retiro" className="text-lemon-600"
-                                                    checked={authData.autorizacionRetiro !== 'SOLO' && authData.autorizacionRetiro !== 'NO'}
-                                                    onChange={() => handleAuthChange('autorizacionRetiro', '')} />
-                                                <span>Lo retira un adulto</span>
-                                            </label>
-                                        </div>
-
-                                        {(authData.autorizacionRetiro !== 'SOLO') && (
-                                            <input type="text" className="input-field mt-2"
-                                                placeholder="Nombre y DNI de personas autorizadas (o 'Padres')"
-                                                value={authData.autorizacionRetiro === 'NO' ? '' : authData.autorizacionRetiro}
-                                                onChange={e => handleAuthChange('autorizacionRetiro', e.target.value)}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* STEP 4: Firma */}
-                    {mode === 'inscripcion' && step === 4 && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <div className="flex justify-between items-center border-b border-canvas-100 pb-2">
-                                <h2 className="text-2xl font-bold text-warm-800">4. Confirmación y Firma</h2>
-                                <span className="text-xs text-warm-500 font-medium bg-canvas-50 px-2 py-1 rounded-md">(*) Datos obligatorios</span>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setShowRegulations(true)}
-                                className="w-full text-left bg-blue-50 hover:bg-blue-100 p-4 rounded-xl text-blue-700 font-medium flex items-center justify-between group transition-colors"
-                            >
-                                <span>📄 Leer Reglamento completo del Taller</span>
-                                <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-
-                            <label className="flex items-center gap-3 cursor-pointer p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-                                <input type="checkbox" className="w-5 h-5 text-lemon-600 rounded"
-                                    checked={authData.aceptacionReglamento}
-                                    onChange={e => handleAuthChange('aceptacionReglamento', e.target.checked)} />
-                                <span className="font-medium text-warm-900">He leído y acepto el reglamento y condiciones.</span>
-                            </label>
-
-                            <div className="border-t border-canvas-200 pt-6">
-                                <label className="label mb-2">Firma del Responsable (Dibujar aquí)</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-xl bg-white overflow-hidden relative">
-                                    <SignatureCanvas
-                                        ref={sigCanvas}
-                                        penColor="black"
-                                        canvasProps={{
-                                            className: 'w-full h-40 cursor-crosshair'
-                                        }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={clearSignature}
-                                        className="absolute top-2 right-2 text-xs text-red-500 bg-white px-2 py-1 rounded border border-red-100 hover:bg-red-50"
-                                    >
-                                        Borrar
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-4 rounded-2xl shadow-sm border border-canvas-200">
-                                <Image
-                                    src="/colores.png"
-                                    alt="Taller Limoné Logo"
-                                    width={80}
-                                    height={50}
-                                    className="mx-auto object-contain"
-                                />
-                            </div>
-
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Aclaración (Nombre Completo) *</label>
-                                    <input type="text" className="input-field"
-                                        value={authData.aclaracionFirma} onChange={e => handleAuthChange('aclaracionFirma', e.target.value)} />
-                                </div>
-                                <div>
-                                    <label className="label">DNI *</label>
-                                    <input type="text" className="input-field"
-                                        value={authData.dniFirma} onChange={e => handleAuthChange('dniFirma', e.target.value)} />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* BUTTONS */}
-                    {mode === 'inscripcion' && step > 0 && (
-                        <div className="flex justify-between gap-4 pt-8 border-t border-canvas-200 mt-8">
-                            <button type="button" onClick={handlePrevious} className="btn-outline">
-                                Volver
-                            </button>
-
-                            {step < 4 ? (
-                                <button type="button" onClick={handleNext} className="btn-primary">
-                                    Siguiente
-                                </button>
-                            ) : (
+                            <div className="pt-6 border-t border-canvas-100 flex gap-4">
                                 <button
-                                    type="button"
-                                    onClick={handleSubmit}
-                                    className="btn-primary bg-lemon-600 hover:bg-lemon-700"
-                                    disabled={loading}
+                                    onClick={handlePrevious}
+                                    className="px-6 py-3 border border-canvas-300 rounded-xl text-warm-600 font-medium hover:bg-canvas-50 transition-colors"
                                 >
-                                    {loading ? 'Enviando...' : 'Finalizar Inscripción'}
+                                    Volver
                                 </button>
-                            )}
+                                <button
+                                    onClick={handleSubmitRegistration}
+                                    disabled={loading}
+                                    className="flex-1 py-3 btn-primary text-lg"
+                                >
+                                    {loading ? 'Procesando...' : 'Completar Registro'}
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
             </main>
-
-            {/* Regulations Modal */}
-            {showRegulations && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95">
-                        <div className="p-6 border-b border-canvas-200 flex justify-between items-center bg-canvas-50 rounded-t-2xl">
-                            <h3 className="text-xl font-bold text-warm-800">Reglamento del Taller</h3>
-                            <button onClick={() => setShowRegulations(false)} className="text-warm-500 hover:text-warm-800 p-2">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="p-6 overflow-y-auto space-y-6 text-warm-700 leading-relaxed text-sm">
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">1. Inscripción y Reinscripción</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Matrícula Anual:</strong> Se abona una matrícula anual para nuevos ingresantes de <strong>$30.000</strong> (correspondiente al 60% del valor de la cuota vigente).</li>
-                                    <li><strong>Reinscripción:</strong> Para alumnos actuales, se cobra una reinscripción del 50% de la cuota vigente. Se otorga un <strong>10% de descuento</strong> si se abona en diciembre o enero para asegurar el lugar (cupos limitados).</li>
-                                    <li><strong>A partir de Febrero:</strong> Las inscripciones y reinscripciones corresponden al 60% del valor de la cuota vigente, sujeto a disponibilidad.</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">2. Aranceles y Pagos</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Plazo de Pago:</strong> Los aranceles deben abonarse del <strong>1 al 10 de cada mes</strong>. Pasado dicho plazo, se aplicará un recargo del 5%.</li>
-                                    <li><strong>Actualizaciones:</strong> Los aranceles pueden modificarse en función de las variaciones del IPC (Índice de Precios al Consumidor).</li>
-                                    <li><strong>Clases Mensuales:</strong> Son 4 clases al mes. Algunos meses incluyen una clase extra sin costo adicional para mantener la continuidad (no recuperable).</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">3. Recuperaciones y Feriados</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Aviso Previo:</strong> Las clases son recuperables únicamente con aviso previo de <strong>mínimo 24 horas</strong>. El no dar aviso implica la pérdida de la clase sin excepción (salvo casos de fuerza mayor).</li>
-                                    <li><strong>Compensaciones:</strong> Las clases extras mencionadas se utilizan para compensar días feriados del calendario anual.</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">4. Materiales</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Cuota de Materiales Básicos:</strong> Valor de <strong>$50.000</strong> (puede abonarse en dos veces). Cubre técnicas básicas: grafito, aguada, tinta china, óleos pastel, tiza pastel, crayones, marcadores, lápices de colores, etc.</li>
-                                    <li><strong>Materiales Especiales:</strong> (Flúo, acuarela y acrílico) Se realizan tres colectas anuales de bajo monto, siempre con aviso previo.</li>
-                                    <li><strong>Obligatorio:</strong> Es requisito concurrir siempre con carpeta y hojas apropiadas. No se permiten hojas de computadora.</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">5. Carpeta y Hojas N° 5</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Carpeta:</strong> N° 5 con elástico. Deberá contener únicamente trabajos del taller. Se puede dejar en el taller durante el año.</li>
-                                    <li><strong>Hojas:</strong> Usamos un máximo de dos hojas por clase. Se recomienda comprar 2 blocks de 24 si se deja la carpeta en el taller.</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">6. Recesos y Finalización</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Vacaciones de Invierno:</strong> Del 14 al 25 de julio. El taller continúa actividades normales; quienes tomen el receso deben dar aviso previo. La cuota se abona completa para mantener el lugar.</li>
-                                    <li><strong>Cierre de Ciclo:</strong> Las clases terminan el 19 de diciembre. Este mes se abona completo, ya que las clases faltantes se compensan con las clases extras (Septiembre y Octubre).</li>
-                                </ul>
-                            </section>
-
-                            <section>
-                                <h4 className="font-bold text-warm-900 border-b border-canvas-100 pb-1 mb-3 bg-lemon-50 px-2 rounded">7. Normas de Convivencia</h4>
-                                <ul className="list-disc pl-5 space-y-2">
-                                    <li><strong>Horarios:</strong> Respetar puntualmente entrada y salida. El taller cuenta con 10 min entre grupos para acondicionar el espacio.</li>
-                                    <li><strong>Celulares:</strong> Permitido solo para consulta de imágenes artísticas (red Wi-Fi disponible).</li>
-                                    <li><strong>Baja del Taller:</strong> Se requiere aviso con <strong>2 semanas de antelación</strong> para organizar el cronograma y reasignar el cupo.</li>
-                                    <li><strong>Patrimonio:</strong> Los trabajos no retirados tras 1 año de permanencia pasarán a ser patrimonio del taller.</li>
-                                </ul>
-                            </section>
-                        </div>
-                        <div className="p-6 border-t border-canvas-200 bg-canvas-50 rounded-b-2xl flex justify-end">
-                            <button
-                                onClick={() => {
-                                    setShowRegulations(false)
-                                    handleAuthChange('aceptacionReglamento', true)
-                                }}
-                                className="btn-primary"
-                            >
-                                Entendido y Acepto
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
 
 export default function InscripcionPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-gradient-lemon flex items-center justify-center">
-                <div className="text-xl font-bold text-warm-600 animate-pulse">Cargando...</div>
-            </div>
-        }>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando...</div>}>
             <InscripcionContent />
         </Suspense>
     )

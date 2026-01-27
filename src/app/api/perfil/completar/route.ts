@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         } = body
 
         // Find the student record
-        const alumno = await prisma.alumno.findUnique({
+        const alumno = await prisma.alumno.findFirst({
             where: { usuarioId: userId }
         })
 

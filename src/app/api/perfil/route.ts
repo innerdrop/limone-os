@@ -14,7 +14,7 @@ export async function GET() {
             )
         }
 
-        const alumno = await prisma.alumno.findUnique({
+        const alumno = await prisma.alumno.findFirst({
             where: { usuarioId: session.user.id }
         })
 
@@ -56,7 +56,7 @@ export async function PUT(request: Request) {
         }
 
         // Update Alumno
-        const updatedAlumno = await prisma.alumno.update({
+        await prisma.alumno.updateMany({
             where: { usuarioId: session.user.id },
             data: {
                 dni,
@@ -70,6 +70,10 @@ export async function PUT(request: Request) {
                 alergias,
                 perfilCompleto: true // We can mark as complete once saved manual for the first time
             }
+        })
+
+        const updatedAlumno = await prisma.alumno.findFirst({
+            where: { usuarioId: session.user.id }
         })
 
         return NextResponse.json(updatedAlumno)

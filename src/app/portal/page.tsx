@@ -16,8 +16,14 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) return null
 
-    const student = await prisma.alumno.findUnique({
-        where: { usuarioId: session.user.id },
+    const students = await prisma.alumno.findMany({
+        where: {
+            usuarioId: session.user.id,
+            OR: [
+                { nombre: { not: null } },
+                { perfilCompleto: true }
+            ] as any
+        },
         include: {
             inscripciones: {
                 where: { estado: 'ACTIVA' },
@@ -36,7 +42,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                 take: 5
             }
         }
-    })
+    }) as any[]
 
     const notificaciones = await prisma.notificacion.findMany({
         where: { usuarioId: session.user.id, leida: false },
@@ -44,16 +50,35 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
         take: 5
     })
 
-    const userName = session?.user?.name?.split(' ')[0] || 'Alumno'
-    const enrollments = student?.inscripciones?.filter(ins => ins.pagado) || []
-    const pendingEnrollments = student?.inscripciones?.filter(ins => !ins.pagado) || []
-    const upcomingPlacements = student?.citasNivelacion || []
+    const userName = session?.user?.name?.split(' ')[0] || 'Tutor'
+
+    // Aggregate data from all students
+    const allEnrollments = (students as any[]).flatMap((s: any) =>
+        (s.inscripciones as any[] || []).map((ins: any) => ({
+            ...ins,
+            studentName: `${(s as any).nombre || ''} ${(s as any).apellido || ''}`.trim() || 'Sin nombre'
+        }))
+    )
+
+    const enrollments = allEnrollments.filter((ins: any) => ins.pagado)
+    const pendingEnrollments = allEnrollments.filter((ins: any) => !ins.pagado)
+
+    const upcomingPlacements = (students as any[]).flatMap((s: any) =>
+        (s.citasNivelacion as any[] || []).map((c: any) => ({
+            ...c,
+            studentName: `${(s as any).nombre || ''} ${(s as any).apellido || ''}`.trim() || 'Sin nombre'
+        }))
+    )
+
+    const totalObras = students.reduce((acc, s) => acc + s.obras.length, 0)
+    const totalTalleres = enrollments.length
 
     // Calculate Upcoming Classes (Top 5 candidates to mix with placements)
     let upcomingClasses: {
         type: 'class',
         id: string,
         taller: string,
+        studentName: string,
         dia: string,
         horario: string,
         date: Date
@@ -98,6 +123,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                 type: 'class',
                                 id: `${ins.id}-${d.getTime()}`,
                                 taller: 'Taller de Verano',
+                                studentName: ins.studentName || 'Alumno',
                                 dia: 'Verano',
                                 horario: '17:00',
                                 date: sessionDate
@@ -144,6 +170,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                 type: 'class',
                                 id: `${ins.id}-${diaText}-${i}`,
                                 taller: 'Taller de Arte',
+                                studentName: ins.studentName || 'Alumno',
                                 dia: diaText,
                                 horario: ins.horario || '',
                                 date: classDate
@@ -161,17 +188,18 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
             type: 'placement' as const,
             id: p.id,
             cita: p,
-            date: p.fecha
+            date: p.fecha,
+            studentName: (p as any).studentName
         })),
         ...upcomingClasses
     ].sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(0, 2)
 
     const estadisticas = [
-        { label: 'Talleres activos', value: enrollments.length.toString(), icon: '📚' },
-        { label: 'Asistencia', value: student?.asistencias.length ? '100%' : '0%', icon: '✅' },
-        { label: 'Obras creadas', value: student?.obras.length.toString() || '0', icon: '🎨' },
-        { label: 'Estado cuenta', value: 'Al día', icon: '💳' },
+        { label: 'Talleres activos', value: totalTalleres.toString(), icon: '📚' },
+        { label: 'Obras creadas', value: totalObras.toString(), icon: '🎨' },
+        { label: 'Alumnos', value: students.length.toString(), icon: '👥' },
+        { label: 'Estado cuenta', value: pendingEnrollments.length > 0 ? 'Pendiente' : 'Al día', icon: '💳' },
     ]
 
     return (
@@ -203,7 +231,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
-                    Nueva Inscripción
+                    {students.some(s => s.perfilCompleto) ? 'Nueva Inscripción' : 'Inscribir menor'}
                 </Link>
             </div>
 
@@ -238,8 +266,9 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                     dia: ins.dia || '',
                                     horario: ins.horario || '',
                                     fase: ins.fase || '',
-                                    asiento: ins.asiento || '0'
-                                }}
+                                    asiento: ins.asiento || '0',
+                                    studentName: ins.studentName
+                                } as any}
                             />
                         ))}
                     </div>
@@ -262,9 +291,14 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                 <div key={activity.id}>
                                     {activity.type === 'class' ? (
                                         <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
-                                            <h3 className="text-xl font-bold text-warm-800 mb-2">
-                                                {activity.taller}
-                                            </h3>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="text-xl font-bold text-warm-800">
+                                                    {activity.taller}
+                                                </h3>
+                                                <span className="text-xs font-bold bg-lemon-100 text-lemon-700 px-2 py-1 rounded-lg">
+                                                    {activity.studentName}
+                                                </span>
+                                            </div>
                                             <div className="space-y-2 text-warm-600">
                                                 <div className="flex items-center gap-2">
                                                     <svg className="w-4 h-4 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

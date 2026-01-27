@@ -7,8 +7,11 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
 
         const {
-            // Student data
+            // Registration Only Flag
+            registrationOnly,
+            // Student data (optional if registrationOnly is true)
             nombre,
+            apellido,
             dni,
             fechaNacimiento,
             edad,
@@ -46,15 +49,8 @@ export async function POST(request: NextRequest) {
             dniFirma
         } = body
 
-        // Validate required fields
-        if (!nombre || !dni || !fechaNacimiento || (!domicilio && !domicilioCalle)) {
-            return NextResponse.json(
-                { error: 'Faltan datos del alumno' },
-                { status: 400 }
-            )
-        }
-
-        if (!tutorNombre || !tutorApellido || !tutorDni || !tutorRelacion || !tutorTelefonoPrincipal || !tutorEmail) {
+        // Validate required fields for Tutor
+        if (!tutorNombre || !tutorApellido || !tutorDni || !tutorTelefonoPrincipal || !tutorEmail) {
             return NextResponse.json(
                 { error: 'Faltan datos del tutor' },
                 { status: 400 }
@@ -73,85 +69,82 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Generate temporary password (first 4 digits of DNI)
-        const tempPassword = dni.substring(0, 4)
+        // Generate temporary password (first 4 digits of Tutor DNI)
+        const tempPassword = tutorDni.substring(0, 4)
         const hashedPassword = await bcrypt.hash(tempPassword, 10)
 
         // Create user account
+        // If registrationOnly is true, we use Tutor Name for the account
         const usuario = await prisma.usuario.create({
             data: {
                 email: tutorEmail,
                 password: hashedPassword,
-                nombre: nombre,
+                nombre: `${tutorNombre} ${tutorApellido}`,
                 telefono: tutorTelefonoPrincipal,
-                rol: 'ALUMNO',
+                rol: 'ALUMNO', // Always ALUMNO for portal users
                 activo: true,
                 debeCambiarPassword: true
             }
         })
 
-        // Create student record
-        const alumno = await prisma.alumno.create({
-            data: {
-                usuarioId: usuario.id,
-                // Student data
-                dni,
-                fechaNacimiento: new Date(fechaNacimiento),
-                edad: parseInt(edad),
-                domicilio,
-                domicilioCalle,
-                domicilioNumero,
-                domicilioTira,
-                domicilioPiso,
-                domicilioDepto,
-                colegio,
-                grado,
-                // Guardian data
-                tutorNombre,
-                tutorApellido,
-                tutorDni,
-                tutorRelacion,
-                tutorDomicilio,
-                tutorDomicilioCalle,
-                tutorDomicilioNumero,
-                tutorDomicilioTira,
-                tutorDomicilioPiso,
-                tutorDomicilioDepto,
-                tutorTelefonoPrincipal,
-                tutorTelefonoAlternativo,
-                tutorEmail,
-                tutorProfesion,
-                // Authorizations
-                autorizacionParticipacion: autorizacionParticipacion || false,
-                autorizacionMedica: autorizacionMedica || false,
-                autorizacionRetiro,
-                autorizacionImagenes: autorizacionImagenes || false,
-                aceptacionReglamento: aceptacionReglamento || false,
-                firmaResponsable,
-                aclaracionFirma,
-                dniFirma,
-                // Profile
-                perfilCompleto: true // Since we are collecting everything now
-            } as any
-        })
-
-        // TODO: Send welcome email with credentials
-        // Email: tutorEmail
-        // Password: tempPassword (first 4 digits of student DNI)
+        // Create student record ONLY if NOT registrationOnly
+        if (!registrationOnly) {
+            await prisma.alumno.create({
+                data: {
+                    usuarioId: usuario.id,
+                    nombre: nombre || null,
+                    apellido: apellido || null,
+                    dni: dni || null,
+                    fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+                    edad: edad ? parseInt(edad) : null,
+                    domicilio,
+                    domicilioCalle,
+                    domicilioNumero,
+                    domicilioTira,
+                    domicilioPiso,
+                    domicilioDepto,
+                    colegio,
+                    grado,
+                    tutorNombre,
+                    tutorApellido,
+                    tutorDni,
+                    tutorRelacion: tutorRelacion || 'Tutor',
+                    tutorDomicilio,
+                    tutorDomicilioCalle,
+                    tutorDomicilioNumero,
+                    tutorDomicilioTira,
+                    tutorDomicilioPiso,
+                    tutorDomicilioDepto,
+                    tutorTelefonoPrincipal,
+                    tutorTelefonoAlternativo,
+                    tutorEmail,
+                    tutorProfesion,
+                    autorizacionParticipacion: autorizacionParticipacion || false,
+                    autorizacionMedica: autorizacionMedica || false,
+                    autorizacionRetiro,
+                    autorizacionImagenes: autorizacionImagenes || false,
+                    aceptacionReglamento: aceptacionReglamento || false,
+                    firmaResponsable,
+                    aclaracionFirma,
+                    dniFirma,
+                    perfilCompleto: true
+                } as any
+            })
+        }
 
         return NextResponse.json({
             success: true,
-            message: 'Inscripción exitosa',
+            message: registrationOnly ? 'Registro exitoso' : 'Inscripción exitosa',
             data: {
                 email: tutorEmail,
-                tempPassword: tempPassword // In production, this should be sent via email only
+                tempPassword: tempPassword
             }
         })
 
     } catch (error) {
-        console.error('Error en inscripción:', error)
+        console.error('Error en inscripción/registro:', error)
         return NextResponse.json(
-            { error: 'Error al procesar la inscripción' },
+            { error: 'Error al procesar la solicitud' },
             { status: 500 }
         )
     }
