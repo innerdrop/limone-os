@@ -55,7 +55,7 @@ export default async function AgendaPage() {
         const currentDate = addDays(today, i)
         const dayOfWeekStr = dayMap[getDay(currentDate)]
 
-        talleres.forEach(taller => {
+        talleres.forEach((taller: any) => {
             if (taller.diasSemana?.toUpperCase().includes(dayOfWeekStr)) {
                 const [hours, minutes] = (taller.horaInicio || '16:00').split(':')
                 const sessionDate = new Date(currentDate)
@@ -80,7 +80,7 @@ export default async function AgendaPage() {
 
     // All agenda items
     const agendaItems = [
-        ...citas.map(cita => ({
+        ...citas.map((cita: any) => ({
             id: cita.id,
             tipo: 'CITA',
             tipoLabel: 'Prueba de Nivelación',

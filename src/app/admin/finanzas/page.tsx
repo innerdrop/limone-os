@@ -59,7 +59,7 @@ export default async function FinanzasPage(props: {
 
     // Generate last 6 months revenue for chart
     const last6Months = Array.from({ length: 6 }).map((_, i) => subMonths(now, 5 - i))
-    const ingresosChart = await Promise.all(last6Months.map(async (date) => {
+    const ingresosChart = await Promise.all(last6Months.map(async (date: Date) => {
         const start = startOfMonth(date)
         const d_copy = new Date(date)
         d_copy.setMonth(d_copy.getMonth() + 1)
@@ -82,7 +82,7 @@ export default async function FinanzasPage(props: {
     }))
 
     const totalMes = pagosMes._sum.monto || 0
-    const maxIngreso = Math.max(...ingresosChart.map(i => i.monto), 1)
+    const maxIngreso = Math.max(...ingresosChart.map((i: any) => i.monto), 1)
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {

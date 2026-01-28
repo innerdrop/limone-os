@@ -26,7 +26,7 @@ export default async function ContenidoPage() {
         orderBy: { fechaCreacion: 'desc' }
     })
 
-    const alumnosConGaleria = alumnosRaw.map(al => ({
+    const alumnosConGaleria = alumnosRaw.map((al: any) => ({
         id: al.id,
         nombre: al.usuario.nombre,
         obras: al._count.obras

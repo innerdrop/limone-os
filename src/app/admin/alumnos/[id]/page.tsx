@@ -166,15 +166,15 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                 </section>
 
                 {/* 3. Pagos Pendientes */}
-                {alumno.inscripciones.some(ins => ins.pagos.length > 0) && (
+                {alumno.inscripciones.some((ins: any) => ins.pagos.length > 0) && (
                     <section className="card border-l-4 border-yellow-500 no-print">
                         <h2 className="text-xl font-bold text-warm-800 mb-6 flex items-center gap-2">
                             <span>💳</span> Pagos Pendientes
                         </h2>
                         <div className="space-y-4">
                             {alumno.inscripciones
-                                .filter(ins => ins.pagos.length > 0)
-                                .map(ins => ins.pagos.map(pago => (
+                                .filter((ins: any) => ins.pagos.length > 0)
+                                .map((ins: any) => ins.pagos.map((pago: any) => (
                                     <div key={pago.id} className="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-200">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex-1">
