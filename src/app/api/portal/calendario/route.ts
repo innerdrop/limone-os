@@ -12,12 +12,15 @@ export async function GET(request: NextRequest) {
         const session = await getServerSession(authOptions)
         if (!session?.user?.id) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-        const student = await prisma.alumno.findUnique({
+        const students = await prisma.alumno.findMany({
             where: { usuarioId: session.user.id },
             include: {
                 inscripciones: {
                     where: { pagado: true, estado: 'ACTIVA' },
-                    include: { taller: true }
+                    include: {
+                        taller: true,
+                        alumno: true
+                    }
                 },
                 citasNivelacion: {
                     where: {
@@ -25,16 +28,17 @@ export async function GET(request: NextRequest) {
                             gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
                             lte: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0)
                         }
-                    }
+                    },
+                    include: { alumno: true }
                 }
             }
         })
 
-        if (!student) return NextResponse.json({ classes: [] })
-
-        const enrollments = student.inscripciones
-        const citas = student.citasNivelacion || []
         const classes: any[] = []
+        if (!students || students.length === 0) return NextResponse.json({ classes: [] })
+
+        const enrollments = students.flatMap(s => s.inscripciones)
+        const citas = students.flatMap(s => s.citasNivelacion || [])
 
         // 1. Regular Classes Generation
         const now = new Date()
@@ -74,7 +78,7 @@ export async function GET(request: NextRequest) {
 
                                 classes.push({
                                     id: `${ins.id}-summer-${diaText}-${d.getTime()}`,
-                                    taller: 'Taller de Verano',
+                                    taller: `☀️ Verano - ${(ins as any).alumno.nombre}`,
                                     dia: diaText,
                                     hora: startTime,
                                     fecha: safeDate,
@@ -100,7 +104,7 @@ export async function GET(request: NextRequest) {
 
                             classes.push({
                                 id: `${ins.id}-${diaText}-${current.getTime()}`,
-                                taller: ins.taller.nombre,
+                                taller: `${ins.taller.nombre} (${(ins as any).alumno.nombre})`,
                                 dia: diaText,
                                 hora: startTime,
                                 fecha: classDate,
@@ -118,15 +122,12 @@ export async function GET(request: NextRequest) {
         for (const cita of citas) {
             const fecha = new Date(cita.fecha)
             classes.push({
-                id: cita.id,
-                taller: 'Prueba de Nivelación',
+                id: (cita as any).id,
+                taller: `🗣️ Nivelación - ${(cita as any).alumno.nombre}`,
                 dia: DAYS_MAP[Object.keys(DAYS_MAP)[fecha.getDay()]] || '',
-                // Note: DAYS_MAP keys are in spanish, need reverse lookup or simple str
-                // Actually `dia` field in `Clase` interface is mostly for display/logic, 
-                // but let's just ensure `fecha` is correct.
                 hora: fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
                 fecha: fecha,
-                estado: cita.estado.toLowerCase(),
+                estado: (cita as any).estado.toLowerCase(),
                 tipo: 'nivelacion'
             })
         }
