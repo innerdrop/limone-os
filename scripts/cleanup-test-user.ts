@@ -12,7 +12,7 @@ async function cleanupTestUser() {
         const usuario = await prisma.usuario.findUnique({
             where: { email: testEmail },
             include: {
-                alumno: {
+                alumnos: {
                     include: {
                         inscripciones: true,
                         citasNivelacion: true,
@@ -20,46 +20,47 @@ async function cleanupTestUser() {
                     }
                 }
             }
-        })
+        }) as any
 
         if (!usuario) {
             console.log('❌ Usuario no encontrado')
             return
         }
 
-        if (!usuario.alumno) {
-            console.log('❌ El usuario no tiene perfil de alumno')
+        if (!usuario.alumnos || usuario.alumnos.length === 0) {
+            console.log('❌ El usuario no tiene perfiles de alumnos')
             return
         }
 
         console.log(`\n✅ Usuario encontrado: ${usuario.nombre}`)
-        console.log(`📊 Resumen actual:`)
-        console.log(`   - Inscripciones: ${usuario.alumno.inscripciones.length}`)
-        console.log(`   - Citas de Nivelación: ${usuario.alumno.citasNivelacion.length}`)
-        console.log(`   - Pagos: ${usuario.alumno.pagos.length}`)
+        console.log(`📊 Total de alumnos: ${usuario.alumnos.length}`)
 
-        // Delete all related data
+        // Delete all related data for each student
         console.log(`\n🗑️  Eliminando datos...`)
 
-        // Delete payments (must be first due to foreign key constraints)
-        const deletedPagos = await prisma.pago.deleteMany({
-            where: { alumnoId: usuario.alumno.id }
-        })
-        console.log(`   ✓ Pagos eliminados: ${deletedPagos.count}`)
+        for (const alumno of usuario.alumnos) {
+            console.log(`📍 Procesando alumno: ${alumno.nombre || 'Sin nombre'} (${alumno.id})`)
 
-        // Delete enrollments
-        const deletedInscripciones = await prisma.inscripcion.deleteMany({
-            where: { alumnoId: usuario.alumno.id }
-        })
-        console.log(`   ✓ Inscripciones eliminadas: ${deletedInscripciones.count}`)
+            // Delete payments
+            const deletedPagos = await prisma.pago.deleteMany({
+                where: { alumnoId: alumno.id }
+            })
+            console.log(`   ✓ Pagos eliminados: ${deletedPagos.count}`)
 
-        // Delete placement test appointments
-        const deletedCitas = await prisma.citaNivelacion.deleteMany({
-            where: { alumnoId: usuario.alumno.id }
-        })
-        console.log(`   ✓ Citas de nivelación eliminadas: ${deletedCitas.count}`)
+            // Delete enrollments
+            const deletedInscripciones = await prisma.inscripcion.deleteMany({
+                where: { alumnoId: alumno.id }
+            })
+            console.log(`   ✓ Inscripciones eliminadas: ${deletedInscripciones.count}`)
 
-        // Delete notifications
+            // Delete placement test appointments
+            const deletedCitas = await prisma.citaNivelacion.deleteMany({
+                where: { alumnoId: alumno.id }
+            })
+            console.log(`   ✓ Citas de nivelación eliminadas: ${deletedCitas.count}`)
+        }
+
+        // Delete notifications for the user
         const deletedNotifs = await prisma.notificacion.deleteMany({
             where: { usuarioId: usuario.id }
         })
