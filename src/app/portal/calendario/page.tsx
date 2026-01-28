@@ -112,19 +112,19 @@ export default function CalendarioPage() {
                 {/* Calendar Grid */}
                 <div className="grid grid-cols-7 gap-1">
                     {/* Day Headers */}
-                    {diasSemana.map((dia) => (
+                    {diasSemana.map((dia: string) => (
                         <div key={dia} className="text-center text-sm font-medium text-warm-500 py-2">
                             {dia}
                         </div>
                     ))}
 
                     {/* Empty cells before first day */}
-                    {Array.from({ length: primerDiaSemana }).map((_, index) => (
+                    {Array.from({ length: primerDiaSemana }).map((_: any, index: number) => (
                         <div key={`empty-${index}`} className="aspect-square p-1" />
                     ))}
 
                     {/* Day cells */}
-                    {Array.from({ length: diasEnMes }).map((_, index) => {
+                    {Array.from({ length: diasEnMes }).map((_: any, index: number) => {
                         const dia = index + 1
                         const clasesDelDia = getClasesDelDia(dia)
                         const esHoy =

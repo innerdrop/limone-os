@@ -86,7 +86,7 @@ export default function AlumnosPortalPage() {
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                    {students.map((student) => (
+                    {students.map((student: any) => (
                         <div key={student.id} className="card p-0 overflow-hidden border-2 border-transparent hover:border-lemon-200 transition-all group">
                             <div className="p-6 space-y-4">
                                 <div className="flex justify-between items-start">

@@ -70,7 +70,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
         }))
     )
 
-    const totalObras = students.reduce((acc, s) => acc + s.obras.length, 0)
+    const totalObras = students.reduce((acc: number, s: any) => acc + (s.obras?.length || 0), 0)
     const totalTalleres = enrollments.length
 
     // Calculate Upcoming Classes (Top 5 candidates to mix with placements)
@@ -136,7 +136,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                 }
             } else {
                 // Regular Logic (Split by comma if multiple days)
-                const diasInscripcion = (ins.dia || '').split(',').map(d => d.trim().toUpperCase())
+                const diasInscripcion = (ins.dia || '').split(',').map((d: string) => d.trim().toUpperCase())
 
                 for (const diaText of diasInscripcion) {
                     const targetDay = DAYS_MAP[diaText]
@@ -184,7 +184,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
 
     // Combine and Sort
     const allActivities = [
-        ...upcomingPlacements.map(p => ({
+        ...upcomingPlacements.map((p: any) => ({
             type: 'placement' as const,
             id: p.id,
             cita: p,
@@ -237,7 +237,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {estadisticas.map((stat, index) => (
+                {estadisticas.map((stat: any, index: number) => (
                     <div key={index} className="card p-4 flex items-center gap-4">
                         <div className="text-3xl">{stat.icon}</div>
                         <div>
@@ -258,7 +258,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                         <h2 className="text-lg font-semibold text-warm-800">Pagos Pendientes</h2>
                     </div>
                     <div className="space-y-4">
-                        {pendingEnrollments.map(ins => (
+                        {pendingEnrollments.map((ins: any) => (
                             <PendingPaymentCard
                                 key={ins.id}
                                 inscripcion={{
@@ -287,7 +287,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
 
                     <div className="space-y-4">
                         {allActivities.length > 0 ? (
-                            allActivities.map((activity) => (
+                            allActivities.map((activity: any) => (
                                 <div key={activity.id}>
                                     {activity.type === 'class' ? (
                                         <div className="p-4 rounded-xl bg-gradient-to-br from-lemon-50 to-leaf-50 border border-lemon-100">
@@ -399,7 +399,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                         { label: 'Mis Pagos', href: '/portal/pagos', icon: '💳', color: 'bg-green-100' },
                         { label: 'Mi calendario', href: '/portal/calendario', icon: '📅', color: 'bg-blue-100' },
                         { label: 'Editar perfil', href: '/portal/perfil', icon: '👤', color: 'bg-purple-100' },
-                    ].map((action, index) => (
+                    ].map((action: any, index: number) => (
                         <Link
                             key={index}
                             href={action.href}

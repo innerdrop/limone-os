@@ -36,10 +36,10 @@ export default function PagosPage() {
         fetchPagos()
     }, [])
 
-    const cuotaPendiente = pagos.find(p => p.estado === 'PENDIENTE')
-    const avisoPendiente = pagos.find(p => p.estado === 'PENDIENTE_VERIFICACION')
-    const pagosAprobados = pagos.filter(p => p.estado === 'CONFIRMADO' || p.estado === 'APROBADO')
-    const totalPagado = pagosAprobados.reduce((sum, p) => sum + p.monto, 0)
+    const cuotaPendiente = pagos.find((p: Pago) => p.estado === 'PENDIENTE')
+    const avisoPendiente = pagos.find((p: Pago) => p.estado === 'PENDIENTE_VERIFICACION')
+    const pagosAprobados = pagos.filter((p: Pago) => p.estado === 'CONFIRMADO' || p.estado === 'APROBADO')
+    const totalPagado = pagosAprobados.reduce((sum: number, p: Pago) => sum + p.monto, 0)
 
     const formatMoney = (amount: number) => {
         return new Intl.NumberFormat('es-AR', {
@@ -159,7 +159,7 @@ export default function PagosPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {pagos.map((pago) => (
+                                {pagos.map((pago: Pago) => (
                                     <tr key={pago.id} className="border-b border-canvas-100 hover:bg-canvas-50">
                                         <td className="py-4 px-4">
                                             <p className="font-medium text-warm-800">{(pago as any).studentName}</p>

@@ -43,9 +43,9 @@ export default function GaleriaPage() {
 
     const obrasFiltradas = filtroTecnica === 'todas'
         ? obras
-        : obras.filter(obra => obra.tecnica?.toLowerCase() === filtroTecnica)
+        : obras.filter((obra: Obra) => obra.tecnica?.toLowerCase() === filtroTecnica)
 
-    const tecnicasUnicas = [...new Set(obras.map(o => o.tecnica).filter(Boolean))] as string[]
+    const tecnicasUnicas = [...new Set(obras.map((o: Obra) => o.tecnica).filter(Boolean))] as string[]
 
     if (loading) {
         return <div className="p-8 text-center text-warm-500">Cargando galería...</div>
@@ -73,7 +73,7 @@ export default function GaleriaPage() {
                             className="input-field py-2 px-4 w-auto"
                         >
                             <option value="todas">Todas las técnicas</option>
-                            {tecnicasUnicas.map((tecnica) => (
+                            {tecnicasUnicas.map((tecnica: string) => (
                                 <option key={tecnica} value={tecnica.toLowerCase()}>
                                     {tecnica}
                                 </option>
@@ -91,7 +91,7 @@ export default function GaleriaPage() {
                         <p className="text-sm text-warm-500">Obras totales</p>
                     </div>
                     <div className="card p-4 text-center">
-                        <p className="text-3xl font-bold text-leaf-600">{obras.filter(o => o.destacada).length}</p>
+                        <p className="text-3xl font-bold text-leaf-600">{obras.filter((o: Obra) => o.destacada).length}</p>
                         <p className="text-sm text-warm-500">Destacadas</p>
                     </div>
                     <div className="card p-4 text-center">
@@ -114,7 +114,7 @@ export default function GaleriaPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {obrasFiltradas.map((obra) => (
+                    {obrasFiltradas.map((obra: Obra) => (
                         <div
                             key={obra.id}
                             onClick={() => setObraSeleccionada(obra)}
