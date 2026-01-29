@@ -300,9 +300,10 @@ export default function PortalHeader({ user }: { user: User }) {
                         <nav className="space-y-1">
                             {[
                                 { label: 'Dashboard', href: '/portal' },
-                                { label: 'Inscribirme', href: '/portal/inscripcion' },
                                 { label: 'Calendario', href: '/portal/calendario' },
+                                { label: 'Inscribirme', href: '/portal/inscripcion' },
                                 { label: 'Mis Pagos', href: '/portal/pagos' },
+                                { label: 'Alumnos', href: '/portal/alumnos' },
                                 { label: 'Mi Galería', href: '/portal/galeria' },
                                 { label: 'Mi Perfil', href: '/portal/perfil' },
                             ].map((item) => (

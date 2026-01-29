@@ -543,12 +543,13 @@ export default function EditarAlumnoPage({ params }: { params: Promise<{ id: str
                             </div>
                             <div className="pt-4">
                                 <label className="label">Autorización de Retiro</label>
-                                <select name="autorizacionRetiro" defaultValue={alumno.autorizacionRetiro || ''} className="input-field">
-                                    <option value="">Seleccionar...</option>
-                                    <option value="SOLO">Se retira solo/a</option>
-                                    <option value="NO">No se retira solo/a (Retiran padres)</option>
-                                    <option value="OTROS">Otras personas autorizadas</option>
-                                </select>
+                                <textarea
+                                    name="autorizacionRetiro"
+                                    defaultValue={alumno.autorizacionRetiro || ''}
+                                    className="input-field"
+                                    rows={3}
+                                    placeholder="Ej: SÍ, SE RETIRA SOLO, o los nombres y DNI de las personas autorizadas."
+                                />
                             </div>
                         </div>
                     </section>

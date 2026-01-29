@@ -266,6 +266,8 @@ export default function PagosPage() {
                         </div>
 
                         <div className="space-y-4">
+                            {/* Mercado Pago disabled for now as per user request */}
+                            {/* 
                             <button className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-blue-200 bg-blue-50 hover:border-blue-400 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -277,8 +279,15 @@ export default function PagosPage() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
                             </button>
+                            */}
 
-                            <button className="w-full flex items-center justify-between p-4 rounded-xl border border-canvas-200 hover:border-canvas-300 transition-colors">
+                            <button
+                                onClick={() => {
+                                    alert('Por favor, realizá la transferencia a los datos indicados en el portal y luego notificá el pago desde allí.');
+                                    setShowPayModal(false);
+                                }}
+                                className="w-full flex items-center justify-between p-4 rounded-xl border border-canvas-200 hover:border-canvas-300 transition-colors"
+                            >
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-lg bg-canvas-200 flex items-center justify-center">
                                         <svg className="w-5 h-5 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

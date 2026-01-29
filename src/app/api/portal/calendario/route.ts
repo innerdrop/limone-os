@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
 
         // 1. Regular Classes Generation
         const now = new Date()
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
         const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
         const end = new Date(now.getFullYear(), now.getMonth() + 2, 0)
 
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
                         // Add classes for each week until end of summer
                         const SUMMER_END = new Date(2026, 1, 28)
                         while (d <= SUMMER_END) {
-                            if (d >= start && d <= end) {
+                            if (d >= start && d <= end && d >= startOfDay) {
                                 const safeDate = new Date(d)
                                 const [h, min] = startTime.split(':').map(Number)
                                 safeDate.setHours(h || 17, min || 0, 0, 0)
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
                         (ins.horario?.split('-')[0] || '16:00')
 
                     while (current <= end) {
-                        if (current.getDay() === targetDayOfWeek) {
+                        if (current.getDay() === targetDayOfWeek && current >= startOfDay) {
                             const classDate = new Date(current)
                             const [h, min] = startTime.split(':').map(Number)
                             classDate.setHours(h || 16, min || 0, 0, 0)

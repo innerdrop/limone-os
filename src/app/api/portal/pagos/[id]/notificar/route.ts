@@ -25,20 +25,22 @@ export async function POST(
         })
 
         // Notificar al administrador (Crear una notificación para Natalia)
-        const admin = await prisma.usuario.findFirst({
+        const admins = await prisma.usuario.findMany({
             where: { rol: 'ADMIN' }
         })
 
-        if (admin) {
-            await prisma.notificacion.create({
-                data: {
-                    usuarioId: admin.id,
-                    titulo: 'Nuevo Aviso de Pago',
-                    mensaje: `${pago.alumno.usuario.nombre} avisó que ya realizó la transferencia de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(pago.monto)}.`,
-                    tipo: 'INFO',
-                    enlace: '/admin/finanzas'
-                }
-            })
+        if (admins.length > 0) {
+            await Promise.all(admins.map(admin =>
+                prisma.notificacion.create({
+                    data: {
+                        usuarioId: admin.id,
+                        titulo: 'Nuevo Aviso de Pago',
+                        mensaje: `${pago.alumno.usuario.nombre} avisó que ya realizó la transferencia de ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(pago.monto)}.`,
+                        tipo: 'INFO',
+                        enlace: '/admin/finanzas'
+                    }
+                })
+            ))
         }
 
         return NextResponse.json({ success: true })

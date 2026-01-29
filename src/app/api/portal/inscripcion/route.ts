@@ -164,93 +164,118 @@ export async function POST(request: NextRequest) {
                         usuarioId: session.user.id,
                         titulo: 'Inscripción Taller de Verano',
                         mensaje: `Inscripción exitosa. Modalidad ${summerModality}, Días: ${diasCombinados}. Valor total: $${monto}`,
-                        tipo: 'SUCCESS',
+                        tipo: 'INFO',
                         leida: false
                     }
                 })
-            })
 
-            return NextResponse.json({ success: true })
-        }
-
-        // --- REGULAR FLOW ---
-        const enrollmentSlots = slots || (body.dia ? [{ dia: body.dia, horario: body.horario, asiento: body.asiento }] : [])
-
-        if (!fase || enrollmentSlots.length === 0) {
-            return NextResponse.json({ error: 'Faltan datos de inscripción' }, { status: 400 })
-        }
-
-        const taller = await prisma.taller.findFirst({
-            where: { nombre: 'Taller Regular', activo: true }
-        })
-        if (!taller) return NextResponse.json({ error: 'Taller Regular no configurado' }, { status: 500 })
-
-        await prisma.$transaction(async (tx) => {
-            let firstInscId = '';
-            const allDays = enrollmentSlots.map((s: any) => s.dia).join(', ');
-
-            // 1) Create Inscriptions and Validate
-            for (let i = 0; i < enrollmentSlots.length; i++) {
-                const slot = enrollmentSlots[i];
-
-                const asientoOcupado = await tx.inscripcion.findFirst({
-                    where: {
-                        dia: { contains: slot.dia },
-                        horario: { contains: slot.horario },
-                        asiento: { contains: slot.asiento.toString() } as any,
-                        estado: 'ACTIVA'
-                    }
-                })
-
-                if (asientoOcupado) {
-                    // Check if it's the SAME seat number (not just contains, e.g. "1" in "10")
-                    const seats = (asientoOcupado.asiento as unknown as string)?.split(',') || [];
-                    if (seats.includes(slot.asiento.toString())) {
-                        throw new Error(`El asiento ${slot.asiento} del ${slot.dia} ya está ocupado.`);
-                    }
+                // NOTIFICAR ADMINS
+                const admins = await tx.usuario.findMany({ where: { rol: 'ADMIN' } })
+                for (const admin of admins) {
+                    await tx.notificacion.create({
+                        data: {
+                            usuarioId: admin.id,
+                            titulo: 'Nueva Inscripción (Verano)',
+                            mensaje: `${alumno.nombre || 'Un alumno'} se inscribió al Taller de Verano (${summerModality}). Total: $${monto}`,
+                            tipo: 'INFO',
+                            enlace: `/admin/alumnos/${alumno.id}`
+                        }
+                    })
                 }
+            })
+        } else {
+            // --- REGULAR FLOW ---
+            const enrollmentSlots = slots || (body.dia ? [{ dia: body.dia, horario: body.horario, asiento: body.asiento }] : [])
 
-                const newInsc = await tx.inscripcion.create({
-                    data: {
-                        alumnoId: alumno.id,
-                        tallerId: taller.id,
-                        dia: slot.dia,
-                        horario: slot.horario,
-                        fase,
-                        asiento: slot.asiento.toString(),
-                        pagado: false,
-                        estado: 'ACTIVA'
-                    } as any
-                })
-
-                if (i === 0) firstInscId = newInsc.id;
+            if (!fase || enrollmentSlots.length === 0) {
+                return NextResponse.json({ error: 'Faltan datos de inscripción' }, { status: 400 })
             }
 
-            // 2) Create SINGLE Payment for the whole set
-            const totalAmount = 25000 * enrollmentSlots.length
-            await tx.pago.create({
-                data: {
-                    alumnoId: alumno.id,
-                    inscripcionId: firstInscId,
-                    monto: totalAmount,
-                    estado: 'PENDIENTE',
-                    mesCubierto: new Date().getMonth() + 1,
-                    anioCubierto: new Date().getFullYear(),
-                    concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${allDays})`
-                }
+            const taller = await prisma.taller.findFirst({
+                where: { nombre: 'Taller Regular', activo: true }
             })
+            if (!taller) return NextResponse.json({ error: 'Taller Regular no configurado' }, { status: 500 })
 
-            // 3) Notify
-            await tx.notificacion.create({
-                data: {
-                    usuarioId: session.user.id,
-                    titulo: 'Inscripción Registrada',
-                    mensaje: `Inscripción exitosa en ${fase}. Días: ${allDays}. Valor mensual: $${totalAmount}`,
-                    tipo: 'INFO',
-                    leida: false
+            await prisma.$transaction(async (tx) => {
+                let firstInscId = '';
+                const allDays = enrollmentSlots.map((s: any) => s.dia).join(', ');
+
+                // 1) Create Inscriptions and Validate
+                for (let i = 0; i < enrollmentSlots.length; i++) {
+                    const slot = enrollmentSlots[i];
+
+                    const asientoOcupado = await tx.inscripcion.findFirst({
+                        where: {
+                            dia: { contains: slot.dia },
+                            horario: { contains: slot.horario },
+                            asiento: { contains: slot.asiento.toString() } as any,
+                            estado: 'ACTIVA'
+                        }
+                    })
+
+                    if (asientoOcupado) {
+                        const seats = (asientoOcupado.asiento as unknown as string)?.split(',') || [];
+                        if (seats.includes(slot.asiento.toString())) {
+                            throw new Error(`El asiento ${slot.asiento} del ${slot.dia} ya está ocupado.`);
+                        }
+                    }
+
+                    const newInsc = await tx.inscripcion.create({
+                        data: {
+                            alumnoId: alumno.id,
+                            tallerId: taller.id,
+                            dia: slot.dia,
+                            horario: slot.horario,
+                            fase,
+                            asiento: slot.asiento.toString(),
+                            pagado: false,
+                            estado: 'ACTIVA'
+                        } as any
+                    })
+
+                    if (i === 0) firstInscId = newInsc.id;
+                }
+
+                // 2) Create SINGLE Payment
+                const totalAmount = 25000 * enrollmentSlots.length
+                await tx.pago.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        inscripcionId: firstInscId,
+                        monto: totalAmount,
+                        estado: 'PENDIENTE',
+                        mesCubierto: new Date().getMonth() + 1,
+                        anioCubierto: new Date().getFullYear(),
+                        concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${allDays})`
+                    }
+                })
+
+                // 3) Notify
+                await tx.notificacion.create({
+                    data: {
+                        usuarioId: session.user.id,
+                        titulo: 'Inscripción Registrada',
+                        mensaje: `Inscripción exitosa en ${fase}. Días: ${allDays}. Valor mensual: $${totalAmount}`,
+                        tipo: 'INFO',
+                        leida: false
+                    }
+                })
+
+                // NOTIFICAR ADMINS
+                const admins = await tx.usuario.findMany({ where: { rol: 'ADMIN' } })
+                for (const admin of admins) {
+                    await tx.notificacion.create({
+                        data: {
+                            usuarioId: admin.id,
+                            titulo: 'Nueva Inscripción (Regular)',
+                            mensaje: `${alumno.nombre || 'Un alumno'} se inscribió a ${fase}. Días: ${allDays}. Total: $${totalAmount}`,
+                            tipo: 'INFO',
+                            enlace: `/admin/alumnos/${alumno.id}`
+                        }
+                    })
                 }
             })
-        })
+        }
 
         // --- PROFILE UPDATE (IF PROVIDED) ---
         const { studentData, authData, signature } = body

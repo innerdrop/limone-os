@@ -162,17 +162,38 @@ export default function EnrollmentPage() {
 
     const [showRules, setShowRules] = useState(false)
     const [leavesAlone, setLeavesAlone] = useState<boolean | null>(null)
-    const [authorizedPerson, setAuthorizedPerson] = useState({
+    const [authorizedPersons, setAuthorizedPersons] = useState([{
         nombre: '',
         apellido: '',
         dni: ''
-    })
+    }])
+
+    const addAuthorizedPerson = () => {
+        setAuthorizedPersons([...authorizedPersons, { nombre: '', apellido: '', dni: '' }])
+    }
+
+    const removeAuthorizedPerson = (index: number) => {
+        if (authorizedPersons.length > 1) {
+            setAuthorizedPersons(authorizedPersons.filter((_, i) => i !== index))
+        }
+    }
+
+    const handleAuthorizedPersonChange = (index: number, field: string, value: string) => {
+        const newPersons = [...authorizedPersons]
+        newPersons[index] = { ...newPersons[index], [field]: (value as any) }
+        setAuthorizedPersons(newPersons)
+    }
 
     const sigCanvas = useRef<SignatureCanvas>(null)
 
     // NEW: Multi-student support
     const [existingStudents, setExistingStudents] = useState<any[]>([])
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
+
+    // Scroll to top when step changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [step, knowsLevel])
 
     // Reset step if navigating to this page (ensure it always starts at step 1)
     useEffect(() => {
@@ -338,7 +359,7 @@ export default function EnrollmentPage() {
                         ...authData,
                         autorizacionRetiro: leavesAlone
                             ? 'SÍ, SE RETIRA SOLO'
-                            : `${authorizedPerson.nombre} ${authorizedPerson.apellido} (DNI: ${authorizedPerson.dni})`
+                            : authorizedPersons.map(p => `${p.nombre} ${p.apellido} (DNI: ${p.dni})`).join(', ')
                     } : null,
                     signature: selectedStudentId === 'new' ? sigCanvas.current?.getCanvas().toDataURL('image/png') : null
                 })
@@ -611,24 +632,36 @@ export default function EnrollmentPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
-                                <input type="checkbox" checked={authData.autorizacionParticipacion} onChange={e => setAuthData({ ...authData, autorizacionParticipacion: e.target.checked })} />
-                                <span className="text-sm">Autorizo la participación en el taller *</span>
+                            <label className="flex items-start gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" className="mt-1" checked={authData.autorizacionParticipacion} onChange={e => setAuthData({ ...authData, autorizacionParticipacion: e.target.checked })} />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-warm-800">Autorizo la participación en el taller *</span>
+                                    <span className="text-[11px] text-warm-500">Permite que el niño/a realice las actividades artísticas programadas.</span>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
-                                <input type="checkbox" checked={authData.autorizacionMedica} onChange={e => setAuthData({ ...authData, autorizacionMedica: e.target.checked })} />
-                                <span className="text-sm">Autorizo atención médica de emergencia *</span>
+                            <label className="flex items-start gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" className="mt-1" checked={authData.autorizacionMedica} onChange={e => setAuthData({ ...authData, autorizacionMedica: e.target.checked })} />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-warm-800">Autorizo atención médica de emergencia *</span>
+                                    <span className="text-[11px] text-warm-500">Permite actuar rápidamente ante cualquier imprevisto de salud.</span>
+                                </div>
                             </label>
-                            <label className="flex items-center gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
-                                <input type="checkbox" checked={authData.autorizacionImagenes} onChange={e => setAuthData({ ...authData, autorizacionImagenes: e.target.checked })} />
-                                <span className="text-sm">Autorizo uso de imágenes con fines educativos</span>
+                            <label className="flex items-start gap-3 p-3 rounded-xl border border-canvas-200 hover:bg-canvas-50 cursor-pointer">
+                                <input type="checkbox" className="mt-1" checked={authData.autorizacionImagenes} onChange={e => setAuthData({ ...authData, autorizacionImagenes: e.target.checked })} />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-bold text-warm-800">Autorizo uso de imágenes con fines educativos</span>
+                                    <span className="text-[11px] text-warm-500">Para compartir fotos de las obras y el proceso creativo en nuestras redes.</span>
+                                </div>
                             </label>
 
                             <div className="p-3 rounded-xl border border-canvas-200 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <label className="flex items-center gap-3 cursor-pointer">
-                                        <input type="checkbox" checked={authData.aceptacionReglamento} onChange={e => setAuthData({ ...authData, aceptacionReglamento: e.target.checked })} />
-                                        <span className="text-sm">Acepto el reglamento interno *</span>
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input type="checkbox" className="mt-1" checked={authData.aceptacionReglamento} onChange={e => setAuthData({ ...authData, aceptacionReglamento: e.target.checked })} />
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-warm-800">Acepto el reglamento interno *</span>
+                                            <span className="text-[11px] text-warm-500">Normas de convivencia, pagos y asistencia para un mejor funcionamiento.</span>
+                                        </div>
                                     </label>
                                     <button
                                         type="button"
@@ -650,7 +683,7 @@ export default function EnrollmentPage() {
                                         </div>
                                         <div className="p-8 max-h-[60vh] overflow-y-auto text-warm-700 space-y-4 text-sm leading-relaxed">
                                             <p className="font-bold">1. Asistencia y Puntualidad</p>
-                                            <p>Se ruega puntualidad tanto en el ingreso como en el retiro de los niños. El taller no se responsabiliza por los niños fuera del horario de clase.</p>
+                                            <p>Se ruega puntualidad tanto en el ingreso como en el retiro de los niños para garantizar su seguridad. Fuera de los horarios de clase, la supervisión de los alumnos queda bajo responsabilidad de sus tutores.</p>
 
                                             <p className="font-bold">2. Materiales</p>
                                             <p>Todos los materiales básicos están incluidos, a menos que se especifique lo contrario para proyectos especiales.</p>
@@ -662,7 +695,7 @@ export default function EnrollmentPage() {
                                             <p>Si el alumno presenta síntomas de malestar o enfermedad, se solicita no asistir a clase para preservar la salud del grupo.</p>
 
                                             <p className="font-bold">5. Pagos</p>
-                                            <p>La cuota debe abonarse del 1 al 10 de cada mes. La falta de pago puede resultar en la pérdida de la vacante.</p>
+                                            <p>La cuota debe abonarse del 1 al 10 de cada mes. Los pagos realizados fuera de este término tendrán un recargo por mora del 1% diario. La falta de pago puede resultar en la pérdida de la vacante.</p>
                                         </div>
                                         <div className="p-6 bg-canvas-50 border-t border-canvas-100 flex justify-center">
                                             <button
@@ -696,40 +729,60 @@ export default function EnrollmentPage() {
                                 </div>
 
                                 {leavesAlone === false && (
-                                    <div className="animate-fade-in p-6 bg-canvas-50 rounded-3xl border-2 border-canvas-200 space-y-4">
-                                        <h4 className="text-sm font-bold text-warm-700">Persona autorizada a retirar al alumno</h4>
-                                        <div className="grid sm:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Nombre</label>
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    value={authorizedPerson.nombre}
-                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, nombre: e.target.value })}
-                                                    placeholder="Ej: María"
-                                                />
+                                    <div className="space-y-4">
+                                        {authorizedPersons.map((person, index) => (
+                                            <div key={index} className="animate-fade-in p-6 bg-canvas-50 rounded-3xl border-2 border-canvas-200 space-y-4 relative">
+                                                {authorizedPersons.length > 1 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAuthorizedPerson(index)}
+                                                        className="absolute top-4 right-4 text-red-400 hover:text-red-500 text-sm font-bold"
+                                                    >
+                                                        Eliminar
+                                                    </button>
+                                                )}
+                                                <h4 className="text-sm font-bold text-warm-700">Persona autorizada {authorizedPersons.length > 1 ? index + 1 : ''}</h4>
+                                                <div className="grid sm:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Nombre</label>
+                                                        <input
+                                                            type="text"
+                                                            className="input-field"
+                                                            value={person.nombre}
+                                                            onChange={e => handleAuthorizedPersonChange(index, 'nombre', e.target.value)}
+                                                            placeholder="Ej: María"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Apellido</label>
+                                                        <input
+                                                            type="text"
+                                                            className="input-field"
+                                                            value={person.apellido}
+                                                            onChange={e => handleAuthorizedPersonChange(index, 'apellido', e.target.value)}
+                                                            placeholder="Ej: Garcia"
+                                                        />
+                                                    </div>
+                                                    <div className="sm:col-span-2">
+                                                        <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">DNI</label>
+                                                        <input
+                                                            type="text"
+                                                            className="input-field"
+                                                            value={person.dni}
+                                                            onChange={e => handleAuthorizedPersonChange(index, 'dni', e.target.value)}
+                                                            placeholder="Número de documento"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">Apellido</label>
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    value={authorizedPerson.apellido}
-                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, apellido: e.target.value })}
-                                                    placeholder="Ej: Garcia"
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-2">
-                                                <label className="text-[10px] font-bold uppercase text-warm-400 ml-1">DNI</label>
-                                                <input
-                                                    type="text"
-                                                    className="input-field"
-                                                    value={authorizedPerson.dni}
-                                                    onChange={e => setAuthorizedPerson({ ...authorizedPerson, dni: e.target.value })}
-                                                    placeholder="Número de documento"
-                                                />
-                                            </div>
-                                        </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={addAuthorizedPerson}
+                                            className="w-full py-4 border-2 border-dashed border-lemon-300 rounded-2xl text-lemon-600 font-bold hover:bg-lemon-50 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <span className="text-xl">+</span> Agregar otra persona autorizada
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -763,8 +816,8 @@ export default function EnrollmentPage() {
                                         setError('Por favor completá todos los campos obligatorios y firmá.')
                                         return
                                     }
-                                    if (leavesAlone === false && (!authorizedPerson.nombre || !authorizedPerson.apellido || !authorizedPerson.dni)) {
-                                        setError('Debes ingresar los datos de la persona autorizada.')
+                                    if (leavesAlone === false && (authorizedPersons.some(p => !p.nombre || !p.apellido || !p.dni))) {
+                                        setError('Debes ingresar los datos de todas las personas autorizadas.')
                                         return
                                     }
 
@@ -772,7 +825,7 @@ export default function EnrollmentPage() {
                                     if (leavesAlone === false) {
                                         setAuthData({
                                             ...authData,
-                                            autorizacionRetiro: `${authorizedPerson.nombre} ${authorizedPerson.apellido} (DNI: ${authorizedPerson.dni})`
+                                            autorizacionRetiro: authorizedPersons.map(p => `${p.nombre} ${p.apellido} (DNI: ${p.dni})`).join(', ')
                                         })
                                     }
 

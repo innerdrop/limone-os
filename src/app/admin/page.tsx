@@ -13,7 +13,8 @@ export default async function AdminDashboard() {
         nuevosAlumnos,
         ingresosMes,
         citasNivelacion,
-        inscripcionesRecientes
+        inscripcionesRecientes,
+        pagosPendientes
     ] = await Promise.all([
         prisma.alumno.count(),
         prisma.alumno.count({
@@ -42,9 +43,18 @@ export default async function AdminDashboard() {
             where: { creadoEn: { gte: last30Days } },
             include: {
                 alumno: { include: { usuario: true } },
-                taller: true
+                taller: true,
+                pagos: true
             },
             orderBy: { creadoEn: 'desc' },
+            take: 5
+        }),
+        prisma.pago.findMany({
+            where: { estado: 'PENDIENTE_VERIFICACION' },
+            include: {
+                alumno: { include: { usuario: true } }
+            },
+            orderBy: { fechaPago: 'desc' },
             take: 5
         })
     ])
@@ -143,6 +153,41 @@ export default async function AdminDashboard() {
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6">
+                {/* Pagos por Verificar (ALERTA) */}
+                {pagosPendientes.length > 0 && (
+                    <div className="card border-2 border-amber-200 bg-amber-50 lg:col-span-2">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">💰</span>
+                                <h2 className="text-lg font-bold text-amber-800">Pagos Pendientes de Verificación</h2>
+                            </div>
+                            <Link href="/admin/finanzas" className="text-sm font-bold text-amber-600 hover:underline">Ver todos →</Link>
+                        </div>
+                        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {pagosPendientes.map((pago) => (
+                                <div key={pago.id} className="p-4 rounded-xl bg-white border border-amber-200 shadow-sm flex flex-col justify-between gap-3">
+                                    <div>
+                                        <p className="font-bold text-warm-800">{pago.alumno.usuario.nombre}</p>
+                                        <p className="text-xs text-warm-500">{pago.concepto}</p>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-lg font-black text-warm-900">{formatMoney(pago.monto)}</span>
+                                        <Link
+                                            href={`/admin/alumnos/${pago.alumno.id}`}
+                                            className="p-2 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 {/* Próximas Citas de Nivelación */}
                 <div className="card">
                     <div className="flex items-center justify-between mb-4">
@@ -179,11 +224,16 @@ export default async function AdminDashboard() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                     </svg>
                                 </div>
-                                <div className="flex-1">
-                                    <p className="text-sm text-warm-700">
-                                        <span className="font-bold">{insc.alumno.usuario.nombre}</span> se inscribió a <span className="italic">{insc.taller.nombre}</span>
-                                    </p>
-                                    <p className="text-xs text-warm-400 mt-1">{insc.creadoEn.toLocaleDateString()}</p>
+                                <div className="flex-1 flex justify-between items-start gap-2">
+                                    <div>
+                                        <p className="text-sm text-warm-700">
+                                            <span className="font-bold">{insc.alumno.usuario.nombre}</span> se inscribió a <span className="italic">{insc.taller.nombre}</span>
+                                        </p>
+                                        <p className="text-xs text-warm-400 mt-1">{insc.creadoEn.toLocaleDateString()}</p>
+                                    </div>
+                                    {insc.pagos.some(p => p.estado === 'PENDIENTE' || p.estado === 'PENDIENTE_VERIFICACION') && (
+                                        <span className="badge badge-warning text-[10px] whitespace-nowrap">Pendiente Pago</span>
+                                    )}
                                 </div>
                             </div>
                         )) : (

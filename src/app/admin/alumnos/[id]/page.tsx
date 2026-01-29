@@ -247,9 +247,9 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                         <div>
                             <label className="label text-xs uppercase tracking-wide mb-2">Retiro del Alumno</label>
                             <div className="bg-canvas-50 p-4 rounded-lg font-medium">
-                                {alumno.autorizacionRetiro === 'SOLO' ? 'Se retira solo/a' :
+                                {alumno.autorizacionRetiro === 'SOLO' || alumno.autorizacionRetiro === 'SÍ, SE RETIRA SOLO' ? 'Se retira solo/a' :
                                     alumno.autorizacionRetiro === 'NO' ? 'No se retira solo/a (Retiran padres)' :
-                                        `Autorizados: ${alumno.autorizacionRetiro}`}
+                                        alumno.autorizacionRetiro}
                             </div>
                         </div>
 
