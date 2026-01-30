@@ -5,6 +5,8 @@ import Header from '@/components/Header'
 import MainHero from '@/components/MainHero'
 import TechniquesGalaxy from '@/components/TechniquesGalaxy'
 import WorkshopSpaceSection from '@/components/WorkshopSpaceSection'
+import FAQSection from '@/components/FAQSection'
+import ContactForm from '@/components/ContactForm'
 
 // ==================== METHODOLOGY SECTION ====================
 function MethodologySection() {
@@ -222,107 +224,83 @@ function ContactSection() {
                             Escribinos y te respondemos a la brevedad.
                         </p>
 
-                        <form className="space-y-6">
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Nombre</label>
-                                    <input type="text" className="input-field" placeholder="Tu nombre" />
-                                </div>
-                                <div>
-                                    <label className="label">Email</label>
-                                    <input type="email" className="input-field" placeholder="tu@email.com" />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="label">Teléfono (opcional)</label>
-                                <input type="tel" className="input-field" placeholder="+54 9 2901 ..." />
-                            </div>
-
-                            <div>
-                                <label className="label">Mensaje</label>
-                                <textarea
-                                    className="input-field min-h-[120px] resize-none"
-                                    placeholder="Contanos en qué podemos ayudarte..."
-                                />
-                            </div>
-
-                            <button type="submit" className="btn-primary w-full sm:w-auto">
-                                Enviar mensaje
-                            </button>
-                        </form>
+                        <ContactForm />
                     </div>
 
-                    {/* Map & Info */}
-                    <div className="space-y-6">
-                        {/* Real Map */}
-                        <div className="aspect-video rounded-2xl overflow-hidden bg-canvas-200 relative shadow-inner border border-canvas-200">
-                            <iframe
-                                src="https://maps.google.com/maps?q=Av.%20Alem%204611%2C%20Ushuaia%2C%20Tierra%20del%20Fuego&t=&z=15&ie=UTF8&iwloc=&output=embed"
-                                width="100%"
-                                height="100%"
-                                style={{ border: 0 }}
-                                allowFullScreen
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                className="grayscale hover:grayscale-0 transition-all duration-700"
-                            ></iframe>
-                        </div>
+                    {/* FAQ & Info */}
+                    <div className="space-y-12">
+                        <FAQSection />
 
-                        {/* Contact Info Cards */}
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="card p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-lemon-100 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-warm-400">Teléfono</p>
-                                        <p className="font-medium text-warm-800">+54 9 2901 588969</p>
-                                    </div>
-                                </div>
+                        <div className="space-y-6">
+                            {/* Real Map */}
+                            <div className="aspect-video rounded-2xl overflow-hidden bg-canvas-200 relative shadow-inner border border-canvas-200">
+                                <iframe
+                                    src="https://maps.google.com/maps?q=Av.%20Alem%204611%2C%20Ushuaia%2C%20Tierra%20del%20Fuego&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                                    width="100%"
+                                    height="100%"
+                                    style={{ border: 0 }}
+                                    allowFullScreen
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    className="grayscale hover:grayscale-0 transition-all duration-700"
+                                ></iframe>
                             </div>
 
-                            <div className="card p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-leaf-100 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-leaf-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-warm-400">Email</p>
-                                        <p className="font-medium text-warm-800">limonetaller@gmail.com</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="card p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-lemon-100 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-lemon-600" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-warm-400">Dirección</p>
-                                        <p className="font-medium text-warm-800">Alem 4611, Ushuaia</p>
+                            {/* Contact Info Cards */}
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="card p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-lemon-100 flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-lemon-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-warm-400">Teléfono</p>
+                                            <p className="font-medium text-warm-800">+54 9 2901 588969</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="card p-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-leaf-100 flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-leaf-600" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                        </svg>
+                                <div className="card p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-leaf-100 flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-leaf-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-warm-400">Email</p>
+                                            <p className="font-medium text-warm-800">limonetaller@gmail.com</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-sm text-warm-400">Horario</p>
-                                        <p className="font-medium text-warm-800">Mar - Vie, 16:00 - 20:30</p>
+                                </div>
+
+                                <div className="card p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-lemon-100 flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-lemon-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-warm-400">Dirección</p>
+                                            <p className="font-medium text-warm-800">Alem 4611, Ushuaia</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="card p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-leaf-100 flex items-center justify-center">
+                                            <svg className="w-5 h-5 text-leaf-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-warm-400">Horario</p>
+                                            <p className="font-medium text-warm-800">Mar - Vie, 16:00 - 20:30</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

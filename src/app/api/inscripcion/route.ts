@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { sendEmail } from '@/lib/email'
+import { welcomeEmail } from '@/lib/email-templates'
 
 export async function POST(request: NextRequest) {
     try {
@@ -131,6 +133,19 @@ export async function POST(request: NextRequest) {
                 } as any
             })
         }
+
+        // Send welcome email
+        const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/login` : 'https://limone.vercel.app/login'
+        sendEmail({
+            to: tutorEmail,
+            subject: '¡Bienvenido/a a Taller Limoné! 🎨',
+            html: welcomeEmail({
+                nombre: `${tutorNombre} ${tutorApellido}`,
+                email: tutorEmail,
+                tempPassword: tempPassword,
+                loginUrl
+            })
+        }).catch(err => console.error('Error sending welcome email:', err))
 
         return NextResponse.json({
             success: true,

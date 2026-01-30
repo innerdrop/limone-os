@@ -1,0 +1,51 @@
+import nodemailer from 'nodemailer'
+
+// Gmail SMTP configuration
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+})
+
+interface EmailOptions {
+    to: string
+    subject: string
+    html: string
+    replyTo?: string
+}
+
+/**
+ * Send an email using Gmail SMTP
+ */
+export async function sendEmail({ to, subject, html, replyTo }: EmailOptions): Promise<boolean> {
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_FROM || 'Taller Limoné <tallerlimone@gmail.com>',
+            to,
+            subject,
+            html,
+            replyTo
+        })
+        console.log(`✅ Email sent to ${to}: ${subject}`)
+        return true
+    } catch (error) {
+        console.error('❌ Error sending email:', error)
+        return false
+    }
+}
+
+/**
+ * Verify email configuration is working
+ */
+export async function verifyEmailConfig(): Promise<boolean> {
+    try {
+        await transporter.verify()
+        console.log('✅ Email configuration verified')
+        return true
+    } catch (error) {
+        console.error('❌ Email configuration error:', error)
+        return false
+    }
+}

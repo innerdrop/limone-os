@@ -9,23 +9,36 @@ datasource db {
 }
 
 model Usuario {
-  id                  String         @id @default(cuid())
-  email               String         @unique
+  id                  String               @id @default(cuid())
+  email               String               @unique
   password            String
   nombre              String
   telefono            String?
-  rol                 String         @default("ALUMNO")
+  rol                 String               @default("ALUMNO")
   imagen              String?
-  activo              Boolean        @default(true)
-  debeCambiarPassword Boolean        @default(true)
-  creadoEn            DateTime       @default(now())
-  actualizadoEn       DateTime       @updatedAt
+  activo              Boolean              @default(true)
+  debeCambiarPassword Boolean              @default(true)
+  creadoEn            DateTime             @default(now())
+  actualizadoEn       DateTime             @updatedAt
   alumnos             Alumno[]
-  clasesDocente       Clase[]        @relation("DocenteClases")
+  clasesDocente       Clase[]              @relation("DocenteClases")
   notificaciones      Notificacion[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("usuarios")
 }
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  usuarioId String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
 
 model Alumno {
   id                        String           @id @default(cuid())

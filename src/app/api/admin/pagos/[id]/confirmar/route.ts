@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { sendEmail } from '@/lib/email'
+import { paymentConfirmedEmail } from '@/lib/email-templates'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 export async function POST(
     request: NextRequest,
@@ -29,7 +33,7 @@ export async function POST(
             where: { id: pagoId },
             data: { estado: 'CONFIRMADO' },
             include: {
-                inscripcion: true,
+                inscripcion: { include: { taller: true } },
                 alumno: { include: { usuario: true } }
             }
         })
@@ -50,7 +54,25 @@ export async function POST(
             }
         })
 
+        // Send confirmation email
+        const alumno = pago.alumno as any
+        const inscripcion = pago.inscripcion as any
+        if (alumno?.usuario?.email) {
+            sendEmail({
+                to: alumno.usuario.email,
+                subject: '¡Pago Confirmado! ✅ - Taller Limoné',
+                html: paymentConfirmedEmail({
+                    nombre: alumno.usuario.nombre || 'Alumno',
+                    alumnoNombre: `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim() || 'Alumno',
+                    monto: Number(pago.monto),
+                    concepto: inscripcion?.taller?.nombre || inscripcion?.fase || 'Taller',
+                    fecha: format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })
+                })
+            }).catch(err => console.error('Error sending payment email:', err))
+        }
+
         return NextResponse.json({ success: true, pago })
+
     } catch (error) {
         console.error('Error al confirmar pago:', error)
         return NextResponse.json({ error: 'Error al confirmar el pago' }, { status: 500 })
