@@ -13,11 +13,6 @@ interface EmailOptions {
 }
 
 const getTransporter = () => {
-    // Debug info in server logs
-    console.log('--- DEBUG EMAIL CONFIG ---')
-    console.log('USER:', process.env.EMAIL_USER)
-    console.log('FROM:', process.env.EMAIL_FROM)
-
     return nodemailer.createTransport({
         service: 'gmail',
         auth: {
