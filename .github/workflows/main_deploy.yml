@@ -79,13 +79,17 @@ jobs:
           ENDSSH
 
       # ------------------------------------------
-      # 4. Configurar Nginx (Aumentar límite de subida)
+      # 4. Configurar Nginx (Aumentar límite de subida - SIN DUPLICADOS)
       # ------------------------------------------
       - name: 🌐 Configure Nginx Limits
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-            echo "🔧 Ajustando límites de subida en Nginx..."
-            sudo sed -i '/server_name limone.usev.app;/a \    client_max_body_size 20M;' /etc/nginx/sites-available/limone.usev.app || true
+            echo "🔧 Ajustando límites de subida en Nginx (Limpiando duplicados)..."
+            # Borramos cualquier línea existente para evitar duplicados
+            sudo sed -i '/client_max_body_size/d' /etc/nginx/sites-available/limone.usev.app
+            # Agregamos la configuración después del server_name
+            sudo sed -i '/server_name limone.usev.app;/a \    client_max_body_size 20M;' /etc/nginx/sites-available/limone.usev.app
+            
             sudo nginx -t && sudo systemctl reload nginx || echo "⚠️ No se pudo recargar Nginx automáticamente."
           ENDSSH
 
