@@ -1,7 +1,23 @@
 import nodemailer from 'nodemailer'
+import path from 'path'
 
-// Helper to create transporter dynamically
+// Force load .env from the project root to ensure it's available in VPS environments
+const dotenv = require('dotenv')
+dotenv.config({ path: path.resolve(process.cwd(), '.env') })
+
+interface EmailOptions {
+    to: string
+    subject: string
+    html: string
+    replyTo?: string
+}
+
 const getTransporter = () => {
+    // Debug info in server logs
+    console.log('--- DEBUG EMAIL CONFIG ---')
+    console.log('USER:', process.env.EMAIL_USER)
+    console.log('FROM:', process.env.EMAIL_FROM)
+
     return nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -9,13 +25,6 @@ const getTransporter = () => {
             pass: process.env.EMAIL_PASS
         }
     })
-}
-
-interface EmailOptions {
-    to: string
-    subject: string
-    html: string
-    replyTo?: string
 }
 
 /**
