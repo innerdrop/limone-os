@@ -1,13 +1,15 @@
 import nodemailer from 'nodemailer'
 
-// Gmail SMTP configuration
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-})
+// Helper to create transporter dynamically
+const getTransporter = () => {
+    return nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    })
+}
 
 interface EmailOptions {
     to: string
@@ -21,6 +23,7 @@ interface EmailOptions {
  */
 export async function sendEmail({ to, subject, html, replyTo }: EmailOptions): Promise<boolean> {
     try {
+        const transporter = getTransporter()
         await transporter.sendMail({
             from: process.env.EMAIL_FROM || 'Taller Limoné <tallerlimone@gmail.com>',
             to,
@@ -41,6 +44,7 @@ export async function sendEmail({ to, subject, html, replyTo }: EmailOptions): P
  */
 export async function verifyEmailConfig(): Promise<boolean> {
     try {
+        const transporter = getTransporter()
         await transporter.verify()
         console.log('✅ Email configuration verified')
         return true

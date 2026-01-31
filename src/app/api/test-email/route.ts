@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { sendEmail, verifyEmailConfig } from '@/lib/email'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
     try {
         // First verify the configuration
