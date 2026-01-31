@@ -141,7 +141,7 @@ function LoginForm() {
                                 <input type="checkbox" className="rounded border-warm-300" />
                                 Recordarme
                             </label>
-                            <Link href="/recuperar-password" className="text-lemon-600 hover:text-lemon-700 font-medium">
+                            <Link href="/forgot-password" className="text-lemon-600 hover:text-lemon-700 font-medium">
                                 ¿Olvidaste tu contraseña?
                             </Link>
                         </div>
