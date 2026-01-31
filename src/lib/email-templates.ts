@@ -31,8 +31,8 @@ function baseTemplate(content: string): string {
                         <!-- Header -->
                         <tr>
                             <td style="background: linear-gradient(135deg, ${colors.yellow} 0%, ${colors.green} 100%); padding: 30px; text-align: center;">
-                                <h1 style="margin: 0; color: ${colors.charcoal}; font-size: 32px; font-weight: bold;">🍋 Taller Limoné</h1>
-                                <p style="margin: 8px 0 0 0; color: ${colors.charcoal}; font-size: 14px; opacity: 0.8;">Arte en el fin del mundo</p>
+                                <img src="https://limone.usev.app/logo.png" alt="Taller Limoné" width="180" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+                                <p style="margin: 12px 0 0 0; color: ${colors.charcoal}; font-size: 14px; font-weight: 500; opacity: 0.9;">Arte en el fin del mundo</p>
                             </td>
                         </tr>
                         <!-- Content -->
