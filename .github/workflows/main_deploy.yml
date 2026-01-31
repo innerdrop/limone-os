@@ -62,12 +62,18 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             
-            echo "🐳 Reconstruyendo contenedores Docker..."
-            docker-compose down
-            docker-compose up -d --build
+            echo "🐳 Limpiando y reconstruyendo contenedores Docker..."
+            # Forzamos la bajada y quita de huérfanos
+            docker-compose down --remove-orphans
+            
+            # Borramos explícitamente los contenedores para evitar el error de sha256
+            docker rm -f limone-app limone-db || true
+            
+            # Construimos y levantamos desde cero
+            docker-compose up -d --build --force-recreate
             
             echo "⏳ Esperando a que la base de datos esté lista..."
-            sleep 10
+            sleep 15
             
             echo "🔄 Sincronizando esquema de base de datos..."
             docker-compose exec -T app npx prisma@5.22.0 db push --skip-generate
