@@ -144,7 +144,7 @@ export function enrollmentEmail(data: EnrollmentEmailData): string {
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Para confirmar tu lugar, realizá el pago correspondiente. Podés subir el comprobante desde tu portal o enviárnoslo por WhatsApp.
         </p>
-        ${button('Ver mi Inscripción', 'https://limone.vercel.app/portal')}
+        ${button('Ver mi Inscripción', 'https://limone.usev.app/portal')}
     `)
 }
 
@@ -208,7 +208,7 @@ export function paymentConfirmedEmail(data: PaymentConfirmedEmailData): string {
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Las clases ya aparecen en tu calendario. ¡Nos vemos pronto!
         </p>
-        ${button('Ver mi Calendario', 'https://limone.vercel.app/portal/calendario')}
+        ${button('Ver mi Calendario', 'https://limone.usev.app/portal/calendario')}
     `)
 }
 
@@ -303,7 +303,7 @@ export function passwordChangedEmail(data: PasswordChangedEmailData): string {
                 ⚠️ Si no realizaste este cambio, contactanos inmediatamente al <strong>+54 9 2901 588969</strong> o respondiendo a este correo.
             </p>
         `, '#FCE4EC')}
-        ${button('Iniciar Sesión', 'https://limone.vercel.app/login')}
+        ${button('Iniciar Sesión', 'https://limone.usev.app/login')}
     `)
 }
 

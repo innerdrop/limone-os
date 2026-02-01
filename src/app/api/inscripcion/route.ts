@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Send welcome email
-        const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/login` : 'https://limone.vercel.app/login'
+        const loginUrl = process.env.NEXTAUTH_URL ? `${process.env.NEXTAUTH_URL}/login` : 'https://limone.usev.app/login'
         sendEmail({
             to: tutorEmail,
             subject: '¡Bienvenido/a a Taller Limoné! 🎨',
