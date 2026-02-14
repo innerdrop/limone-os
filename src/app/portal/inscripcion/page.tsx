@@ -12,6 +12,21 @@ interface Taller {
     imagen?: string
 }
 
+interface OpcionInscripcion {
+    id: string
+    nombre: string
+    descripcion: string
+    emoji: string
+    colorFondo: string
+    colorBorde: string
+    colorHoverBg: string
+    tipo: string
+    redirigirUrl: string | null
+    esNuevo: boolean
+    orden: number
+    activo: boolean
+}
+
 const FASES = [
     { id: 'Fase 1', nombre: 'Principiante', desc: 'Introducción al arte y dibujo.', color: 'from-emerald-400 to-emerald-600' },
     { id: 'Fase 2', nombre: 'Intermedio', desc: 'Perfeccionamiento de técnicas.', color: 'from-blue-400 to-blue-600' },
@@ -123,15 +138,19 @@ export default function EnrollmentPage() {
     const pathname = usePathname()
     const [loading, setLoading] = useState(false)
     const [step, setStep] = useState(1)
-    // New Steps:
-    // 1: Nivel (Decision: Conoce Nivel -> Fase OR No Conoce -> Test)
-    // 2: Día/Horario (If Enroll) OR Confirm Test (If Test)
-    // 3: Asiento (If Enroll)
-    // 4: Pago (If Enroll)
+    // Steps:
+    // -2: Student Selection
+    // -1: Student Data
+    // 1: Enrollment Options / Level / Placement Test
+    // 2: Schedule (Regular or Summer) OR Confirm Test
+    // 3: Permisos y Firma
+    // 4: Payment Summary
 
     // State for Decision
     const [knowsLevel, setKnowsLevel] = useState<boolean | null>(null) // null = not decided
     const [isSummer, setIsSummer] = useState(false)
+    const [isClaseUnica, setIsClaseUnica] = useState(false)
+    const [precioClaseUnica, setPrecioClaseUnica] = useState(15000)
 
     // State for Student Profile Completion
     const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null)
@@ -190,6 +209,9 @@ export default function EnrollmentPage() {
     const [existingStudents, setExistingStudents] = useState<any[]>([])
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null)
 
+    // Enrollment options from admin
+    const [opcionesInscripcion, setOpcionesInscripcion] = useState<OpcionInscripcion[]>([])
+
     // Scroll to top when step changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -198,11 +220,16 @@ export default function EnrollmentPage() {
     // Reset step if navigating to this page (ensure it always starts at step 1)
     useEffect(() => {
         setLoading(true)
-        fetch('/api/portal/perfil')
-            .then(res => res.json())
-            .then(data => {
+        Promise.all([
+            fetch('/api/portal/perfil').then(res => res.json()),
+            fetch('/api/admin/opciones-inscripcion').then(res => res.json()).catch(() => []),
+            fetch('/api/admin/precios').then(res => res.json()).catch(() => ({ precio_clase_unica: 15000 }))
+        ])
+            .then(([data, opciones, precios]) => {
                 const alumnos = data.students || []
                 setExistingStudents(alumnos)
+                if (Array.isArray(opciones)) setOpcionesInscripcion(opciones)
+                if (precios?.precio_clase_unica) setPrecioClaseUnica(precios.precio_clase_unica)
 
                 if (alumnos.length === 0) {
                     setIsProfileComplete(false)
@@ -210,7 +237,7 @@ export default function EnrollmentPage() {
                     setStep(-1) // Start at student data
                 } else {
                     // Start at selection
-                    setIsProfileComplete(true) // We have profiles, even if they choose to add a new one later
+                    setIsProfileComplete(true)
                     setStep(-2)
                 }
             })
@@ -223,8 +250,17 @@ export default function EnrollmentPage() {
 
         setKnowsLevel(null)
         setIsSummer(false)
+        setIsClaseUnica(false)
         setSlots([])
         setSelectedFase('')
+
+        // Handle query params
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('type') === 'single-class') {
+            setKnowsLevel(true)
+            setIsClaseUnica(true)
+            setStep(2)
+        }
     }, [pathname])
 
     const calculateAge = (birthDate: string) => {
@@ -343,15 +379,19 @@ export default function EnrollmentPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    type: 'enrollment',
-                    fase: isSummer ? 'Taller de Verano' : selectedFase,
+                    type: isClaseUnica ? 'single-class' : 'enrollment',
+                    fase: isClaseUnica ? 'Clase Única' : isSummer ? 'Taller de Verano' : selectedFase,
                     isSummer,
+                    isClaseUnica,
+                    dia: isClaseUnica ? tempDia : undefined,
+                    horario: isClaseUnica ? tempHorario : undefined,
+                    asiento: isClaseUnica ? tempAsiento : undefined,
                     summerModality,
                     summerDays,
                     summerFrequency,
                     summerTime,
                     summerStartDate,
-                    slots: isSummer ? [] : slots,
+                    slots: isClaseUnica ? [{ id: 'unica', dia: tempDia, horario: tempHorario, asiento: tempAsiento }] : isSummer ? [] : slots,
                     studentId: selectedStudentId,
                     studentData: selectedStudentId === 'new' ? studentData : null,
                     // Construct final authData with latest values
@@ -413,28 +453,30 @@ export default function EnrollmentPage() {
     }
 
     // Logic to determine Total Steps based on path
-    const totalSteps = 3 // Always 3 now (Step 2 is either Schedule or Date or Confirm)
+    const totalSteps = 4
 
     const nextStep = () => setStep(prev => prev + 1)
     const prevStep = () => {
         if (step === 1 && knowsLevel !== null) {
-            if (isSummer) {
-                // If backtracking from Summer step 1 (which is essentially step 1 content)
-                // Actually step 1 is Decision.
-                setIsSummer(false)
-                setKnowsLevel(null)
-            } else {
-                setKnowsLevel(null)
-            }
+            setKnowsLevel(null)
+            setIsSummer(false)
             setSelectedFase('')
+            return
+        }
+        if (step === 2 && isSummer) {
+            // From summer config, go back to 3 options
+            setKnowsLevel(null)
+            setIsSummer(false)
+            setStep(1)
             return
         }
         setStep(prev => prev - 1)
     }
 
     const getStepLabel = (s: number) => {
-        if (knowsLevel === false) return s === 1 ? 'Nivelación' : 'Confirmar'
-        return s === 1 ? 'Nivel' : s === 2 ? (isSummer ? 'Fecha' : 'Cursada') : 'Pago'
+        if (knowsLevel === false) return s === 1 ? 'Nivelación' : s === 2 ? 'Confirmar' : s === 3 ? 'Permisos' : 'Fin'
+        if (isClaseUnica) return s === 1 ? 'Tipo' : s === 2 ? 'Horario' : s === 3 ? 'Permisos' : 'Pago'
+        return s === 1 ? 'Nivel' : s === 2 ? (isSummer ? 'Fecha' : 'Cursada') : s === 3 ? 'Permisos' : 'Pago'
     }
 
     if (isProfileComplete === null) {
@@ -613,21 +655,21 @@ export default function EnrollmentPage() {
                                         return
                                     }
                                     setError('')
-                                    setStep(0)
+                                    setStep(1)
                                 }}
                                 className="w-full btn-primary py-4 text-lg"
                             >
-                                Siguiente: Permisos y Firma
+                                Siguiente: Elegir Taller
                             </button>
                         </div>
                     </div>
                 )}
 
-                {/* STEP 0: Authorizations */}
-                {step === 0 && (
+                {/* STEP 3: Authorizations (Permisos y Firma) */}
+                {step === 3 && (
                     <div className="card max-w-2xl mx-auto space-y-6 animate-slide-up">
                         <div className="text-center">
-                            <h2 className="text-2xl font-bold text-warm-800">2. Permisos y Firma</h2>
+                            <h2 className="text-2xl font-bold text-warm-800">Permisos y Firma</h2>
                             <p className="text-warm-500">Necesitamos tu autorización legal como tutor.</p>
                         </div>
 
@@ -809,7 +851,7 @@ export default function EnrollmentPage() {
                         </div>
 
                         <div className="flex gap-4 pt-6">
-                            <button onClick={() => setStep(-1)} className="px-6 py-4 border border-canvas-300 rounded-xl text-warm-600 font-medium hover:bg-canvas-50">Volver</button>
+                            <button onClick={() => setStep(2)} className="px-6 py-4 border border-canvas-300 rounded-xl text-warm-600 font-medium hover:bg-canvas-50">Volver</button>
                             <button
                                 onClick={() => {
                                     if (!authData.autorizacionParticipacion || !authData.autorizacionMedica || !authData.aceptacionReglamento || !authData.aclaracionFirma || !authData.dniFirma || sigCanvas.current?.isEmpty() || leavesAlone === null) {
@@ -830,11 +872,11 @@ export default function EnrollmentPage() {
                                     }
 
                                     setError('')
-                                    setStep(1)
+                                    setStep(4)
                                 }}
                                 className="flex-1 btn-primary py-4 text-lg"
                             >
-                                Siguiente: Elegir Taller
+                                Siguiente: Confirmación
                             </button>
                         </div>
                     </div>
@@ -845,20 +887,54 @@ export default function EnrollmentPage() {
                     <div className="animate-slide-up">
                         {knowsLevel === null ? (
                             <div className="max-w-4xl mx-auto space-y-8 text-center pt-8">
+                                <button onClick={() => setStep(-2)} className="text-sm text-lemon-600 hover:underline mb-2">← Volver a selección de alumno</button>
                                 <h2 className="text-2xl font-bold text-warm-800">Elegí tu camino</h2>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <button onClick={() => { setKnowsLevel(true); setIsSummer(false); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md">
-                                        <div className="w-16 h-16 rounded-2xl bg-emerald-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">✅</div>
-                                        <h3 className="text-xl font-black text-warm-800 mb-2">Curso Regular</h3>
-                                        <p className="text-warm-500 text-sm">Ya sé en qué fase anual inscribirme.</p>
-                                    </button>
-
-                                    <button onClick={() => { setKnowsLevel(true); setIsSummer(true); setStep(2); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:shadow-md">
-                                        <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-3 py-1 rounded-bl-xl z-10">NUEVO</div>
-                                        <div className="w-16 h-16 rounded-2xl bg-orange-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">☀️</div>
-                                        <h3 className="text-xl font-black text-warm-800 mb-2">Taller de Verano</h3>
-                                        <p className="text-warm-500 text-sm">Enero y Febrero. Una vez por semana.</p>
-                                    </button>
+                                <div className={`grid gap-6 ${opcionesInscripcion.length <= 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
+                                    {opcionesInscripcion.length > 0 ? opcionesInscripcion.map(op => (
+                                        <button
+                                            key={op.id}
+                                            onClick={() => {
+                                                if (op.tipo === 'clase_unica' || (op.redirigirUrl && op.redirigirUrl.includes('clase-unica'))) {
+                                                    setKnowsLevel(true); setIsClaseUnica(true); setIsSummer(false); setStep(2);
+                                                } else if (op.redirigirUrl) {
+                                                    window.location.href = op.redirigirUrl;
+                                                } else if (op.tipo === 'verano') {
+                                                    setKnowsLevel(true); setIsSummer(true); setIsClaseUnica(false); setStep(2);
+                                                } else {
+                                                    setKnowsLevel(true); setIsSummer(false); setIsClaseUnica(false);
+                                                }
+                                            }}
+                                            className={`p-8 rounded-3xl border-2 border-warm-200 hover:${op.colorBorde} hover:${op.colorHoverBg} transition-all group relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:shadow-md`}
+                                        >
+                                            {op.esNuevo && (
+                                                <div className="absolute top-0 right-0 bg-purple-400 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl z-10">NUEVO</div>
+                                            )}
+                                            <div className={`w-16 h-16 rounded-2xl ${op.colorFondo} mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner`}>
+                                                {op.emoji}
+                                            </div>
+                                            <h3 className="text-xl font-black text-warm-800 mb-2">{op.nombre}</h3>
+                                            <p className="text-warm-500 text-sm">{op.descripcion}</p>
+                                        </button>
+                                    )) : (
+                                        <>
+                                            <button onClick={() => { setKnowsLevel(true); setIsSummer(false); setIsClaseUnica(false); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md">
+                                                <div className="w-16 h-16 rounded-2xl bg-emerald-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">🎨</div>
+                                                <h3 className="text-xl font-black text-warm-800 mb-2">Taller Regular</h3>
+                                                <p className="text-warm-500 text-sm">Curso anual completo de arte.</p>
+                                            </button>
+                                            <button onClick={() => { setKnowsLevel(true); setIsSummer(true); setIsClaseUnica(false); setStep(2); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all group relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:shadow-md">
+                                                <div className="w-16 h-16 rounded-2xl bg-orange-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">☀️</div>
+                                                <h3 className="text-xl font-black text-warm-800 mb-2">Taller de Verano</h3>
+                                                <p className="text-warm-500 text-sm">Enero y Febrero. Modalidades especiales.</p>
+                                            </button>
+                                            <button onClick={() => { setKnowsLevel(true); setIsClaseUnica(true); setIsSummer(false); setStep(2); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-purple-400 hover:bg-purple-50/50 transition-all group relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:shadow-md">
+                                                <div className="absolute top-0 right-0 bg-purple-400 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl z-10">NUEVO</div>
+                                                <div className="w-16 h-16 rounded-2xl bg-purple-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">✨</div>
+                                                <h3 className="text-xl font-black text-warm-800 mb-2">Clase Única</h3>
+                                                <p className="text-warm-500 text-sm">Una clase individual para probar.</p>
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         ) : knowsLevel === true ? (
@@ -907,12 +983,13 @@ export default function EnrollmentPage() {
                 )}
 
                 {/* STEP 2: Configure Schedule (Regular Only) */}
-                {step === 2 && knowsLevel === true && !isSummer && (
+                {step === 2 && knowsLevel === true && !isSummer && !isClaseUnica && (
                     <div className="max-w-4xl mx-auto animate-slide-up space-y-8">
                         {/* ... Existing Slot UI ... */}
                         <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-warm-800">Armá tu Horario</h2>
-                            <p className="text-warm-500">Podés elegir hasta 2 días de cursada semanal.</p>
+                            <h2 className="text-2xl font-bold text-warm-800">{'Armá tu Horario'}</h2>
+                            <button onClick={() => { setKnowsLevel(null); setSelectedFase(''); setStep(1); }} className="text-sm text-lemon-600 hover:underline mt-2">{'← Volver'}</button>
+                            <p className="text-warm-500">{'Podés elegir hasta 2 días de cursada semanal.'}</p>
                         </div>
                         <div className="grid gap-4">
                             {slots.map((slot, idx) => (
@@ -937,186 +1014,273 @@ export default function EnrollmentPage() {
                         </div>
 
                         {/* Adding Slot Workflow */}
-                        {isAddingSlot && (
-                            <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-lemon-200 shadow-xl space-y-8 animate-fade-in relative">
-                                <button onClick={() => setIsAddingSlot(false)} className="absolute top-6 right-6 text-warm-400 hover:text-red-500">✕</button>
-                                <h3 className="text-xl font-bold text-warm-800 text-center">Nuevo Turno</h3>
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-bold text-warm-700 mb-2">Día</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {DIAS.map(d => (
-                                                <button key={d} onClick={() => setTempDia(d)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{d}</button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    {tempDia && (
-                                        <div className="animate-fade-in">
-                                            <label className="block text-sm font-bold text-warm-700 mb-2">Horario</label>
+                        {
+                            isAddingSlot && (
+                                <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-lemon-200 shadow-xl space-y-8 animate-fade-in relative">
+                                    <button onClick={() => setIsAddingSlot(false)} className="absolute top-6 right-6 text-warm-400 hover:text-red-500">✕</button>
+                                    <h3 className="text-xl font-bold text-warm-800 text-center">Nuevo Turno</h3>
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="block text-sm font-bold text-warm-700 mb-2">Día</label>
                                             <div className="flex flex-wrap gap-2">
-                                                {HORARIOS.map(h => (
-                                                    <button key={h.value} onClick={() => setTempHorario(h.value)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempHorario === h.value ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{h.label}</button>
+                                                {DIAS.map(d => (
+                                                    <button key={d} onClick={() => setTempDia(d)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{d}</button>
                                                 ))}
                                             </div>
                                         </div>
-                                    )}
-                                </div>
-                                {tempDia && tempHorario && (
-                                    <div className="animate-fade-in space-y-4">
-                                        <div className="text-center"><p className="text-sm font-bold text-warm-500">Elegí tu asiento</p></div>
-                                        <div className="flex flex-wrap justify-center gap-4 bg-warm-50 p-6 rounded-3xl border-2 border-warm-100">
-                                            {Array.from({ length: 10 }, (_, i) => i + 1).map(num => {
-                                                const occupied = occupiedSeats.includes(num) || slots.some(s => s.dia === tempDia && s.horario === tempHorario && s.asiento === num)
-                                                return (
-                                                    <button key={num} disabled={occupied} onClick={() => setTempAsiento(num)} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${occupied ? 'bg-warm-200 border-warm-300 text-warm-400' : tempAsiento === num ? 'bg-lemon-500 border-lemon-500 text-white scale-110' : 'bg-white border-warm-200 text-warm-600 hover:border-lemon-400'}`}>{num}</button>
-                                                )
-                                            })}
-                                        </div>
+                                        {tempDia && (
+                                            <div className="animate-fade-in">
+                                                <label className="block text-sm font-bold text-warm-700 mb-2">Horario</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {HORARIOS.map(h => (
+                                                        <button key={h.value} onClick={() => setTempHorario(h.value)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempHorario === h.value ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{h.label}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                                <button disabled={!tempDia || !tempHorario || !tempAsiento} onClick={handleAddSlot} className="w-full py-4 bg-lemon-600 text-white font-black rounded-xl disabled:opacity-50 hover:bg-lemon-700 transition-colors">Confirmar Horario</button>
-                                {error && <p className="text-red-500 text-center font-bold text-sm">{error}</p>}
-                            </div>
-                        )}
+                                    {tempDia && tempHorario && (
+                                        <div className="animate-fade-in space-y-4">
+                                            <div className="text-center"><p className="text-sm font-bold text-warm-500">Elegí tu asiento</p></div>
+                                            <div className="flex flex-wrap justify-center gap-4 bg-warm-50 p-6 rounded-3xl border-2 border-warm-100">
+                                                {Array.from({ length: 10 }, (_, i) => i + 1).map(num => {
+                                                    const occupied = occupiedSeats.includes(num) || slots.some(s => s.dia === tempDia && s.horario === tempHorario && s.asiento === num)
+                                                    return (
+                                                        <button key={num} disabled={occupied} onClick={() => setTempAsiento(num)} className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${occupied ? 'bg-warm-200 border-warm-300 text-warm-400' : tempAsiento === num ? 'bg-lemon-500 border-lemon-500 text-white scale-110' : 'bg-white border-warm-200 text-warm-600 hover:border-lemon-400'}`}>{num}</button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <button disabled={!tempDia || !tempHorario || !tempAsiento} onClick={handleAddSlot} className="w-full py-4 bg-lemon-600 text-white font-black rounded-xl disabled:opacity-50 hover:bg-lemon-700 transition-colors">Confirmar Horario</button>
+                                    {error && <p className="text-red-500 text-center font-bold text-sm">{error}</p>}
+                                </div>
+                            )
+                        }
                         <div className="flex justify-center pt-8">
-                            <button disabled={slots.length === 0 || isAddingSlot} onClick={nextStep} className="px-12 py-4 bg-warm-900 text-white font-black rounded-2xl shadow-xl disabled:opacity-50 hover:bg-black transition-colors">Continuar con {slots.length} {slots.length === 1 ? 'día' : 'días'}</button>
+                            <button disabled={slots.length === 0 || isAddingSlot} onClick={() => setStep(3)} className="px-12 py-4 bg-warm-900 text-white font-black rounded-2xl shadow-xl disabled:opacity-50 hover:bg-black transition-colors">Continuar con {slots.length} {slots.length === 1 ? 'día' : 'días'}</button>
                         </div>
-                    </div>
-                )}
+                    </div >
+                )
+                }
 
-                {/* STEP 2: Summer Workshop Configuration */}
-                {step === 2 && isSummer && (
-                    <div className="max-w-2xl mx-auto space-y-8 animate-slide-up">
+                {/* STEP 2: Clase Única Schedule */}
+                {step === 2 && isClaseUnica && (
+                    <div className="card max-w-2xl mx-auto space-y-8 animate-slide-up">
                         <div className="text-center space-y-2">
-                            <h2 className="text-3xl font-serif font-bold text-warm-800">Taller de Verano 2026</h2>
-                            <p className="text-warm-500">Del 6 de Enero al 28 de Febrero • Niños de 5 a 12 años</p>
+                            <h2 className="text-2xl font-bold text-warm-800">{'Elegí día y horario'}</h2>
+                            <button onClick={() => { setKnowsLevel(null); setIsClaseUnica(false); setStep(1); }} className="text-sm text-lemon-600 hover:underline mt-2">{'← Volver'}</button>
+                            <p className="text-warm-500">{'Seleccioná cuándo querés asistir a tu clase.'}</p>
                         </div>
 
-                        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-warm-100 shadow-xl space-y-8">
-
-                            {/* 1. Select Modality */}
-                            <div>
-                                <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">1. Elegí la Modalidad</label>
-                                <div className="grid md:grid-cols-2 gap-4">
+                        {/* Day Selection */}
+                        <div>
+                            <label className="block text-sm font-bold text-warm-700 mb-2">Día de la semana</label>
+                            <div className="flex flex-wrap gap-2">
+                                {DIAS.map(d => (
                                     <button
-                                        onClick={() => setSummerModality('BASE')}
-                                        className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${summerModality === 'BASE' ? 'border-lemon-500 bg-lemon-50 ring-4 ring-lemon-100' : 'border-warm-100 hover:border-lemon-300'}`}
+                                        key={d}
+                                        onClick={() => { setTempDia(d); setTempAsiento(null); }}
+                                        className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d ? 'bg-purple-500 border-purple-500 text-white' : 'bg-white border-warm-100 text-warm-600 hover:border-purple-300'}`}
                                     >
-                                        <h4 className="font-black text-warm-900 text-lg mb-1">Modalidad Base</h4>
-                                        <p className="text-warm-500 text-sm mb-2">Corta duración (1h 20m)</p>
-                                        <div className="text-xs font-bold bg-white/50 inline-block px-2 py-1 rounded text-warm-600">Materiales Incluidos</div>
+                                        {d}
                                     </button>
-
-                                    <button
-                                        onClick={() => setSummerModality('EXTENDED')}
-                                        className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${summerModality === 'EXTENDED' ? 'border-orange-500 bg-orange-50 ring-4 ring-orange-100' : 'border-warm-100 hover:border-orange-300'}`}
-                                    >
-                                        <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl">POPULAR</div>
-                                        <h4 className="font-black text-warm-900 text-lg mb-1">Extendida</h4>
-                                        <p className="text-warm-500 text-sm mb-2">2 horas + Merienda</p>
-                                        <div className="text-xs font-bold bg-white/50 inline-block px-2 py-1 rounded text-orange-600">Merienda Incluida</div>
-                                    </button>
-                                </div>
+                                ))}
                             </div>
+                        </div>
 
-
-
-                            {/* 2. Select Frequency */}
-                            <div>
-                                <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">2. Frecuencia Semanal</label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => setSummerFrequency('1x')}
-                                        className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerFrequency === '1x' ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
-                                    >
-                                        1 vez por semana
-                                    </button>
-                                    <button
-                                        onClick={() => setSummerFrequency('2x')}
-                                        className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerFrequency === '2x' ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
-                                    >
-                                        2 veces por semana
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* 3. Select Days */}
-                            <div>
-                                <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">3. Día{summerFrequency === '2x' ? 's' : ''} de Cursada</label>
-                                <div className="grid grid-cols-4 gap-3">
-                                    {['MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'].map(dia => {
-                                        const isSelected = summerDays.includes(dia)
-                                        return (
-                                            <button
-                                                key={dia}
-                                                onClick={() => {
-                                                    if (summerFrequency === '1x') {
-                                                        setSummerDays([dia])
-                                                    } else {
-                                                        // 2x logic
-                                                        if (isSelected) {
-                                                            setSummerDays(summerDays.filter(d => d !== dia))
-                                                        } else {
-                                                            if (summerDays.length < 2) {
-                                                                setSummerDays([...summerDays, dia])
-                                                            }
-                                                        }
-                                                    }
-                                                }}
-                                                className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${isSelected ? 'border-orange-500 bg-orange-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-orange-300'} ${summerFrequency === '2x' && !isSelected && summerDays.length >= 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                {dia.charAt(0) + dia.slice(1).toLowerCase()}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                                <p className="text-xs text-warm-400 mt-2 px-2">
-                                    {summerFrequency === '2x' && summerDays.length < 2 ? `* Elegí 2 días para tu cursada.` : '* Tu clase será siempre el mismo día cada semana.'}
-                                </p>
-                            </div>
-
-                            {/* 4. Select Time */}
-                            <div>
-                                <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">4. Elegí el Horario</label>
-                                <div className="grid md:grid-cols-2 gap-3">
-                                    {(summerModality === 'BASE' ? SUMMER_HORARIOS_BASE : SUMMER_HORARIOS_EXTENDED).map((h) => (
+                        {/* Time Selection */}
+                        {tempDia && (
+                            <div className="animate-fade-in">
+                                <label className="block text-sm font-bold text-warm-700 mb-2">Horario</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {HORARIOS.map(h => (
                                         <button
                                             key={h.value}
-                                            onClick={() => setSummerTime(h.value)}
-                                            className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerTime === h.value ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
+                                            onClick={() => { setTempHorario(h.value); setTempAsiento(null); }}
+                                            className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempHorario === h.value ? 'bg-purple-500 border-purple-500 text-white' : 'bg-white border-warm-100 text-warm-600 hover:border-purple-300'}`}
                                         >
                                             {h.label}
                                         </button>
                                     ))}
                                 </div>
                             </div>
+                        )}
 
-                            {/* 5. Date Selection */}
-                            <div>
-                                <label className="block text-sm font-bold text-warm-700 mb-2 uppercase tracking-wider">5. Fecha de Inicio</label>
-                                <input
-                                    type="date"
-                                    className="w-full p-4 rounded-xl border-2 border-warm-200 font-bold text-warm-800 focus:border-lemon-500 focus:ring-4 focus:ring-lemon-100 outline-none transition-all"
-                                    value={summerStartDate}
-                                    onChange={(e) => setSummerStartDate(e.target.value)}
-                                    min="2026-01-06"
-                                    max="2026-02-28"
-                                />
-                                <p className="text-xs text-warm-400 mt-2 px-2">
-                                    * Seleccioná la fecha de tu primera clase. El precio se ajusta según las semanas restantes.
-                                </p>
+                        {/* Seat Selection */}
+                        {tempDia && tempHorario && (
+                            <div className="animate-fade-in space-y-4">
+                                <div className="text-center"><p className="text-sm font-bold text-warm-500">{'Elegí tu asiento'}</p></div>
+                                <div className="flex flex-wrap justify-center gap-4 bg-warm-50 p-6 rounded-3xl border-2 border-warm-100">
+                                    {Array.from({ length: 10 }, (_, i) => i + 1).map(num => {
+                                        const occupied = occupiedSeats.includes(num)
+                                        return (
+                                            <button
+                                                key={num}
+                                                disabled={occupied}
+                                                onClick={() => setTempAsiento(num)}
+                                                className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${occupied ? 'bg-warm-200 border-warm-300 text-warm-400 cursor-not-allowed' : tempAsiento === num ? 'bg-purple-500 border-purple-500 text-white scale-110' : 'bg-white border-warm-200 text-warm-600 hover:border-purple-400'}`}
+                                            >
+                                                {num}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Price + Continue */}
+                        {tempDia && tempHorario && tempAsiento && (
+                            <div className="animate-fade-in space-y-4">
+                                <div className="bg-purple-50 p-6 rounded-2xl border-2 border-purple-200">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-warm-700 font-bold">Precio Clase Única:</span>
+                                        <span className="text-2xl font-black text-purple-600">${precioClaseUnica.toLocaleString('es-AR')}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => setStep(3)} className="w-full py-4 bg-purple-600 text-white font-black rounded-2xl shadow-xl hover:bg-purple-700 transition-colors">
+                                    Continuar
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* STEP 2: Summer Workshop Configuration */}
+                {
+                    step === 2 && isSummer && (
+                        <div className="max-w-2xl mx-auto space-y-8 animate-slide-up">
+                            <div className="text-center space-y-2">
+                                <h2 className="text-3xl font-serif font-bold text-warm-800">Taller de Verano 2026</h2>
+                                <button onClick={() => { setKnowsLevel(null); setIsSummer(false); setStep(1); }} className="text-sm text-lemon-600 hover:underline mt-2">← Volver</button>
+                                <p className="text-warm-500">Del 6 de Enero al 28 de Febrero • Niños de 5 a 12 años</p>
                             </div>
 
-                            <button
-                                disabled={!summerStartDate || summerDays.length === 0 || (summerFrequency === '2x' && summerDays.length < 2) || !summerTime}
-                                onClick={nextStep}
-                                className="w-full py-4 bg-lemon-500 text-white font-black rounded-xl hover:bg-lemon-600 disabled:opacity-50 disabled:hover:bg-lemon-500 transition-colors shadow-lg shadow-lemon-200"
-                            >
-                                Continuar
-                            </button>
+                            <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border-2 border-warm-100 shadow-xl space-y-8">
+
+                                {/* 1. Select Modality */}
+                                <div>
+                                    <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">1. Elegí la Modalidad</label>
+                                    <div className="grid md:grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => setSummerModality('BASE')}
+                                            className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${summerModality === 'BASE' ? 'border-lemon-500 bg-lemon-50 ring-4 ring-lemon-100' : 'border-warm-100 hover:border-lemon-300'}`}
+                                        >
+                                            <h4 className="font-black text-warm-900 text-lg mb-1">Modalidad Base</h4>
+                                            <p className="text-warm-500 text-sm mb-2">Corta duración (1h 20m)</p>
+                                            <div className="text-xs font-bold bg-white/50 inline-block px-2 py-1 rounded text-warm-600">Materiales Incluidos</div>
+                                        </button>
+
+                                        <button
+                                            onClick={() => setSummerModality('EXTENDED')}
+                                            className={`p-6 rounded-2xl border-2 text-left transition-all relative overflow-hidden ${summerModality === 'EXTENDED' ? 'border-orange-500 bg-orange-50 ring-4 ring-orange-100' : 'border-warm-100 hover:border-orange-300'}`}
+                                        >
+                                            <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl">POPULAR</div>
+                                            <h4 className="font-black text-warm-900 text-lg mb-1">Extendida</h4>
+                                            <p className="text-warm-500 text-sm mb-2">2 horas + Merienda</p>
+                                            <div className="text-xs font-bold bg-white/50 inline-block px-2 py-1 rounded text-orange-600">Merienda Incluida</div>
+                                        </button>
+                                    </div>
+                                </div>
+
+
+
+                                {/* 2. Select Frequency */}
+                                <div>
+                                    <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">2. Frecuencia Semanal</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button
+                                            onClick={() => setSummerFrequency('1x')}
+                                            className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerFrequency === '1x' ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
+                                        >
+                                            1 vez por semana
+                                        </button>
+                                        <button
+                                            onClick={() => setSummerFrequency('2x')}
+                                            className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerFrequency === '2x' ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
+                                        >
+                                            2 veces por semana
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* 3. Select Days */}
+                                <div>
+                                    <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">3. Día{summerFrequency === '2x' ? 's' : ''} de Cursada</label>
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {['MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'].map(dia => {
+                                            const isSelected = summerDays.includes(dia)
+                                            return (
+                                                <button
+                                                    key={dia}
+                                                    onClick={() => {
+                                                        if (summerFrequency === '1x') {
+                                                            setSummerDays([dia])
+                                                        } else {
+                                                            // 2x logic
+                                                            if (isSelected) {
+                                                                setSummerDays(summerDays.filter(d => d !== dia))
+                                                            } else {
+                                                                if (summerDays.length < 2) {
+                                                                    setSummerDays([...summerDays, dia])
+                                                                }
+                                                            }
+                                                        }
+                                                    }}
+                                                    className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${isSelected ? 'border-orange-500 bg-orange-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-orange-300'} ${summerFrequency === '2x' && !isSelected && summerDays.length >= 2 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    {dia.charAt(0) + dia.slice(1).toLowerCase()}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                    <p className="text-xs text-warm-400 mt-2 px-2">
+                                        {summerFrequency === '2x' && summerDays.length < 2 ? `* Elegí 2 días para tu cursada.` : '* Tu clase será siempre el mismo día cada semana.'}
+                                    </p>
+                                </div>
+
+                                {/* 4. Select Time */}
+                                <div>
+                                    <label className="block text-sm font-bold text-warm-700 mb-4 uppercase tracking-wider">4. Elegí el Horario</label>
+                                    <div className="grid md:grid-cols-2 gap-3">
+                                        {(summerModality === 'BASE' ? SUMMER_HORARIOS_BASE : SUMMER_HORARIOS_EXTENDED).map((h) => (
+                                            <button
+                                                key={h.value}
+                                                onClick={() => setSummerTime(h.value)}
+                                                className={`p-4 rounded-xl border-2 font-bold transition-all text-center ${summerTime === h.value ? 'border-lemon-500 bg-lemon-500 text-white shadow-lg' : 'border-warm-200 text-warm-600 hover:border-lemon-300'}`}
+                                            >
+                                                {h.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* 5. Date Selection */}
+                                <div>
+                                    <label className="block text-sm font-bold text-warm-700 mb-2 uppercase tracking-wider">5. Fecha de Inicio</label>
+                                    <input
+                                        type="date"
+                                        className="w-full p-4 rounded-xl border-2 border-warm-200 font-bold text-warm-800 focus:border-lemon-500 focus:ring-4 focus:ring-lemon-100 outline-none transition-all"
+                                        value={summerStartDate}
+                                        onChange={(e) => setSummerStartDate(e.target.value)}
+                                        min="2026-01-06"
+                                        max="2026-02-28"
+                                    />
+                                    <p className="text-xs text-warm-400 mt-2 px-2">
+                                        * Seleccioná la fecha de tu primera clase. El precio se ajusta según las semanas restantes.
+                                    </p>
+                                </div>
+
+                                <button
+                                    disabled={!summerStartDate || summerDays.length === 0 || (summerFrequency === '2x' && summerDays.length < 2) || !summerTime}
+                                    onClick={() => setStep(3)}
+                                    className="w-full py-4 bg-lemon-500 text-white font-black rounded-xl hover:bg-lemon-600 disabled:opacity-50 disabled:hover:bg-lemon-500 transition-colors shadow-lg shadow-lemon-200"
+                                >
+                                    Continuar
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )
+                    )
                 }
 
                 {/* STEP 2 (Placement Test) */}
@@ -1130,14 +1294,33 @@ export default function EnrollmentPage() {
                     )
                 }
 
-                {/* STEP 3: Payment/Summary (Unified) */}
+                {/* STEP 4: Payment/Summary (Unified) */}
                 {
-                    step === 3 && knowsLevel === true && (
+                    step === 4 && knowsLevel === true && (
                         <div className="max-w-md mx-auto space-y-8 animate-scale-up">
                             <div className="bg-white rounded-[2.5rem] border-2 border-warm-100 overflow-hidden shadow-2xl p-8 space-y-6">
                                 <h2 className="text-2xl font-black text-warm-900 text-center">Resumen de Inscripción</h2>
                                 <div className="space-y-4">
-                                    {isSummer ? (
+                                    {isClaseUnica ? (
+                                        <>
+                                            <div className="p-4 bg-purple-50 rounded-2xl">
+                                                <p className="text-xs uppercase font-bold text-purple-600 mb-1">Programa</p>
+                                                <p className="font-bold text-warm-800">Clase Única</p>
+                                            </div>
+                                            <div className="flex justify-between items-center border-b border-warm-100 pb-2">
+                                                <p className="text-xs uppercase font-bold text-warm-400">Día</p>
+                                                <p className="font-bold text-warm-800">{tempDia}</p>
+                                            </div>
+                                            <div className="flex justify-between items-center border-b border-warm-100 pb-2">
+                                                <p className="text-xs uppercase font-bold text-warm-400">Horario</p>
+                                                <p className="font-bold text-warm-800">{tempHorario}</p>
+                                            </div>
+                                            <div className="flex justify-between items-center border-b border-warm-100 pb-2">
+                                                <p className="text-xs uppercase font-bold text-warm-400">Asiento</p>
+                                                <p className="font-bold text-warm-800">#{tempAsiento}</p>
+                                            </div>
+                                        </>
+                                    ) : isSummer ? (
                                         <>
                                             <div className="p-4 bg-orange-50 rounded-2xl">
                                                 <p className="text-xs uppercase font-bold text-orange-600 mb-1">Programa</p>
@@ -1187,9 +1370,11 @@ export default function EnrollmentPage() {
                                     <div className="flex justify-between items-end">
                                         <span className="font-bold text-warm-500">Total</span>
                                         <span className="text-3xl font-black text-warm-900">
-                                            {isSummer
-                                                ? `$${calculateSummerPrice(summerStartDate, summerModality, summerFrequency).toLocaleString('es-AR')}`
-                                                : `$${(slots.length * 25000).toLocaleString('es-AR')}`
+                                            {isClaseUnica
+                                                ? `$${precioClaseUnica.toLocaleString('es-AR')}`
+                                                : isSummer
+                                                    ? `$${calculateSummerPrice(summerStartDate, summerModality, summerFrequency).toLocaleString('es-AR')}`
+                                                    : `$${(slots.length * 25000).toLocaleString('es-AR')}`
                                             }
                                         </span>
                                     </div>
@@ -1209,7 +1394,7 @@ export default function EnrollmentPage() {
 
             {/* Back button */}
             {
-                step > 1 && (
+                step > 1 && step !== 3 && (
                     <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-white/80 backdrop-blur-xl border border-warm-100 px-6 py-3 rounded-full shadow-2xl z-50">
                         <button onClick={prevStep} className="flex items-center gap-2 text-warm-500 hover:text-warm-900 transition-colors font-bold uppercase text-[10px] tracking-widest">
                             <span>←</span> Anterior

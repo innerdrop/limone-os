@@ -152,145 +152,20 @@ function InscripcionContent() {
                                 <p className="text-warm-500">¿Qué te gustaría hacer?</p>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="max-w-md mx-auto">
                                 <button
                                     onClick={() => { setMode('inscripcion'); setStep(1); }}
-                                    className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
+                                    className="w-full p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
                                 >
                                     <div className="w-16 h-16 rounded-2xl bg-lemon-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">📝</div>
                                     <h3 className="text-xl font-black text-warm-800 mb-2">Registrarme e Inscribirme</h3>
                                     <p className="text-warm-500 text-sm">Crea tu cuenta para comenzar a inscribir a tus hijos.</p>
                                 </button>
-
-                                <button
-                                    onClick={() => { setMode('nivelacion'); }}
-                                    className="p-8 rounded-3xl border-2 border-warm-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md"
-                                >
-                                    <div className="w-16 h-16 rounded-2xl bg-blue-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">🤔</div>
-                                    <h3 className="text-xl font-black text-warm-800 mb-2">Clase Gratuita Única</h3>
-                                    <p className="text-warm-500 text-sm">Quiero agendar una clase de prueba sin cargo para conocer el taller.</p>
-                                </button>
                             </div>
                         </div>
                     )}
 
-                    {/* NIVELACION FORM (Keeping existing) */}
-                    {mode === 'nivelacion' && (
-                        <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-                            <div className="text-center">
-                                <button onClick={() => { setMode('choice'); setError(''); }} className="text-sm text-lemon-600 hover:underline mb-4">← Volver</button>
-                                <h2 className="text-2xl font-bold text-warm-800">Agendar Clase de Prueba</h2>
-                                <p className="text-warm-500 mt-2">Completá el formulario y te contactaremos para coordinar tu clase gratuita.</p>
-                            </div>
 
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Nombre del Alumno *</label>
-                                    <input
-                                        type="text"
-                                        className="input-field"
-                                        value={levelingData.nombreAlumno}
-                                        onChange={e => setLevelingData({ ...levelingData, nombreAlumno: e.target.value })}
-                                        placeholder="Nombre y apellido del niño/a"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label">Edad del Alumno *</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        value={levelingData.edadAlumno}
-                                        onChange={e => setLevelingData({ ...levelingData, edadAlumno: e.target.value })}
-                                        placeholder="Ej: 10"
-                                        min="5"
-                                        max="18"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="label">Nombre del Tutor *</label>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    value={levelingData.nombreTutor}
-                                    onChange={e => setLevelingData({ ...levelingData, nombreTutor: e.target.value })}
-                                    placeholder="Nombre y apellido del padre/madre/tutor"
-                                />
-                            </div>
-
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Teléfono / WhatsApp *</label>
-                                    <input
-                                        type="tel"
-                                        className="input-field"
-                                        value={levelingData.telefonoTutor}
-                                        onChange={e => setLevelingData({ ...levelingData, telefonoTutor: e.target.value })}
-                                        placeholder="+54 9 2901 xxxxxx"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label">Email *</label>
-                                    <input
-                                        type="email"
-                                        className="input-field"
-                                        value={levelingData.emailTutor}
-                                        onChange={e => setLevelingData({ ...levelingData, emailTutor: e.target.value })}
-                                        placeholder="email@ejemplo.com"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="label">Fecha Preferida (opcional)</label>
-                                    <input
-                                        type="date"
-                                        className="input-field"
-                                        value={levelingData.fechaPreferida}
-                                        onChange={e => setLevelingData({ ...levelingData, fechaPreferida: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label">Hora Preferida (opcional)</label>
-                                    <select
-                                        className="input-field"
-                                        value={levelingData.horaPreferida}
-                                        onChange={e => setLevelingData({ ...levelingData, horaPreferida: e.target.value })}
-                                    >
-                                        <option value="">Cualquier horario</option>
-                                        <option value="16:00">16:00 hs</option>
-                                        <option value="17:00">17:00 hs</option>
-                                        <option value="18:00">18:00 hs</option>
-                                        <option value="19:00">19:00 hs</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                <p className="text-sm text-blue-800">
-                                    <strong>¿Qué es la clase de prueba?</strong><br />
-                                    Es una clase única y gratuita donde el alumno participa de la actividad para conocer el taller y definimos su grupo ideal.
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() => {
-                                    if (!levelingData.nombreAlumno || !levelingData.edadAlumno || !levelingData.nombreTutor || !levelingData.telefonoTutor || !levelingData.emailTutor) {
-                                        setError('Por favor completá todos los campos obligatorios (*)')
-                                        return
-                                    }
-                                    setError('')
-                                    const message = `Hola Natalia! 👋\n\nQuiero agendar una *Clase de Prueba Gratuita* para mi hijo/a:\n\n👧 *Alumno:* ${levelingData.nombreAlumno}\n📅 *Edad:* ${levelingData.edadAlumno} años\n👤 *Tutor:* ${levelingData.nombreTutor}\n📱 *Teléfono:* ${levelingData.telefonoTutor}\n📧 *Email:* ${levelingData.emailTutor}\n${levelingData.fechaPreferida ? `🗓️ *Fecha preferida:* ${levelingData.fechaPreferida}` : ''}\n${levelingData.horaPreferida ? `⏰ *Hora preferida:* ${levelingData.horaPreferida}` : ''}\n\n¡Gracias!`
-                                    window.location.href = `https://wa.me/5492901588969?text=${encodeURIComponent(message)}`
-                                }}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl transition-colors shadow-lg"
-                            >
-                                Contactar por WhatsApp
-                            </button>
-                        </div>
-                    )}
 
                     {/* STEP 2: Registration Success */}
                     {step === 2 && registrationResponse && (

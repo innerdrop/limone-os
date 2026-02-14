@@ -383,3 +383,23 @@ model Slide {
 
   @@map("slides")
 }
+
+// Opciones de inscripción administrables
+model OpcionInscripcion {
+  id            String   @id @default(cuid())
+  nombre        String   @unique
+  descripcion   String?
+  emoji         String   @default("🎨")
+  colorFondo    String   @default("bg-emerald-100") // Tailwind class for icon bg
+  colorBorde    String   @default("border-lemon-400") // Tailwind class for hover border
+  colorHoverBg  String   @default("bg-lemon-50/50") // Tailwind class for hover bg
+  tipo          String   @default("regular") // "regular" | "verano" | "clase-unica" | "custom"
+  redirigirUrl  String?  // If set, redirects to this URL instead of the normal flow
+  esNuevo       Boolean  @default(false)
+  orden         Int      @default(0)
+  activo        Boolean  @default(true)
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("opciones_inscripcion")
+}

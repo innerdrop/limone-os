@@ -89,6 +89,108 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, cita })
         }
 
+        // --- SINGLE CLASS FLOW ---
+        if (type === 'single-class') {
+            const { dia, horario, asiento } = body
+
+            if (!dia || !horario || !asiento) {
+                return NextResponse.json({ error: 'Faltan datos de la clase única' }, { status: 400 })
+            }
+
+            // Get or create Clase Única taller
+            let taller = await prisma.taller.findFirst({
+                where: { nombre: 'Clase Única', activo: true }
+            })
+
+            if (!taller) {
+                // Create if doesn't exist
+                taller = await prisma.taller.create({
+                    data: {
+                        nombre: 'Clase Única',
+                        descripcion: 'Clase individual de prueba',
+                        activo: true,
+                        precio: 15000
+                    }
+                })
+            }
+
+            // Get price from configuration
+            const precioConfig = await prisma.configuracion.findUnique({
+                where: { clave: 'precio_clase_unica' }
+            })
+            const precio = precioConfig ? parseFloat(precioConfig.valor) : 15000
+
+            await prisma.$transaction(async (tx) => {
+                // Check seat availability
+                const asientoOcupado = await tx.inscripcion.findFirst({
+                    where: {
+                        dia: dia,
+                        horario: horario,
+                        asiento: asiento.toString(),
+                        estado: 'ACTIVA'
+                    }
+                })
+
+                if (asientoOcupado) {
+                    throw new Error(`El asiento ${asiento} ya está ocupado.`)
+                }
+
+                // Create enrollment
+                const inscripcion = await tx.inscripcion.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        tallerId: taller.id,
+                        dia: dia,
+                        horario: horario,
+                        asiento: asiento.toString(),
+                        fase: 'Clase Única',
+                        estado: 'ACTIVA',
+                        pagado: false
+                    } as any
+                })
+
+                // Create payment
+                await tx.pago.create({
+                    data: {
+                        alumnoId: alumno.id,
+                        inscripcionId: inscripcion.id,
+                        monto: precio,
+                        estado: 'PENDIENTE',
+                        mesCubierto: new Date().getMonth() + 1,
+                        anioCubierto: new Date().getFullYear(),
+                        concepto: `Clase Única - ${dia} ${horario}`
+                    }
+                })
+
+                // Notify user
+                await tx.notificacion.create({
+                    data: {
+                        usuarioId: session.user.id,
+                        titulo: 'Inscripción a Clase Única',
+                        mensaje: `Tu clase está agendada para ${dia} a las ${horario}. Asiento: ${asiento}. Total: $${precio}`,
+                        tipo: 'INFO',
+                        leida: false
+                    }
+                })
+
+                // Notify admins
+                const admins = await tx.usuario.findMany({ where: { rol: 'ADMIN' } })
+                for (const admin of admins) {
+                    await tx.notificacion.create({
+                        data: {
+                            usuarioId: admin.id,
+                            titulo: 'Nueva Clase Única',
+                            mensaje: `${alumno.nombre || 'Un alumno'} se inscribió a una Clase Única (${dia} ${horario}). Total: $${precio}`,
+                            tipo: 'INFO',
+                            enlace: `/admin/alumnos/${alumno.id}`
+                        }
+                    })
+                }
+            })
+
+            return NextResponse.json({ success: true })
+        }
+
         // --- ENROLLMENT FLOW ---
         const { slots, fase, isSummer, summerModality, summerDays, summerTime, summerFrequency, summerStartDate } = body
 

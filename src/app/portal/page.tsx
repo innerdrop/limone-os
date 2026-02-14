@@ -396,9 +396,9 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {[
                         { label: 'Inscribirme', href: '/portal/inscripcion', icon: '🎨', color: 'bg-lemon-100' },
+                        { label: 'Clase Única', href: '/portal/inscripcion?type=single-class', icon: '✨', color: 'bg-purple-100' },
                         { label: 'Mis Pagos', href: '/portal/pagos', icon: '💳', color: 'bg-green-100' },
                         { label: 'Mi calendario', href: '/portal/calendario', icon: '📅', color: 'bg-blue-100' },
-                        { label: 'Editar perfil', href: '/portal/perfil', icon: '👤', color: 'bg-purple-100' },
                     ].map((action: any, index: number) => (
                         <Link
                             key={index}

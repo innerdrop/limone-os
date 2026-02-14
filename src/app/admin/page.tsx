@@ -11,8 +11,11 @@ export default async function AdminDashboard() {
     const [
         totalAlumnos,
         nuevosAlumnos,
-        ingresosMes,
-        citasNivelacion,
+        ingresosMesData,
+        citasNivelacionCount,
+        latestCitas,
+        latestClases,
+        latestTareas,
         inscripcionesRecientes,
         pagosPendientes
     ] = await Promise.all([
@@ -27,17 +30,21 @@ export default async function AdminDashboard() {
                 fechaPago: { gte: monthStart }
             }
         }),
+        prisma.citaNivelacion.count({ where: { fecha: { gte: now } } }),
         prisma.citaNivelacion.findMany({
-            where: { fecha: { gte: now } },
-            include: {
-                alumno: {
-                    include: {
-                        usuario: true
-                    }
-                }
-            },
-            orderBy: { fecha: 'asc' },
-            take: 5
+            include: { alumno: { include: { usuario: true } } },
+            orderBy: { fecha: 'desc' },
+            take: 6
+        }),
+        prisma.clase.findMany({
+            include: { taller: true },
+            orderBy: { fechaHora: 'desc' },
+            take: 6
+        }),
+        prisma.tarea.findMany({
+            where: { completada: false },
+            orderBy: { fecha: 'desc' },
+            take: 6
         }),
         prisma.inscripcion.findMany({
             where: { creadoEn: { gte: last30Days } },
@@ -62,8 +69,8 @@ export default async function AdminDashboard() {
     const stats = {
         alumnosActivos: totalAlumnos,
         alumnosNuevosMes: nuevosAlumnos,
-        ingresosMes: ingresosMes._sum.monto || 0,
-        citasPendientes: citasNivelacion.length,
+        ingresosMes: ingresosMesData._sum.monto || 0,
+        citasPendientes: citasNivelacionCount,
     }
 
     const formatMoney = (amount: number) => {
@@ -188,26 +195,68 @@ export default async function AdminDashboard() {
                     </div>
                 )}
 
-                {/* Próximas Citas de Nivelación */}
+                {/* Próximas Actividades */}
                 <div className="card">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-warm-800">Pruebas de Nivelación</h2>
-                        <span className="text-xs text-warm-400">Próximas programadas</span>
+                        <h2 className="text-lg font-semibold text-warm-800">Próximas Actividades</h2>
+                        <Link href="/admin/agenda" className="text-xs font-bold text-lemon-600 hover:underline">Ver Agenda →</Link>
                     </div>
                     <div className="space-y-3">
-                        {citasNivelacion.length > 0 ? citasNivelacion.map((cita) => (
-                            <div key={cita.id} className="flex items-center justify-between p-3 rounded-xl bg-canvas-50 border border-canvas-200">
-                                <div>
-                                    <p className="font-medium text-warm-800">{cita.alumno.usuario.nombre}</p>
-                                    <p className="text-sm text-warm-500">{cita.fecha.toLocaleString('es-AR', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                        {(() => {
+                            type Activity = { id: string; type: 'clase' | 'tarea' | 'nivelacion'; title: string; subtitle: string; date: Date; icon: string; color: string; badgeText: string; badgeClass: string }
+                            const activities: Activity[] = [
+                                ...latestClases.map(c => ({
+                                    id: c.id,
+                                    type: 'clase' as const,
+                                    title: c.taller.nombre,
+                                    subtitle: c.notas || 'Clase programada',
+                                    date: c.fechaHora,
+                                    icon: '🎨',
+                                    color: 'bg-lemon-100',
+                                    badgeText: 'Clase',
+                                    badgeClass: 'badge badge-lemon'
+                                })),
+                                ...latestTareas.map(t => ({
+                                    id: t.id,
+                                    type: 'tarea' as const,
+                                    title: t.titulo,
+                                    subtitle: t.descripcion || (t.hora ? `a las ${t.hora}` : 'Sin hora definida'),
+                                    date: t.fecha,
+                                    icon: '✅',
+                                    color: t.prioridad === 'ALTA' ? 'bg-red-100' : t.prioridad === 'MEDIA' ? 'bg-amber-100' : 'bg-blue-100',
+                                    badgeText: t.prioridad === 'ALTA' ? 'Urgente' : 'Tarea',
+                                    badgeClass: t.prioridad === 'ALTA' ? 'badge badge-warning' : 'badge badge-lemon'
+                                })),
+                                ...latestCitas.map(c => ({
+                                    id: c.id,
+                                    type: 'nivelacion' as const,
+                                    title: `Nivelación: ${c.alumno.usuario.nombre}`,
+                                    subtitle: c.alumno.nombre + ' ' + c.alumno.apellido,
+                                    date: c.fecha,
+                                    icon: '🧐',
+                                    color: 'bg-purple-100',
+                                    badgeText: 'Nivelación',
+                                    badgeClass: 'badge badge-lemon'
+                                }))
+                            ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 4)
+
+                            if (activities.length === 0) {
+                                return <p className="text-sm text-warm-400 italic py-4 text-center">No hay actividades próximas</p>
+                            }
+
+                            return activities.map((act) => (
+                                <div key={act.id} className="flex items-center gap-3 p-3 rounded-xl bg-canvas-50 border border-canvas-200 hover:bg-canvas-100 transition-colors">
+                                    <div className={`w-10 h-10 rounded-xl ${act.color} flex items-center justify-center text-lg flex-shrink-0`}>
+                                        {act.icon}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-warm-800 text-sm truncate">{act.title}</p>
+                                        <p className="text-xs text-warm-500">{act.date.toLocaleString('es-AR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                    <span className={act.badgeClass + ' text-[10px] whitespace-nowrap'}>{act.badgeText}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="badge badge-lemon">Pendiente</span>
-                                </div>
-                            </div>
-                        )) : (
-                            <p className="text-sm text-warm-400 italic py-4 text-center">No hay pruebas programadas</p>
-                        )}
+                            ))
+                        })()}
                     </div>
                 </div>
 
