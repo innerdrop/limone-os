@@ -146,28 +146,27 @@ function NotificationsDropdown() {
                             <div className="p-2">
                                 {notificaciones.length > 0 ? (
                                     notificaciones.map(notif => (
-                                        <div key={notif.id} className="p-3 hover:bg-canvas-50 rounded-xl transition-colors group relative">
-                                            <button
-                                                onClick={() => markAsRead(notif.id)}
-                                                className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 p-1 hover:bg-canvas-200 rounded-full transition-all"
-                                                title="Marcar como leída"
-                                            >
-                                                <svg className="w-3 h-3 text-warm-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                            </button>
+                                        <div
+                                            key={notif.id}
+                                            onClick={() => markAsRead(notif.id)}
+                                            className="p-3 hover:bg-canvas-50 rounded-xl transition-colors group relative cursor-pointer"
+                                        >
                                             <div className="flex gap-3">
                                                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${notif.tipo === 'INFO' ? 'bg-blue-100' : 'bg-brand-purple/10'}`}>
                                                     <span>{notif.tipo === 'INFO' ? '💰' : '🔔'}</span>
                                                 </div>
-                                                <div className="flex-1 pr-6">
+                                                <div className="flex-1 pr-2">
                                                     <p className="text-sm font-bold text-warm-800">{notif.titulo}</p>
                                                     <p className="text-xs text-warm-600 mt-0.5">{notif.mensaje}</p>
                                                     {notif.enlace && (
                                                         <Link
                                                             href={notif.enlace}
                                                             className="text-[10px] text-lemon-600 font-bold hover:underline mt-2 inline-block"
-                                                            onClick={() => setIsOpen(false)}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                markAsRead(notif.id);
+                                                                setIsOpen(false);
+                                                            }}
                                                         >
                                                             Ver detalles →
                                                         </Link>

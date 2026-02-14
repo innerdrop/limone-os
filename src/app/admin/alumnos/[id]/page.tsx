@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import PrintButton from '@/components/admin/PrintButton'
 import ConfirmPaymentButton from '@/components/admin/ConfirmPaymentButton'
+import CancelEnrollmentButton from '@/components/admin/CancelEnrollmentButton'
 
 export default async function AlumnoDetailPage(props: { params: Promise<{ id: string }> }) {
     const params = await props.params
@@ -165,7 +166,66 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                     </div>
                 </section>
 
-                {/* 3. Pagos Pendientes */}
+                {/* 3. Inscripciones */}
+                <section className="card">
+                    <h2 className="text-xl font-bold text-warm-800 mb-6 flex items-center gap-2">
+                        <span>🎨</span> Inscripciones
+                    </h2>
+                    <div className="space-y-4">
+                        {alumno.inscripciones.length > 0 ? (
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                {alumno.inscripciones.map((ins: any) => (
+                                    <div key={ins.id} className={`p-4 rounded-2xl border-2 transition-all ${ins.estado === 'CANCELADA' ? 'bg-canvas-100 border-canvas-200 opacity-60' : 'bg-white border-lemon-100 hover:border-lemon-400'}`}>
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h3 className="font-bold text-warm-800">{ins.taller.nombre}</h3>
+                                                <p className="text-xs text-warm-500 font-medium uppercase tracking-wider">{ins.fase}</p>
+                                            </div>
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${ins.estado === 'ACTIVA' ? 'bg-leaf-100 text-leaf-700' : 'bg-red-100 text-red-700'}`}>
+                                                {ins.estado}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-y-2 text-sm mb-4">
+                                            <div>
+                                                <p className="text-[10px] text-warm-400 font-bold uppercase">Día</p>
+                                                <p className="font-semibold text-warm-700">{ins.dia}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] text-warm-400 font-bold uppercase">Horario</p>
+                                                <p className="font-semibold text-warm-700">{ins.horario}</p>
+                                            </div>
+                                            {ins.asiento && (
+                                                <div>
+                                                    <p className="text-[10px] text-warm-400 font-bold uppercase">Asiento</p>
+                                                    <p className="font-semibold text-warm-700">{ins.asiento}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {ins.estado !== 'CANCELADA' && (
+                                            <div className="no-print pt-3 border-t border-canvas-100">
+                                                <CancelEnrollmentButton
+                                                    inscripcionId={ins.id}
+                                                    tallerNombre={ins.taller.nombre}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {ins.notas && ins.estado === 'CANCELADA' && (
+                                            <div className="mt-2 p-2 bg-red-50 rounded-lg text-[11px] text-red-700 font-medium">
+                                                {ins.notas}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center py-8 text-warm-400 italic">No hay inscripciones registradas</p>
+                        )}
+                    </div>
+                </section>
+
+                {/* 4. Pagos Pendientes */}
                 {alumno.inscripciones.some((ins: any) => ins.pagos.length > 0) && (
                     <section className="card border-l-4 border-yellow-500 no-print">
                         <h2 className="text-xl font-bold text-warm-800 mb-6 flex items-center gap-2">
@@ -203,7 +263,17 @@ export default async function AlumnoDetailPage(props: { params: Promise<{ id: st
                                                 <p className="text-3xl font-black text-warm-900">${pago.monto.toLocaleString('es-AR')}</p>
                                             </div>
                                         </div>
-                                        <ConfirmPaymentButton pagoId={pago.id} monto={pago.monto} />
+                                        <div className="flex flex-col sm:flex-row gap-3">
+                                            <div className="flex-1">
+                                                <ConfirmPaymentButton pagoId={pago.id} monto={pago.monto} />
+                                            </div>
+                                            <div className="flex-shrink-0 flex items-center">
+                                                <CancelEnrollmentButton
+                                                    inscripcionId={ins.id}
+                                                    tallerNombre={ins.taller.nombre}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                 )))}
                         </div>
