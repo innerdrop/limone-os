@@ -38,7 +38,7 @@ NEXTAUTH_SECRET="${AUTH_SECRET}"
 # --- APP ---
 NEXT_PUBLIC_APP_URL="https://limone.usev.app"
 NODE_ENV="production"
-PORT=3006
+PORT=3081
 EOL
 fi
 
@@ -54,9 +54,9 @@ npm run build
 echo -e "${BLUE}>>> Iniciando aplicación con PM2...${NC}"
 if command -v pm2 &> /dev/null; then
     pm2 delete limone-web 2>/dev/null || true
-    pm2 start npm --name "limone-web" -- start -- -p 3006
+    pm2 start npm --name "limone-web" -- start -- -p 3081
     pm2 save
-    echo -e "${GREEN}>>> Aplicación iniciada en puerto 3006.${NC}"
+    echo -e "${GREEN}>>> Aplicación iniciada en puerto 3081.${NC}"
 else
     echo -e "${RED}PM2 no encontrado. Instalalo con: npm install -g pm2${NC}"
 fi
@@ -80,7 +80,7 @@ server {
     client_max_body_size 20M;
 
     location / {
-        proxy_pass http://localhost:3006;
+        proxy_pass http://localhost:3081;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';

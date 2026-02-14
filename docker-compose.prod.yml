@@ -13,7 +13,7 @@ services:
     container_name: limone-app
     restart: unless-stopped
     ports:
-      - "3006:3000"
+      - "3081:3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: ${DATABASE_URL}
