@@ -30,7 +30,7 @@ async function migrate() {
             await local.usuario.upsert({
                 where: { id: u.id },
                 update: {},
-                create: u
+                create: u as any
             })
         }
         console.log('✅ Usuarios migrados')
@@ -42,7 +42,7 @@ async function migrate() {
             await local.alumno.upsert({
                 where: { id: a.id },
                 update: {},
-                create: a
+                create: a as any
             })
         }
         console.log('✅ Alumnos migrados')
@@ -54,7 +54,7 @@ async function migrate() {
             await local.taller.upsert({
                 where: { id: t.id },
                 update: {},
-                create: t
+                create: t as any
             })
         }
         console.log('✅ Talleres migrados')
@@ -66,7 +66,7 @@ async function migrate() {
             await local.clase.upsert({
                 where: { id: c.id },
                 update: {},
-                create: c
+                create: c as any
             })
         }
         console.log('✅ Clases migradas')
@@ -78,7 +78,7 @@ async function migrate() {
             await local.inscripcion.upsert({
                 where: { id: i.id },
                 update: {},
-                create: i
+                create: i as any
             })
         }
         console.log('✅ Inscripciones migradas')
@@ -90,7 +90,7 @@ async function migrate() {
             await local.pago.upsert({
                 where: { id: p.id },
                 update: {},
-                create: p
+                create: p as any
             })
         }
         console.log('✅ Pagos migrados')
@@ -102,7 +102,7 @@ async function migrate() {
             await local.notificacion.upsert({
                 where: { id: n.id },
                 update: {},
-                create: n
+                create: n as any
             })
         }
         console.log('✅ Notificaciones migradas')
@@ -114,7 +114,7 @@ async function migrate() {
             await local.slide.upsert({
                 where: { id: s.id },
                 update: {},
-                create: s
+                create: s as any
             })
         }
         console.log('✅ Slides migrados')
@@ -126,7 +126,7 @@ async function migrate() {
             await local.configuracion.upsert({
                 where: { id: c.id },
                 update: {},
-                create: c
+                create: c as any
             })
         }
         console.log('✅ Configuraciones migradas')
@@ -138,7 +138,7 @@ async function migrate() {
             await local.testimonio.upsert({
                 where: { id: t.id },
                 update: {},
-                create: t
+                create: t as any
             })
         }
         console.log('✅ Testimonios migrados')
@@ -150,7 +150,7 @@ async function migrate() {
             await local.tarea.upsert({
                 where: { id: t.id },
                 update: {},
-                create: t
+                create: t as any
             })
         }
         console.log('✅ Tareas migradas')
@@ -162,7 +162,7 @@ async function migrate() {
             await local.obra.upsert({
                 where: { id: o.id },
                 update: {},
-                create: o
+                create: o as any
             })
         }
         console.log('✅ Obras migradas')
