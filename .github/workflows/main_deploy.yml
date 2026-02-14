@@ -78,8 +78,8 @@ jobs:
             sleep 15
             
             echo "🔄 Sincronizando esquema de base de datos..."
-            # Usando --url y --accept-data-loss para evitar errores de versión y prompts interactivos
-            docker-compose exec -T app npx prisma db push --url="postgresql://limone:limone_dev_2025@db:5432/limone?schema=public" --accept-data-loss
+            # Forzamos la versión 5.22.0 que es la que usa el proyecto para evitar errores de Prisma 7
+            docker-compose exec -T -e DATABASE_URL="postgresql://limone:limone_dev_2025@db:5432/limone?schema=public" app npx prisma@5.22.0 db push --skip-generate --accept-data-loss
             
             echo "🧹 Limpiando imágenes Docker no utilizadas..."
             docker image prune -f
