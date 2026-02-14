@@ -78,8 +78,8 @@ jobs:
             sleep 15
             
             echo "🔄 Sincronizando esquema de base de datos..."
-            # Forzamos DATABASE_URL para que use el nombre del servicio interno de Docker 'db'
-            docker-compose exec -T -e DATABASE_URL="postgresql://limone:limone_dev_2025@db:5432/limone?schema=public" app npx prisma db push --skip-generate
+            # Usando --url y --accept-data-loss para evitar errores de versión y prompts interactivos
+            docker-compose exec -T app npx prisma db push --url="postgresql://limone:limone_dev_2025@db:5432/limone?schema=public" --accept-data-loss
             
             echo "🧹 Limpiando imágenes Docker no utilizadas..."
             docker image prune -f
