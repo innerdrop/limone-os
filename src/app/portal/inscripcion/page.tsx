@@ -234,10 +234,23 @@ export default function EnrollmentPage() {
                 if (alumnos.length === 0) {
                     setIsProfileComplete(false)
                     setSelectedStudentId('new')
-                    setStep(-1) // Start at student data
+                    const params = new URLSearchParams(window.location.search)
+                    if (params.get('type') === 'single-class') {
+                        setKnowsLevel(true)
+                        setIsClaseUnica(true)
+                        setStep(2)
+                    } else {
+                        setStep(-1) // Start at student data
+                    }
                 } else {
                     // Start at selection
                     setIsProfileComplete(true)
+                    const params = new URLSearchParams(window.location.search)
+                    if (params.get('type') === 'single-class') {
+                        setKnowsLevel(true)
+                        setIsClaseUnica(true)
+                        // Stay at setStep(-2) to choose WHICH student
+                    }
                     setStep(-2)
                 }
             })
@@ -253,14 +266,6 @@ export default function EnrollmentPage() {
         setIsClaseUnica(false)
         setSlots([])
         setSelectedFase('')
-
-        // Handle query params
-        const params = new URLSearchParams(window.location.search)
-        if (params.get('type') === 'single-class') {
-            setKnowsLevel(true)
-            setIsClaseUnica(true)
-            setStep(2)
-        }
     }, [pathname])
 
     const calculateAge = (birthDate: string) => {

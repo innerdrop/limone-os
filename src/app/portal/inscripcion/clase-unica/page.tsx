@@ -154,6 +154,19 @@ export default function ClaseUnicaPage() {
                                     <span className="text-purple-600 font-bold group-hover:translate-x-1 transition-transform">Elegir →</span>
                                 </button>
                             ))}
+
+                            <button
+                                onClick={() => router.push('/portal/inscripcion?type=single-class')}
+                                className="p-4 rounded-xl border-2 border-dashed border-canvas-200 hover:border-leaf-400 hover:bg-leaf-50 transition-all flex items-center gap-4 group text-left"
+                            >
+                                <div className="w-12 h-12 rounded-full bg-leaf-100 flex items-center justify-center text-xl text-leaf-600">
+                                    +
+                                </div>
+                                <div>
+                                    <p className="font-bold text-warm-800">Inscribir a otro niño/a</p>
+                                    <p className="text-sm text-warm-500">Agregar un nuevo perfil a tu cuenta</p>
+                                </div>
+                            </button>
                         </div>
 
                         <button
@@ -248,7 +261,7 @@ export default function ClaseUnicaPage() {
                             </button>
                             <button
                                 onClick={handleSubmit}
-                                disabled={!selectedDia || !selectedHorario || !selectedAsiento || loading}
+                                disabled={!selectedStudentId || !selectedDia || !selectedHorario || !selectedAsiento || loading}
                                 className="flex-1 py-3 bg-purple-600 text-white font-black rounded-xl disabled:opacity-50 hover:bg-purple-700 transition-colors"
                             >
                                 {loading ? 'Procesando...' : 'Confirmar Inscripción'}

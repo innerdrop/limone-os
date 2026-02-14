@@ -28,13 +28,8 @@ export async function POST(request: NextRequest) {
                 where: { id: studentId }
             })
         } else {
-            // Fallback: try to find any student for the user
-            alumno = await prisma.alumno.findFirst({
-                where: { usuarioId: session.user.id }
-            })
-
-            // If still no student AND we have data to create one, create it now
-            if (!alumno && body.studentData) {
+            // Fallback: If we have studentData, we should probably create a new student
+            if (body.studentData) {
                 alumno = await prisma.alumno.create({
                     data: {
                         usuarioId: session.user.id,
@@ -42,6 +37,22 @@ export async function POST(request: NextRequest) {
                         perfilCompleto: false
                     }
                 })
+            } else {
+                // Otherwise, try to find any student for the user
+                // If there's only one, we can assume it's that one (legacy support)
+                // If there are multiple, we must return an error
+                const students = await prisma.alumno.findMany({
+                    where: { usuarioId: session.user.id }
+                })
+
+                if (students.length === 1) {
+                    alumno = students[0]
+                } else if (students.length > 1) {
+                    return NextResponse.json({ error: 'Debes seleccionar un alumno' }, { status: 400 })
+                } else {
+                    // No students yet, but no studentData either
+                    return NextResponse.json({ error: 'Faltan datos del alumno' }, { status: 400 })
+                }
             }
         }
 
