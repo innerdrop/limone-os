@@ -27,7 +27,8 @@ export async function PATCH(
                 activo: body.activo,
                 diasSemana: body.diasSemana,
                 horaInicio: body.horaInicio,
-            }
+                horarios: body.horarios
+            } as any
         })
 
         return NextResponse.json(taller)

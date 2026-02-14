@@ -211,6 +211,7 @@ export default function EnrollmentPage() {
 
     // Enrollment options from admin
     const [opcionesInscripcion, setOpcionesInscripcion] = useState<OpcionInscripcion[]>([])
+    const [talleres, setTalleres] = useState<any[]>([])
 
     // Scroll to top when step changes
     useEffect(() => {
@@ -223,12 +224,14 @@ export default function EnrollmentPage() {
         Promise.all([
             fetch('/api/portal/perfil').then(res => res.json()),
             fetch('/api/admin/opciones-inscripcion').then(res => res.json()).catch(() => []),
-            fetch('/api/admin/precios').then(res => res.json()).catch(() => ({ precio_clase_unica: 15000 }))
+            fetch('/api/admin/precios').then(res => res.json()).catch(() => ({ precio_clase_unica: 15000 })),
+            fetch('/api/talleres').then(res => res.json()).catch(() => [])
         ])
-            .then(([data, opciones, precios]) => {
+            .then(([data, opciones, precios, workshops]) => {
                 const alumnos = data.students || []
                 setExistingStudents(alumnos)
                 if (Array.isArray(opciones)) setOpcionesInscripcion(opciones)
+                if (Array.isArray(workshops)) setTalleres(workshops)
                 if (precios?.precio_clase_unica) setPrecioClaseUnica(precios.precio_clase_unica)
 
                 if (alumnos.length === 0) {
@@ -1028,8 +1031,8 @@ export default function EnrollmentPage() {
                                         <div>
                                             <label className="block text-sm font-bold text-warm-700 mb-2">Día</label>
                                             <div className="flex flex-wrap gap-2">
-                                                {DIAS.map(d => (
-                                                    <button key={d} onClick={() => setTempDia(d)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{d}</button>
+                                                {(talleres.find(t => t.nombre === 'Taller Regular')?.diasSemana?.split(',') || DIAS).map((d: string) => (
+                                                    <button key={d} onClick={() => setTempDia(d.trim())} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d.trim() ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{d.trim()}</button>
                                                 ))}
                                             </div>
                                         </div>
@@ -1037,7 +1040,7 @@ export default function EnrollmentPage() {
                                             <div className="animate-fade-in">
                                                 <label className="block text-sm font-bold text-warm-700 mb-2">Horario</label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {HORARIOS.map(h => (
+                                                    {(talleres.find(t => t.nombre === 'Taller Regular')?.horarios || HORARIOS).map((h: any) => (
                                                         <button key={h.value} onClick={() => setTempHorario(h.value)} className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempHorario === h.value ? 'bg-lemon-500 border-lemon-500 text-white' : 'bg-white border-warm-100 text-warm-600'}`}>{h.label}</button>
                                                     ))}
                                                 </div>
@@ -1082,13 +1085,13 @@ export default function EnrollmentPage() {
                         <div>
                             <label className="block text-sm font-bold text-warm-700 mb-2">Día de la semana</label>
                             <div className="flex flex-wrap gap-2">
-                                {DIAS.map(d => (
+                                {(talleres.find(t => t.nombre === 'Clase Única')?.diasSemana?.split(',') || DIAS).map((d: string) => (
                                     <button
                                         key={d}
-                                        onClick={() => { setTempDia(d); setTempAsiento(null); }}
-                                        className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d ? 'bg-purple-500 border-purple-500 text-white' : 'bg-white border-warm-100 text-warm-600 hover:border-purple-300'}`}
+                                        onClick={() => { setTempDia(d.trim()); setTempAsiento(null); }}
+                                        className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${tempDia === d.trim() ? 'bg-purple-500 border-purple-500 text-white' : 'bg-white border-warm-100 text-warm-600 hover:border-purple-300'}`}
                                     >
-                                        {d}
+                                        {d.trim()}
                                     </button>
                                 ))}
                             </div>
@@ -1099,7 +1102,7 @@ export default function EnrollmentPage() {
                             <div className="animate-fade-in">
                                 <label className="block text-sm font-bold text-warm-700 mb-2">Horario</label>
                                 <div className="flex flex-wrap gap-2">
-                                    {HORARIOS.map(h => (
+                                    {(talleres.find(t => t.nombre === 'Clase Única')?.horarios || HORARIOS).map((h: any) => (
                                         <button
                                             key={h.value}
                                             onClick={() => { setTempHorario(h.value); setTempAsiento(null); }}

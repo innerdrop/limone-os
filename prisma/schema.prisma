@@ -119,6 +119,7 @@ model Taller {
   activo        Boolean       @default(true)
   diasSemana    String?
   horaInicio    String?
+  horarios      Json?         // [{ label: "16:00 a 17:20", value: "16:00-17:20" }]
   creadoEn      DateTime      @default(now())
   actualizadoEn DateTime      @updatedAt
   clases        Clase[]

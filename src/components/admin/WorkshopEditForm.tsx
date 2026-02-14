@@ -14,11 +14,19 @@ interface Taller {
     activo: boolean
     diasSemana: string | null
     horaInicio: string | null
+    horarios?: any
 }
+
+const DIAS_DISPONIBLES = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
 
 export default function WorkshopEditForm({ taller }: { taller: Taller }) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+
+    // Parse initial settings
+    const initialDays = taller.diasSemana ? taller.diasSemana.split(',').map(d => d.trim()) : []
+    const initialHorarios = Array.isArray(taller.horarios) ? taller.horarios : []
+
     const [formData, setFormData] = useState({
         nombre: taller.nombre,
         descripcion: taller.descripcion || '',
@@ -26,9 +34,37 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
         cupoMaximo: taller.cupoMaximo,
         duracion: taller.duracion,
         activo: taller.activo,
-        diasSemana: taller.diasSemana || '',
-        horaInicio: taller.horaInicio || '',
+        diasSemana: initialDays,
+        horarios: initialHorarios,
     })
+
+    const [newHorarioLabel, setNewHorarioLabel] = useState('')
+    const [newHorarioValue, setNewHorarioValue] = useState('')
+
+    const toggleDia = (dia: string) => {
+        const currentDays = [...formData.diasSemana]
+        if (currentDays.includes(dia)) {
+            setFormData({ ...formData, diasSemana: currentDays.filter(d => d !== dia) })
+        } else {
+            setFormData({ ...formData, diasSemana: [...currentDays, dia] })
+        }
+    }
+
+    const addHorario = () => {
+        if (!newHorarioLabel || !newHorarioValue) return
+        setFormData({
+            ...formData,
+            horarios: [...formData.horarios, { label: newHorarioLabel, value: newHorarioValue }]
+        })
+        setNewHorarioLabel('')
+        setNewHorarioValue('')
+    }
+
+    const removeHorario = (index: number) => {
+        const newHorarios = [...formData.horarios]
+        newHorarios.splice(index, 1)
+        setFormData({ ...formData, horarios: newHorarios })
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -38,7 +74,10 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
             const res = await fetch(`/api/admin/talleres/${taller.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    diasSemana: formData.diasSemana.join(','), // Back to string for DB
+                }),
             })
 
             if (res.ok) {
@@ -102,26 +141,86 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
                         />
                     </div>
 
-                    <div>
-                        <label className="label">Días de la Semana</label>
-                        <input
-                            type="text"
-                            placeholder="ej: Martes a Viernes"
-                            className="input-field"
-                            value={formData.diasSemana}
-                            onChange={(e) => setFormData({ ...formData, diasSemana: e.target.value })}
-                        />
+                    <div className="md:col-span-2">
+                        <label className="label mb-3">Días de la Semana</label>
+                        <div className="flex flex-wrap gap-2">
+                            {DIAS_DISPONIBLES.map(dia => (
+                                <button
+                                    key={dia}
+                                    type="button"
+                                    onClick={() => toggleDia(dia)}
+                                    className={`px-4 py-2 rounded-xl border-2 text-xs font-bold transition-all ${formData.diasSemana.includes(dia)
+                                        ? 'bg-lemon-500 border-lemon-500 text-white shadow-md shadow-lemon-100'
+                                        : 'bg-white border-warm-100 text-warm-600 hover:border-lemon-300'
+                                        }`}
+                                >
+                                    {dia}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="label">Hora de Inicio</label>
-                        <input
-                            type="text"
-                            placeholder="ej: 16:00"
-                            className="input-field"
-                            value={formData.horaInicio}
-                            onChange={(e) => setFormData({ ...formData, horaInicio: e.target.value })}
-                        />
+                    <div className="md:col-span-2 border-t border-canvas-100 pt-6">
+                        <label className="label mb-3">Bloques de Horarios</label>
+
+                        <div className="grid gap-3 mb-4">
+                            {formData.horarios.map((h: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-canvas-50 rounded-xl border border-canvas-100">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-warm-800">{h.label}</span>
+                                        <span className="text-[10px] uppercase text-warm-500 font-mono">{h.value}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeHorario(index)}
+                                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            ))}
+                            {formData.horarios.length === 0 && (
+                                <p className="text-sm text-warm-400 italic py-2 text-center">No hay horarios definidos.</p>
+                            )}
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border-2 border-dashed border-canvas-200">
+                            <p className="text-xs font-bold text-warm-500 uppercase tracking-wider mb-3">Agregar nuevo bloque</p>
+                            <div className="grid grid-cols-2 gap-4 items-end">
+                                <div>
+                                    <label className="text-[10px] font-bold text-warm-400 uppercase mb-1 block">Etiqueta (ej: 16:00 a 17:20)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="16:00 a 17:20"
+                                        className="input-field text-sm"
+                                        value={newHorarioLabel}
+                                        onChange={(e) => setNewHorarioLabel(e.target.value)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-bold text-warm-400 uppercase mb-1 block">Valor (ej: 16:00-17:20)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="16:00-17:20"
+                                        className="input-field text-sm font-mono"
+                                        value={newHorarioValue}
+                                        onChange={(e) => setNewHorarioValue(e.target.value)}
+                                    />
+                                </div>
+                                <div className="col-span-2 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={addHorario}
+                                        disabled={!newHorarioLabel || !newHorarioValue}
+                                        className="w-full py-2 bg-warm-800 text-white rounded-xl text-sm font-bold hover:bg-black disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        + Agregar Bloque
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 mt-4">
