@@ -1,5 +1,6 @@
 {
   "name": "limone-os",
+  "//": "Manual trigger for clean deployment - 2026-02-14",
   "version": "1.0.0",
   "private": true,
   "description": "Plataforma SaaS para Taller Limoné - Gestión de taller de arte",
