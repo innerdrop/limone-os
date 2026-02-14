@@ -11,7 +11,7 @@ export default async function AgendaPage() {
     const today = startOfDay(new Date())
     const next7Days = endOfDay(addDays(today, 7))
 
-    const [citas, tareas, talleres, tareasPendientesTotal] = await Promise.all([
+    const [citas, tareas, talleres, tareasPendientesTotal, diasNoLaborables] = await Promise.all([
         prisma.citaNivelacion.findMany({
             where: { fecha: { gte: today, lte: next7Days } },
             include: { alumno: { include: { usuario: true } } },
@@ -21,7 +21,6 @@ export default async function AgendaPage() {
             where: { fecha: { gte: today, lte: next7Days } },
             orderBy: [{ completada: 'asc' }, { prioridad: 'desc' }, { fecha: 'asc' }]
         }),
-        // Mostrar TODOS los talleres activos (no solo los que tienen inscripciones)
         prisma.taller.findMany({
             where: { activo: true },
             include: {
@@ -36,6 +35,9 @@ export default async function AgendaPage() {
         }),
         prisma.tarea.count({
             where: { completada: false }
+        }),
+        (prisma as any).diaNoLaborable.findMany({
+            where: { fecha: { gte: today, lte: next7Days } }
         })
     ])
 
@@ -51,9 +53,30 @@ export default async function AgendaPage() {
 
     // Generate workshop sessions for the next 7 days
     const tallerSessions: any[] = []
+    const nonWorkingDayItems: any[] = []
+
     for (let i = 0; i <= 7; i++) {
         const currentDate = addDays(today, i)
         const dayOfWeekStr = dayMap[getDay(currentDate)]
+
+        const nonWorkingDay = (diasNoLaborables as any[]).find(d =>
+            startOfDay(new Date(d.fecha)).getTime() === startOfDay(currentDate).getTime()
+        )
+
+        if (nonWorkingDay) {
+            nonWorkingDayItems.push({
+                id: `dnl-${nonWorkingDay.id}`,
+                tipo: 'DNL',
+                tipoLabel: '🚫 DÍA NO LABORABLE',
+                fecha: startOfDay(currentDate),
+                titulo: nonWorkingDay.motivo || 'Cerrado',
+                detalle: 'No se dictan clases hoy.',
+                color: 'bg-red-100 text-red-700 border-red-500',
+                link: '/admin/calendario',
+                completada: false
+            })
+            continue // Skip workshops for this day
+        }
 
         talleres.forEach((taller: any) => {
             if (taller.diasSemana?.toUpperCase().includes(dayOfWeekStr)) {
@@ -117,7 +140,8 @@ export default async function AgendaPage() {
                 prioridad: tarea.prioridad
             }
         }),
-        ...tallerSessions
+        ...tallerSessions,
+        ...nonWorkingDayItems
     ]
 
     // Sort by date

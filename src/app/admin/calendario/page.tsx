@@ -1,0 +1,167 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+
+interface DiaNoLaborable {
+    id: string
+    fecha: string
+    motivo: string | null
+}
+
+const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+export default function AdminCalendarioPage() {
+    const [fechaActual, setFechaActual] = useState(new Date())
+    const [diasCargados, setDiasCargados] = useState<DiaNoLaborable[]>([])
+    const [loading, setLoading] = useState(true)
+    const [motivoTemp, setMotivoTemp] = useState('')
+    const [diaSeleccionado, setDiaSeleccionado] = useState<Date | null>(null)
+    const [processing, setProcessing] = useState(false)
+
+    const fetchDias = async () => {
+        try {
+            const res = await fetch('/api/admin/calendario')
+            const data = await res.json()
+            setDiasCargados(data)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => { fetchDias() }, [])
+
+    const toggleDia = async (fecha: Date, esQuitar: boolean) => {
+        setProcessing(true)
+        try {
+            const res = await fetch('/api/admin/calendario', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fecha: fecha.toISOString(),
+                    motivo: esQuitar ? undefined : motivoTemp,
+                    esLaborable: esQuitar
+                })
+            })
+            if (res.ok) {
+                fetchDias()
+                setDiaSeleccionado(null)
+                setMotivoTemp('')
+            }
+        } finally {
+            setProcessing(false)
+        }
+    }
+
+    const primerDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), 1)
+    const ultimoDiaMes = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0)
+    const diasEnMes = ultimoDiaMes.getDate()
+    const primerDiaSemana = primerDiaMes.getDay()
+
+    const mesAnterior = () => setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() - 1, 1))
+    const mesSiguiente = () => setFechaActual(new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 1))
+
+    if (loading) return <div className="p-8 text-center text-warm-500">Cargando calendario...</div>
+
+    return (
+        <div className="space-y-6 animate-fade-in">
+            <div>
+                <h1 className="text-3xl font-bold text-warm-900">Configuración Calendario</h1>
+                <p className="text-warm-500 mt-1">Seleccioná los días no laborables. Esto notificará a los alumnos afectados.</p>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+                {/* Calendar Grid */}
+                <div className="card">
+                    <div className="flex items-center justify-between mb-8">
+                        <button onClick={mesAnterior} className="p-2 hover:bg-warm-100 rounded-lg">←</button>
+                        <h2 className="text-xl font-bold text-warm-800">{meses[fechaActual.getMonth()]} {fechaActual.getFullYear()}</h2>
+                        <button onClick={mesSiguiente} className="p-2 hover:bg-warm-100 rounded-lg">→</button>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1">
+                        {diasSemana.map(d => <div key={d} className="text-center text-xs font-bold text-warm-400 py-2">{d}</div>)}
+                        {Array.from({ length: primerDiaSemana }).map((_, i) => <div key={i} />)}
+                        {Array.from({ length: diasEnMes }).map((_, i) => {
+                            const dia = i + 1
+                            const d = new Date(fechaActual.getFullYear(), fechaActual.getMonth(), dia)
+                            const isNoLaborable = diasCargados.some(x => new Date(x.fecha).toDateString() === d.toDateString())
+
+                            return (
+                                <button
+                                    key={dia}
+                                    onClick={() => setDiaSeleccionado(d)}
+                                    className={`aspect-square p-2 rounded-xl text-sm font-bold transition-all border-2 flex items-center justify-center ${isNoLaborable
+                                            ? 'bg-red-50 border-red-200 text-red-600'
+                                            : 'bg-white border-warm-50 text-warm-700 hover:border-lemon-300'
+                                        }`}
+                                >
+                                    {dia}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                {/* Management Panel */}
+                <div className="space-y-6">
+                    {diaSeleccionado ? (
+                        <div className="card p-8 animate-slide-up bg-white">
+                            {diasCargados.some(x => new Date(x.fecha).toDateString() === diaSeleccionado.toDateString()) ? (
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-bold text-warm-800">Día No Laborable</h3>
+                                    <p className="text-warm-500">
+                                        Fecha: <span className="font-bold text-warm-900">{diaSeleccionado.toLocaleDateString()}</span>
+                                    </p>
+                                    <p className="text-sm bg-red-50 p-4 rounded-xl text-red-700 border border-red-100">
+                                        Motivo: {diasCargados.find(x => new Date(x.fecha).toDateString() === diaSeleccionado.toDateString())?.motivo || 'No especificado'}
+                                    </p>
+                                    <button
+                                        onClick={() => toggleDia(diaSeleccionado, true)}
+                                        disabled={processing}
+                                        className="w-full py-4 bg-warm-100 text-warm-700 font-bold rounded-2xl hover:bg-warm-200"
+                                    >
+                                        Marcar como Laborable
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <h3 className="text-xl font-bold text-warm-800">Marcar como No Laborable</h3>
+                                    <p className="text-warm-500">
+                                        Fecha: <span className="font-bold text-warm-900">{diaSeleccionado.toLocaleDateString()}</span>
+                                    </p>
+                                    <div>
+                                        <label className="label">Comentario / Motivo</label>
+                                        <input
+                                            type="text"
+                                            value={motivoTemp}
+                                            onChange={e => setMotivoTemp(e.target.value)}
+                                            placeholder="Ej: Feriado Nacional, Reforma..."
+                                            className="input-field"
+                                        />
+                                    </div>
+                                    <div className="p-4 bg-lemon-50 rounded-xl border border-lemon-200">
+                                        <p className="text-xs text-lemon-800 leading-relaxed">
+                                            ⚠️ Al guardar, se enviará un mail a los alumnos afectados y se les otorgará un <strong>crédito de clase extra</strong>.
+                                        </p>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleDia(diaSeleccionado, false)}
+                                        disabled={processing}
+                                        className="w-full py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200"
+                                    >
+                                        Confirmar No Laborable
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        <div className="card p-12 flex flex-col items-center justify-center text-center text-warm-400 italic">
+                            Seleccioná un día del calendario para gestionarlo.
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    )
+}

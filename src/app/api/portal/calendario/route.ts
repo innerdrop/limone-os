@@ -30,6 +30,39 @@ export async function GET(request: NextRequest) {
                         }
                     },
                     include: { alumno: true }
+                },
+                solicitudesRecuperacion: {
+                    where: {
+                        estado: 'APROBADA',
+                        esRecuperable: true,
+                        fechaRecuperacion: {
+                            gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
+                        }
+                    },
+                    include: {
+                        inscripcion: {
+                            include: { taller: true }
+                        },
+                        alumno: true
+                    }
+                },
+                creditosClaseExtra: {
+                    where: {
+                        usado: true,
+                        fechaProgramada: {
+                            gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
+                        }
+                    },
+                    include: { alumno: true }
+                }
+            } as any
+        })
+
+        const diasNoLaborables = await (prisma as any).diaNoLaborable.findMany({
+            where: {
+                fecha: {
+                    gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+                    lte: new Date(new Date().getFullYear(), new Date().getMonth() + 2, 0)
                 }
             }
         })
@@ -37,8 +70,8 @@ export async function GET(request: NextRequest) {
         const classes: any[] = []
         if (!students || students.length === 0) return NextResponse.json({ classes: [] })
 
-        const enrollments = students.flatMap(s => s.inscripciones)
-        const citas = students.flatMap(s => s.citasNivelacion || [])
+        const enrollments = students.flatMap((s: any) => s.inscripciones)
+        const citas = students.flatMap((s: any) => s.citasNivelacion || [])
 
         // 1. Regular Classes Generation
         const now = new Date()
@@ -48,7 +81,7 @@ export async function GET(request: NextRequest) {
 
         for (const ins of enrollments) {
             const isSummer = ins.fase === 'Taller de Verano'
-            const diasInscripcion = (ins.dia || '').split(',').map(d => d.trim().toUpperCase())
+            const diasInscripcion = (ins.dia || '').split(',').map((d: string) => d.trim().toUpperCase())
 
             for (const diaText of diasInscripcion) {
                 const targetDayOfWeek = DAYS_MAP[diaText]
@@ -77,15 +110,19 @@ export async function GET(request: NextRequest) {
                                 const [h, min] = startTime.split(':').map(Number)
                                 safeDate.setHours(h || 17, min || 0, 0, 0)
 
-                                classes.push({
-                                    id: `${ins.id}-summer-${diaText}-${d.getTime()}`,
-                                    taller: `☀️ Verano - ${(ins as any).alumno.nombre}`,
-                                    dia: diaText,
-                                    hora: startTime,
-                                    fecha: safeDate,
-                                    estado: 'programada',
-                                    tipo: 'verano'
-                                })
+                                const isNoLaborable = diasNoLaborables.some((dnl: any) => new Date(dnl.fecha).toDateString() === safeDate.toDateString())
+
+                                if (!isNoLaborable) {
+                                    classes.push({
+                                        id: `${ins.id}-summer-${diaText}-${d.getTime()}`,
+                                        taller: `☀️ Verano - ${(ins as any).alumno.nombre}`,
+                                        dia: diaText,
+                                        hora: startTime,
+                                        fecha: safeDate,
+                                        estado: 'programada',
+                                        tipo: 'verano'
+                                    })
+                                }
                             }
                             d.setDate(d.getDate() + 7)
                         }
@@ -103,15 +140,19 @@ export async function GET(request: NextRequest) {
                             const [h, min] = startTime.split(':').map(Number)
                             classDate.setHours(h || 16, min || 0, 0, 0)
 
-                            classes.push({
-                                id: `${ins.id}-${diaText}-${current.getTime()}`,
-                                taller: `${ins.taller.nombre} (${(ins as any).alumno.nombre})`,
-                                dia: diaText,
-                                hora: startTime,
-                                fecha: classDate,
-                                estado: 'programada',
-                                tipo: 'clase'
-                            })
+                            const isNoLaborable = diasNoLaborables.some((d: any) => new Date(d.fecha).toDateString() === classDate.toDateString())
+
+                            if (!isNoLaborable) {
+                                classes.push({
+                                    id: `${ins.id}-${diaText}-${current.getTime()}`,
+                                    taller: `${ins.taller.nombre} (${(ins as any).alumno.nombre})`,
+                                    dia: diaText,
+                                    hora: startTime,
+                                    fecha: classDate,
+                                    estado: 'programada',
+                                    tipo: 'clase'
+                                })
+                            }
                         }
                         current.setDate(current.getDate() + 1)
                     }
@@ -130,6 +171,36 @@ export async function GET(request: NextRequest) {
                 fecha: fecha,
                 estado: (cita as any).estado.toLowerCase(),
                 tipo: 'nivelacion'
+            })
+        }
+
+        // 3. Add Recovery Classes
+        const recoveries = students.flatMap((s: any) => (s as any).solicitudesRecuperacion || [])
+        for (const rec of recoveries) {
+            const fecha = new Date(rec.fechaRecuperacion)
+            classes.push({
+                id: rec.id,
+                taller: `🔄 Recupero: ${rec.inscripcion.taller.nombre} (${(rec as any).alumno.nombre || 'Alumno'})`,
+                dia: DAYS_MAP[Object.keys(DAYS_MAP)[fecha.getDay()]] || '',
+                hora: rec.horarioRecuperacion,
+                fecha: fecha,
+                estado: 'programada',
+                tipo: 'recupero'
+            })
+        }
+
+        // 4. Add Extra Classes (Credits)
+        const credits = students.flatMap((s: any) => (s as any).creditosClaseExtra || [])
+        for (const cred of credits) {
+            const fecha = new Date(cred.fechaProgramada)
+            classes.push({
+                id: cred.id,
+                taller: `🎨 Clase Extra: ${(cred as any).alumno.nombre || 'Alumno'}`,
+                dia: DAYS_MAP[Object.keys(DAYS_MAP)[fecha.getDay()]] || '',
+                hora: cred.horarioProgramado,
+                fecha: fecha,
+                estado: 'programada',
+                tipo: 'extra'
             })
         }
 

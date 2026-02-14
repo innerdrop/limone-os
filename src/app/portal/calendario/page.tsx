@@ -132,38 +132,56 @@ export default function CalendarioPage() {
                             fechaActual.getMonth() === new Date().getMonth() &&
                             fechaActual.getFullYear() === new Date().getFullYear()
 
+                        const tieneClases = clasesDelDia.length > 0
+
                         return (
                             <div
                                 key={dia}
-                                className={`aspect-square p-1 rounded-lg border transition-all overflow-hidden ${esHoy
-                                    ? 'border-lemon-400 bg-lemon-50'
-                                    : 'border-transparent hover:border-canvas-200'
+                                className={`min-h-[60px] sm:aspect-square p-1 rounded-xl border transition-all overflow-hidden flex flex-col ${esHoy
+                                    ? 'border-lemon-400 bg-lemon-50 ring-2 ring-lemon-200 ring-inset'
+                                    : tieneClases
+                                        ? 'border-warm-100 bg-white shadow-soft ring-1 ring-warm-50 sm:ring-0 active:bg-lemon-50 transition-colors'
+                                        : 'border-transparent hover:border-canvas-200'
                                     }`}
                             >
-                                <div className={`text-sm font-medium ${esHoy ? 'text-lemon-700' : 'text-warm-600'}`}>
-                                    {dia}
+                                <div className="flex items-center justify-between mb-1 px-1">
+                                    <span className={`text-xs sm:text-sm font-bold ${esHoy ? 'text-lemon-700 bg-lemon-200/50 w-6 h-6 rounded-full flex items-center justify-center' : 'text-warm-600'
+                                        }`}>
+                                        {dia}
+                                    </span>
+                                    {tieneClases && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-lemon-500 sm:hidden animate-pulse" />
+                                    )}
                                 </div>
+
                                 {clasesDelDia.length > 0 && (
-                                    <div className="mt-1 space-y-0.5">
+                                    <div className="flex-1 space-y-0.5 overflow-y-auto no-scrollbar">
                                         {clasesDelDia.slice(0, 3).map((clase: any) => (
                                             <button
                                                 key={clase.id}
                                                 onClick={() => clase.tipo !== 'nivelacion' && handleAvisarInasistencia(clase)}
                                                 disabled={clase.tipo === 'nivelacion'}
-                                                className={`w-full text-[10px] sm:text-xs px-1 py-0.5 rounded truncate text-left ${clase.tipo === 'nivelacion'
-                                                    ? 'bg-blue-100 text-blue-700 font-medium'
+                                                className={`w-full text-[9px] sm:text-[10px] px-1.5 py-1 rounded-lg truncate text-left border shadow-sm transition-all active:scale-95 ${clase.tipo === 'nivelacion'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-100 font-bold'
                                                     : clase.tipo === 'verano'
-                                                        ? 'bg-orange-100 text-orange-700 font-medium'
-                                                        : clase.estado === 'completada'
-                                                            ? 'bg-green-100 text-green-700'
-                                                            : clase.estado === 'ausente'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-lemon-100 text-lemon-700 hover:bg-lemon-200'
+                                                        ? 'bg-orange-50 text-orange-700 border-orange-100 font-bold'
+                                                        : clase.tipo === 'extra'
+                                                            ? 'bg-purple-50 text-purple-700 border-purple-100 font-bold'
+                                                            : clase.estado === 'completada'
+                                                                ? 'bg-green-50 text-green-700 border-green-100'
+                                                                : clase.estado === 'ausente'
+                                                                    ? 'bg-red-50 text-red-700 border-red-100'
+                                                                    : 'bg-lemon-50 text-lemon-800 border-lemon-200 hover:bg-lemon-100'
                                                     }`}
                                             >
-                                                {clase.hora} {clase.taller}
+                                                <span className="opacity-70 font-bold mr-1">{clase.hora}</span>
+                                                <span className="hidden sm:inline">{clase.taller}</span>
+                                                <span className="sm:hidden">{clase.tipo === 'extra' ? '✨' : (clase.tipo === 'verano' ? '☀️' : '🎨')}</span>
                                             </button>
                                         ))}
+                                        {clasesDelDia.length > 3 && (
+                                            <div className="text-[8px] text-center text-warm-400 font-bold">+{clasesDelDia.length - 3}</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -182,8 +200,12 @@ export default function CalendarioPage() {
                         <span className="text-warm-600">Asistió</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                        <div className="w-3 h-3 rounded bg-red-100 border border-red-300" />
-                        <span className="text-warm-600">Ausente</span>
+                        <div className="w-3 h-3 rounded bg-purple-100 border border-purple-300" />
+                        <span className="text-warm-600">Clase Extra</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-lemon-500" />
+                        <span className="text-warm-600">Tiene talleres</span>
                     </div>
                 </div>
             </div>
@@ -263,9 +285,27 @@ export default function CalendarioPage() {
                                 Cancelar
                             </button>
                             <button
-                                onClick={() => {
-                                    alert('¡Aviso enviado! Natalia será notificada.')
-                                    setShowModal(false)
+                                onClick={async () => {
+                                    const motivo = (document.querySelector('textarea') as HTMLTextAreaElement).value;
+                                    try {
+                                        const res = await fetch('/api/portal/inasistencia', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                classId: claseSeleccionada.id,
+                                                motivo,
+                                                fechaClase: claseSeleccionada.fecha
+                                            })
+                                        });
+                                        if (res.ok) {
+                                            alert('¡Aviso enviado! Natalia será notificada.');
+                                            setShowModal(false);
+                                        } else {
+                                            alert('Error al enviar el aviso.');
+                                        }
+                                    } catch (err) {
+                                        alert('Error de conexión.');
+                                    }
                                 }}
                                 className="flex-1 py-2.5 px-4 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors"
                             >

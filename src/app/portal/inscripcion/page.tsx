@@ -898,11 +898,17 @@ export default function EnrollmentPage() {
                                 <button onClick={() => setStep(-2)} className="text-sm text-lemon-600 hover:underline mb-2">← Volver a selección de alumno</button>
                                 <h2 className="text-2xl font-bold text-warm-800">Elegí tu camino</h2>
                                 <div className={`grid gap-6 ${opcionesInscripcion.length <= 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'}`}>
-                                    {opcionesInscripcion.length > 0 ? opcionesInscripcion.map(op => (
+                                    {opcionesInscripcion.length > 0 ? opcionesInscripcion.filter(op => {
+                                        if (op.tipo === 'regular') {
+                                            const selectedStudent = existingStudents.find(s => s.id === selectedStudentId)
+                                            return selectedStudent?.claseUnicaAprobada
+                                        }
+                                        return true
+                                    }).map(op => (
                                         <button
                                             key={op.id}
                                             onClick={() => {
-                                                if (op.tipo === 'clase_unica' || (op.redirigirUrl && op.redirigirUrl.includes('clase-unica'))) {
+                                                if (op.tipo === 'clase-unica' || (op.redirigirUrl && op.redirigirUrl.includes('clase-unica')) || op.tipo === 'clase_unica') {
                                                     setKnowsLevel(true); setIsClaseUnica(true); setIsSummer(false); setStep(2);
                                                 } else if (op.redirigirUrl) {
                                                     window.location.href = op.redirigirUrl;
@@ -925,11 +931,13 @@ export default function EnrollmentPage() {
                                         </button>
                                     )) : (
                                         <>
-                                            <button onClick={() => { setKnowsLevel(true); setIsSummer(false); setIsClaseUnica(false); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md">
-                                                <div className="w-16 h-16 rounded-2xl bg-emerald-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">🎨</div>
-                                                <h3 className="text-xl font-black text-warm-800 mb-2">Taller Regular</h3>
-                                                <p className="text-warm-500 text-sm">Curso anual completo de arte.</p>
-                                            </button>
+                                            {(existingStudents.find(s => s.id === selectedStudentId)?.claseUnicaAprobada) && (
+                                                <button onClick={() => { setKnowsLevel(true); setIsSummer(false); setIsClaseUnica(false); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-lemon-400 hover:bg-lemon-50/50 transition-all group flex flex-col items-center text-center shadow-sm hover:shadow-md">
+                                                    <div className="w-16 h-16 rounded-2xl bg-emerald-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">🎨</div>
+                                                    <h3 className="text-xl font-black text-warm-800 mb-2">Taller Regular</h3>
+                                                    <p className="text-warm-500 text-sm">Curso anual completo de arte.</p>
+                                                </button>
+                                            )}
                                             <button onClick={() => { setKnowsLevel(true); setIsSummer(true); setIsClaseUnica(false); setStep(2); }} className="p-8 rounded-3xl border-2 border-warm-200 hover:border-orange-400 hover:bg-orange-50/50 transition-all group relative overflow-hidden flex flex-col items-center text-center shadow-sm hover:shadow-md">
                                                 <div className="w-16 h-16 rounded-2xl bg-orange-100 mb-4 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform shadow-inner">☀️</div>
                                                 <h3 className="text-xl font-black text-warm-800 mb-2">Taller de Verano</h3>

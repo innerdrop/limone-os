@@ -96,6 +96,7 @@ model Alumno {
   telefonoEmergencia        String?
   nivel                     String           @default("PRINCIPIANTE")
   notas                     String?
+  claseUnicaAprobada       Boolean          @default(false)
   creadoEn                  DateTime         @default(now())
   actualizadoEn             DateTime         @updatedAt
   usuario                   Usuario          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -104,6 +105,8 @@ model Alumno {
   inscripciones             Inscripcion[]
   obras                     Obra[]
   pagos                     Pago[]
+  solicitudesRecuperacion   SolicitudRecuperacion[]
+  creditosClaseExtra        CreditoClaseExtra[]
 
   @@map("alumnos")
 }
@@ -122,8 +125,9 @@ model Taller {
   horarios      Json?         // [{ label: "16:00 a 17:20", value: "16:00-17:20" }]
   creadoEn      DateTime      @default(now())
   actualizadoEn DateTime      @updatedAt
-  clases        Clase[]
-  inscripciones Inscripcion[]
+  clases              Clase[]
+  inscripciones       Inscripcion[]
+  creditosClaseExtra  CreditoClaseExtra[]
 
   @@map("talleres")
 }
@@ -177,6 +181,7 @@ model Inscripcion {
   taller           Taller   @relation(fields: [tallerId], references: [id], onDelete: Cascade)
   alumno           Alumno   @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
   pagos            Pago[]
+  solicitudesRecuperacion   SolicitudRecuperacion[]
 
   @@map("inscripciones")
 }
@@ -403,4 +408,53 @@ model OpcionInscripcion {
   actualizadoEn DateTime @updatedAt
 
   @@map("opciones_inscripcion")
+}
+
+model SolicitudRecuperacion {
+  id                  String   @id @default(cuid())
+  alumnoId            String
+  inscripcionId       String
+  fechaClaseOriginal  DateTime
+  motivo              String?
+  estado              String   @default("PENDIENTE") // PENDIENTE, APROBADA, RECHAZADA
+  
+  // Si es aprobada:
+  esRecuperable      Boolean  @default(false)
+  fechaRecuperacion   DateTime?
+  horarioRecuperacion String? // El bloque horario
+  
+  creadoEn            DateTime @default(now())
+  actualizadoEn       DateTime @updatedAt
+  
+  alumno              Alumno      @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  inscripcion         Inscripcion @relation(fields: [inscripcionId], references: [id], onDelete: Cascade)
+
+  @@map("solicitudes_recuperacion")
+}
+
+model DiaNoLaborable {
+  id          String   @id @default(cuid())
+  fecha       DateTime @unique
+  motivo      String?
+  creadoEn    DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  @@map("dias_no_laborables")
+}
+
+model CreditoClaseExtra {
+  id                String    @id @default(cuid())
+  alumnoId          String
+  tallerId          String?   // Taller afectado
+  motivo            String?   // E.g. "Día no laborable: Feriado"
+  usado             Boolean   @default(false)
+  fechaProgramada   DateTime?
+  horarioProgramado String?
+  creadoEn          DateTime  @default(now())
+  actualizadoEn     DateTime  @updatedAt
+
+  alumno            Alumno    @relation(fields: [alumnoId], references: [id], onDelete: Cascade)
+  taller            Taller?   @relation(fields: [tallerId], references: [id], onDelete: SetNull)
+
+  @@map("creditos_clase_extra")
 }

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import PlacementCard from '@/components/portal/PlacementCard'
 import PendingPaymentCard from '@/components/portal/PendingPaymentCard'
-import { startOfMonth, subDays } from 'date-fns'
+import { startOfMonth, subDays, addDays } from 'date-fns'
 
 const DAYS_MAP: Record<string, number> = {
     'DOMINGO': 0, 'LUNES': 1, 'MARTES': 2, 'MIERCOLES': 3, 'JUEVES': 4, 'VIERNES': 5, 'SABADO': 6
@@ -20,7 +20,7 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
     const now = new Date()
     const last30Days = subDays(now, 30)
 
-    const [students, notificaciones] = await Promise.all([
+    const [students, notificaciones, diasNoLaborables, extraCredits] = await Promise.all([
         prisma.alumno.findMany({
             where: {
                 usuarioId: session.user.id,
@@ -51,6 +51,22 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
             where: { usuarioId: session.user.id, leida: false },
             orderBy: { fechaEnvio: 'desc' },
             take: 5
+        }),
+        (prisma as any).diaNoLaborable.findMany({
+            where: {
+                fecha: {
+                    gte: subDays(new Date(), 1),
+                    lte: addDays(new Date(), 30)
+                }
+            }
+        }),
+        (prisma as any).creditoClaseExtra.findMany({
+            where: {
+                alumno: { usuarioId: session.user.id },
+                usado: true,
+                fechaProgramada: { gte: new Date() }
+            },
+            include: { alumno: true }
         })
     ])
 
@@ -79,6 +95,11 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
 
     const totalObras = students.reduce((acc: number, s: any) => acc + (s.obras?.length || 0), 0)
     const totalTalleres = enrollments.length
+
+    // Check for available extra class credits
+    const availableCredits = await (prisma as any).creditoClaseExtra.count({
+        where: { alumno: { usuarioId: session.user.id }, usado: false }
+    })
 
     // Calculate Upcoming Classes (Top 5 candidates to mix with placements)
     let upcomingClasses: any[] = []
@@ -112,16 +133,22 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                             const sessionDate = new Date(d)
                             sessionDate.setHours(17, 0, 0, 0)
 
-                            upcomingClasses.push({
-                                type: 'class',
-                                id: `${ins.id}-${d.getTime()}`,
-                                taller: 'Taller de Verano',
-                                studentName: ins.studentName || 'Alumno',
-                                dia: 'Verano',
-                                horario: '17:00',
-                                date: sessionDate
-                            })
-                            found++
+                            const isNoLaborable = (diasNoLaborables as any[]).some(dnl =>
+                                new Date(dnl.fecha).toDateString() === sessionDate.toDateString()
+                            )
+
+                            if (!isNoLaborable) {
+                                upcomingClasses.push({
+                                    type: 'class',
+                                    id: `${ins.id}-${d.getTime()}`,
+                                    taller: 'Taller de Verano',
+                                    studentName: ins.studentName || 'Alumno',
+                                    dia: 'Verano',
+                                    horario: '17:00',
+                                    date: sessionDate
+                                })
+                                found++
+                            }
                         }
                         d.setDate(d.getDate() + 1)
                         checks++
@@ -150,15 +177,22 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
                                 const [h, m] = startTime.split(':').map(Number)
                                 classDate.setHours(h, m, 0, 0)
                             }
-                            upcomingClasses.push({
-                                type: 'class',
-                                id: `${ins.id}-${diaText}-${i}`,
-                                taller: ins.taller.nombre,
-                                studentName: ins.studentName || 'Alumno',
-                                dia: diaText,
-                                horario: ins.horario || '',
-                                date: classDate
-                            })
+
+                            const isNoLaborable = (diasNoLaborables as any[]).some(dnl =>
+                                new Date(dnl.fecha).toDateString() === classDate.toDateString()
+                            )
+
+                            if (!isNoLaborable) {
+                                upcomingClasses.push({
+                                    type: 'class',
+                                    id: `${ins.id}-${diaText}-${i}`,
+                                    taller: ins.taller.nombre,
+                                    studentName: ins.studentName || 'Alumno',
+                                    dia: diaText,
+                                    horario: ins.horario || '',
+                                    date: classDate
+                                })
+                            }
                         }
                     }
                 }
@@ -174,7 +208,16 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
             date: p.fecha,
             studentName: (p as any).studentName
         })),
-        ...upcomingClasses
+        ...upcomingClasses,
+        ...(extraCredits as any[]).map(c => ({
+            type: 'class',
+            id: c.id,
+            taller: '🎨 Clase Extra',
+            studentName: c.alumno.nombre,
+            dia: 'Extra',
+            horario: c.horarioProgramado,
+            date: new Date(c.fechaProgramada)
+        }))
     ].sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 2)
 
     const estadisticas = [
@@ -186,6 +229,23 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
 
     return (
         <div className="space-y-8 animate-fade-in">
+            {availableCredits > 0 && (
+                <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-xl shadow-purple-200 animate-in fade-in slide-in-from-top-4">
+                    <div className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl">🎨</div>
+                            <div>
+                                <h3 className="text-xl font-bold">¡Tenés {availableCredits} {availableCredits === 1 ? 'clase extra disponible' : 'clases extra disponibles'}!</h3>
+                                <p className="text-purple-100 text-sm">Natalí marcó días no laborables y tenés créditos para recuperar tus clases.</p>
+                            </div>
+                        </div>
+                        <Link href="/portal/clases-extra" className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl hover:bg-purple-50 transition-colors whitespace-nowrap">
+                            Agendar Ahora
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {resolvedSearchParams.inscripcion === 'exitosa' && (
                 <div className="p-4 rounded-xl bg-green-50 border border-green-200 flex items-center gap-3 text-green-700 animate-in fade-in slide-in-from-top-4">
                     <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-xl">✨</div>
