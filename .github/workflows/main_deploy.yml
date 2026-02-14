@@ -43,7 +43,9 @@ jobs:
             exit 1
           fi
           mkdir -p ~/.ssh
+          # Escribir la clave asegurando que termine con una línea nueva
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          echo "" >> ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
 
