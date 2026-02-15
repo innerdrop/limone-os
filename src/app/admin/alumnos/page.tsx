@@ -30,11 +30,9 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
     const selectedDate = filterFecha ? new Date(filterFecha + 'T00:00:00') : null
     const dayName = selectedDate ? DAYS_ES[selectedDate.getDay()] : null
 
-    // Fetch alumnos with relations
+    // Fetch alumnos with relations (Removed perfilCompleto filter to show all)
     const alumnosRaw = await prisma.alumno.findMany({
-        where: {
-            perfilCompleto: true
-        },
+        where: {},
         include: {
             usuario: true,
             inscripciones: {
@@ -67,29 +65,36 @@ export default async function AlumnosPage(props: { searchParams: Promise<SearchP
 
         if (selectedDate && dayName) {
             // 1. Regular class?
-            const regClass = al.inscripciones.find((ins: any) =>
-                (ins.dia || '').toUpperCase().includes(dayName)
-            )
+            const regClass = (al.inscripciones || []).find((ins: any) => {
+                const workshopDays = ins.taller?.diasSemana?.toUpperCase() || ''
+                const inscriptionDays = (ins.dia || '').toUpperCase()
+
+                if (inscriptionDays && inscriptionDays !== '') {
+                    return inscriptionDays.includes(dayName)
+                }
+                return workshopDays.includes(dayName)
+            })
+
             if (regClass) {
                 // Determine hour if multiple are present (separated by /)
-                const dias = (regClass.dia || '').split(',').map((d: string) => d.trim().toUpperCase())
+                const dias = (regClass.dia || regClass.taller?.diasSemana || '').split(',').map((d: string) => d.trim().toUpperCase())
                 const index = dias.indexOf(dayName)
                 const horario = regClass.horario?.includes('/') ?
                     (regClass.horario.split('/')[index] || regClass.horario.split('/')[0]).trim() :
                     regClass.horario
-                actividadHoy = { tipo: 'Clase Regular', horario }
+                actividadHoy = { tipo: regClass.taller?.nombre || 'Clase Regular', horario: horario || 'S/H' }
             }
 
             // 2. Extra credit?
-            const extra = al.creditosClaseExtra.find((c: any) => c.fechaProgramada && isSameDay(new Date(c.fechaProgramada), selectedDate))
+            const extra = (al.creditosClaseExtra || []).find((c: any) => c.fechaProgramada && isSameDay(new Date(c.fechaProgramada), selectedDate))
             if (extra) actividadHoy = { tipo: '📌 Clase Extra', horario: extra.horarioProgramado }
 
             // 3. Recovery?
-            const rec = al.solicitudesRecuperacion.find((r: any) => r.fechaRecuperacion && isSameDay(new Date(r.fechaRecuperacion), selectedDate))
+            const rec = (al.solicitudesRecuperacion || []).find((r: any) => r.fechaRecuperacion && isSameDay(new Date(r.fechaRecuperacion), selectedDate))
             if (rec) actividadHoy = { tipo: '🔄 Recupero', horario: rec.horarioRecuperacion }
 
             // 4. Nivelacion?
-            const niv = al.citasNivelacion.find((c: any) => isSameDay(new Date(c.fecha), selectedDate))
+            const niv = (al.citasNivelacion || []).find((c: any) => isSameDay(new Date(c.fecha), selectedDate))
             if (niv) actividadHoy = { tipo: '🗣️ Nivelación', horario: new Date(niv.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) }
         }
 
