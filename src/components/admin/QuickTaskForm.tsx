@@ -12,7 +12,7 @@ const categorias = [
     { value: 'OTRO', label: '📋 Otro' },
 ]
 
-export default function QuickTaskForm() {
+export default function QuickTaskForm({ onSuccess }: { onSuccess?: () => void }) {
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [loading, setLoading] = useState(false)
@@ -45,6 +45,7 @@ export default function QuickTaskForm() {
                     categoria: ''
                 })
                 router.refresh()
+                if (onSuccess) onSuccess()
             }
         } catch (error) {
             console.error(error)
