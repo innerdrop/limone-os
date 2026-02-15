@@ -32,7 +32,6 @@ function baseTemplate(content: string): string {
                         <tr>
                             <td style="background: linear-gradient(135deg, ${colors.yellow} 0%, ${colors.green} 100%); padding: 30px; text-align: center;">
                                 <img src="https://limone.usev.app/logo.png" alt="Taller Limoné" width="180" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
-                                <p style="margin: 12px 0 0 0; color: ${colors.charcoal}; font-size: 14px; font-weight: 500; opacity: 0.9;">Arte en el fin del mundo</p>
                             </td>
                         </tr>
                         <!-- Content -->
@@ -354,6 +353,46 @@ export function contactFormEmailToUser(data: { nombre: string }): string {
         ${button('WhatsApp', 'https://wa.me/5492901588969', colors.green)}
         <p style="color: #888; font-size: 14px; margin: 24px 0 0 0;">
             ¡Gracias por tu interés en Taller Limoné!
+        </p>
+    `)
+}
+
+export function genericEmail(data: { titulo: string, mensaje: string, botonTexto?: string, botonUrl?: string }): string {
+    return baseTemplate(`
+        <h2 style="color: ${colors.charcoal}; margin: 0 0 16px 0;">${data.titulo}</h2>
+        <div style="color: #666; line-height: 1.6; margin: 0 0 24px 0; white-space: pre-wrap;">
+            ${data.mensaje}
+        </div>
+        ${data.botonTexto && data.botonUrl ? button(data.botonTexto, data.botonUrl) : ''}
+    `)
+}
+
+export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo: string, tieneCredito: boolean }): string {
+    return baseTemplate(`
+        <h2 style="color: ${colors.purple}; margin: 0 0 16px 0;">Aviso de Clase Cancelada 🎨</h2>
+        <p style="color: #666; line-height: 1.6; margin: 0 0 16px 0;">
+            Hola <strong>${data.nombre}</strong>,
+        </p>
+        <p style="color: #666; line-height: 1.6; margin: 0 0 16px 0;">
+            Te informamos que el día <strong>${data.fecha}</strong> no se dictarán clases en el taller por el siguiente motivo:
+        </p>
+        ${infoBox(`
+            <p style="margin: 0; color: ${colors.charcoal}; font-weight: bold; text-align: center;">
+                ${data.motivo}
+            </p>
+        `, '#F4ECF7')}
+        ${data.tieneCredito ? `
+        <p style="color: #666; line-height: 1.6; margin: 16px 0;">
+            Se ha acreditado una <strong>clase extra</strong> en tu cuenta para que puedas recuperarla en cualquier otro horario disponible del mes.
+        </p>
+        ${button('Ver mi Calendario', 'https://limone.usev.app/portal/calendario', colors.yellow)}
+        ` : `
+        <p style="color: #666; line-height: 1.6; margin: 16px 0;">
+            Ante cualquier consulta, no dudes en contactarnos.
+        </p>
+        `}
+        <p style="color: #888; font-size: 14px; margin: 24px 0 0 0;">
+            ¡Nos vemos pronto en el taller! 🖌️
         </p>
     `)
 }

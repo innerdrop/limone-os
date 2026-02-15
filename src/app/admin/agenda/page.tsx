@@ -1,179 +1,65 @@
-import Link from 'next/link'
-import prisma from '@/lib/prisma'
-import { startOfDay, endOfDay, addDays, format, getDay, isToday } from 'date-fns'
+'use client'
+
+import { useState, useEffect } from 'react'
+import { startOfDay, addDays, format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
+import Link from 'next/link'
 import QuickTaskForm from '@/components/admin/QuickTaskForm'
-import TaskActions from '@/components/admin/TaskActions'
 
-export const dynamic = 'force-dynamic'
+export default function AgendaPage() {
+    const [loading, setLoading] = useState(true)
+    const [agendaData, setAgendaData] = useState<any>(null)
+    const [selectedItem, setSelectedItem] = useState<any>(null)
 
-export default async function AgendaPage() {
-    const today = startOfDay(new Date())
-    const next7Days = endOfDay(addDays(today, 7))
-
-    const [citas, tareas, talleres, tareasPendientesTotal, diasNoLaborables] = await Promise.all([
-        prisma.citaNivelacion.findMany({
-            where: { fecha: { gte: today, lte: next7Days } },
-            include: { alumno: { include: { usuario: true } } },
-            orderBy: { fecha: 'asc' }
-        }),
-        prisma.tarea.findMany({
-            where: { fecha: { gte: today, lte: next7Days } },
-            orderBy: [{ completada: 'asc' }, { prioridad: 'desc' }, { fecha: 'asc' }]
-        }),
-        prisma.taller.findMany({
-            where: { activo: true },
-            include: {
-                _count: {
-                    select: {
-                        inscripciones: {
-                            where: { estado: 'ACTIVA' }
-                        }
-                    }
-                }
+    const fetchAgenda = async () => {
+        try {
+            const res = await fetch('/api/admin/agenda-v2')
+            if (res.ok) {
+                const data = await res.json()
+                setAgendaData(data)
             }
-        }),
-        prisma.tarea.count({
-            where: { completada: false }
-        }),
-        (prisma as any).diaNoLaborable.findMany({
-            where: { fecha: { gte: today, lte: next7Days } }
-        })
-    ])
-
-    const dayMap: { [key: number]: string } = {
-        0: 'DOMINGO',
-        1: 'LUNES',
-        2: 'MARTES',
-        3: 'MIERCOLES',
-        4: 'JUEVES',
-        5: 'VIERNES',
-        6: 'SABADO'
-    }
-
-    // Generate workshop sessions for the next 7 days
-    const tallerSessions: any[] = []
-    const nonWorkingDayItems: any[] = []
-
-    for (let i = 0; i <= 7; i++) {
-        const currentDate = addDays(today, i)
-        const dayOfWeekStr = dayMap[getDay(currentDate)]
-
-        const nonWorkingDay = (diasNoLaborables as any[]).find(d =>
-            startOfDay(new Date(d.fecha)).getTime() === startOfDay(currentDate).getTime()
-        )
-
-        if (nonWorkingDay) {
-            nonWorkingDayItems.push({
-                id: `dnl-${nonWorkingDay.id}`,
-                tipo: 'DNL',
-                tipoLabel: '🚫 DÍA NO LABORABLE',
-                fecha: startOfDay(currentDate),
-                titulo: nonWorkingDay.motivo || 'Cerrado',
-                detalle: 'No se dictan clases hoy.',
-                color: 'bg-red-100 text-red-700 border-red-500',
-                link: '/admin/calendario',
-                completada: false
-            })
-            continue // Skip workshops for this day
+        } catch (error) {
+            console.error('Error fetching agenda:', error)
+        } finally {
+            setLoading(false)
         }
+    }
 
-        talleres.forEach((taller: any) => {
-            if (taller.diasSemana?.toUpperCase().includes(dayOfWeekStr)) {
-                const [hours, minutes] = (taller.horaInicio || '16:00').split(':')
-                const sessionDate = new Date(currentDate)
-                sessionDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+    useEffect(() => {
+        fetchAgenda()
+    }, [])
 
-                const alumnosActivos = (taller as any)._count?.inscripciones || 0
+    if (loading) return (
+        <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lemon-500"></div>
+        </div>
+    )
 
-                tallerSessions.push({
-                    id: `taller-${taller.id}-${i}`,
-                    tipo: 'TALLER',
-                    tipoLabel: taller.nombre.toLowerCase().includes('verano') ? '☀️ Taller de Verano' : '🎨 Taller Regular',
-                    fecha: sessionDate,
-                    titulo: taller.nombre,
-                    detalle: `${taller.horaInicio} hs • ${alumnosActivos} alumno${alumnosActivos !== 1 ? 's' : ''} inscripto${alumnosActivos !== 1 ? 's' : ''}`,
-                    color: taller.nombre.toLowerCase().includes('verano') ? 'bg-orange-100 text-orange-700 border-orange-300' : 'bg-leaf-100 text-leaf-700 border-leaf-300',
-                    link: `/admin/talleres`
-                })
-            }
+    // Group items by day label
+    const groupedItems: Record<string, any[]> = {}
+    if (agendaData?.agendaItems) {
+        agendaData.agendaItems.forEach((item: any) => {
+            const dayKey = format(new Date(item.fecha), "EEEE d 'de' MMMM", { locale: es })
+            if (!groupedItems[dayKey]) groupedItems[dayKey] = []
+            groupedItems[dayKey].push(item)
         })
     }
 
-
-    // All agenda items
-    const agendaItems = [
-        ...citas.map((cita: any) => ({
-            id: cita.id,
-            tipo: 'CITA',
-            tipoLabel: 'Prueba de Nivelación',
-            fecha: cita.fecha,
-            titulo: cita.alumno.usuario.nombre,
-            detalle: cita.notas || 'Cita de nivelación programada',
-            color: 'bg-lemon-100 text-lemon-700 border-lemon-300',
-            link: `/admin/alumnos/${cita.alumnoId}`,
-            completada: false
-        })),
-        ...tareas.map((tarea: any) => {
-            const fechaConHora = new Date(tarea.fecha)
-            if (tarea.hora) {
-                const [hours, minutes] = tarea.hora.split(':')
-                fechaConHora.setHours(parseInt(hours), parseInt(minutes), 0, 0)
-            }
-            return {
-                id: tarea.id,
-                tipo: 'TAREA',
-                tipoLabel: tarea.categoria ? getCategoriaLabel(tarea.categoria) : 'Tarea',
-                fecha: fechaConHora,
-                hora: tarea.hora,
-                titulo: tarea.titulo,
-                detalle: tarea.descripcion || '',
-                color: tarea.completada
-                    ? 'bg-gray-100 text-gray-500 border-gray-300'
-                    : tarea.prioridad === 'ALTA'
-                        ? 'bg-red-100 text-red-700 border-red-300'
-                        : tarea.prioridad === 'BAJA'
-                            ? 'bg-green-100 text-green-700 border-green-300'
-                            : 'bg-blue-100 text-blue-700 border-blue-300',
-                link: '#',
-                completada: tarea.completada,
-                prioridad: tarea.prioridad
-            }
-        }),
-        ...tallerSessions,
-        ...nonWorkingDayItems
-    ]
-
-    // Sort by date
-    agendaItems.sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
-
-    // Group by day
-    const groupedItems: { [key: string]: typeof agendaItems } = {}
-    agendaItems.forEach(item => {
-        const dayKey = format(item.fecha, "EEEE d 'de' MMMM", { locale: es })
-        if (!groupedItems[dayKey]) groupedItems[dayKey] = []
-        groupedItems[dayKey].push(item)
-    })
-
-    // Stats for today
-    const todayItems = agendaItems.filter(item => isToday(item.fecha))
-    const todayTareas = todayItems.filter(i => i.tipo === 'TAREA' && !i.completada).length
-    const todayTalleres = todayItems.filter(i => i.tipo === 'TALLER').length
-    const todayCitas = todayItems.filter(i => i.tipo === 'CITA').length
+    const stats = agendaData?.stats || { todayTalleres: 0, todayCitas: 0 }
 
     return (
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-6 animate-fade-in mb-20 px-4 md:px-0">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-serif font-bold text-warm-800">
-                        📅 Agenda Global
+                        📅 Agenda de Clases
                     </h1>
                     <p className="text-warm-500 mt-1">
-                        Vista completa de talleres, citas y tareas
+                        Solo se muestran los talleres con alumnos inscriptos este día
                     </p>
                 </div>
-                <QuickTaskForm />
+                <QuickTaskForm onSuccess={fetchAgenda} />
             </div>
 
             {/* Today Summary */}
@@ -187,31 +73,17 @@ export default async function AgendaPage() {
                     </div>
                     <div className="flex flex-wrap gap-4">
                         <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-xl">
-                            <span className="text-2xl">📝</span>
-                            <div>
-                                <p className="text-lg font-bold text-warm-800">{todayTareas}</p>
-                                <p className="text-xs text-warm-500">Tareas pendientes</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-xl">
                             <span className="text-2xl">🎨</span>
                             <div>
-                                <p className="text-lg font-bold text-warm-800">{todayTalleres}</p>
-                                <p className="text-xs text-warm-500">Talleres</p>
+                                <p className="text-lg font-bold text-warm-800">{stats.todayTalleres}</p>
+                                <p className="text-xs text-warm-500">Clases hoy</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-xl">
                             <span className="text-2xl">👤</span>
                             <div>
-                                <p className="text-lg font-bold text-warm-800">{todayCitas}</p>
-                                <p className="text-xs text-warm-500">Citas</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 bg-white/80 px-4 py-2 rounded-xl border-2 border-red-200">
-                            <span className="text-2xl">⚠️</span>
-                            <div>
-                                <p className="text-lg font-bold text-red-600">{tareasPendientesTotal}</p>
-                                <p className="text-xs text-warm-500">Total pendientes</p>
+                                <p className="text-lg font-bold text-warm-800">{stats.todayCitas}</p>
+                                <p className="text-xs text-warm-500">Citas hoy</p>
                             </div>
                         </div>
                     </div>
@@ -220,70 +92,48 @@ export default async function AgendaPage() {
 
             {/* Agenda Items */}
             <div className="space-y-8">
-                {Object.keys(groupedItems).length > 0 ? Object.entries(groupedItems).map(([day, items]) => {
-                    const dayDate = items[0]?.fecha
-                    const isTodayGroup = dayDate && isToday(dayDate)
+                {Object.keys(groupedItems).length > 0 ? Object.entries(groupedItems).map(([dayLabel, items]) => {
+                    const firstItemDate = new Date(items[0].fecha)
+                    const isTodayGroup = isToday(firstItemDate)
 
                     return (
-                        <div key={day} className="space-y-4">
-                            <h2 className={`text-lg font-bold border-b pb-2 capitalize flex items-center gap-2 ${isTodayGroup ? 'text-leaf-700 border-leaf-300' : 'text-warm-600 border-warm-200'
-                                }`}>
+                        <div key={dayLabel} className="space-y-4">
+                            <h2 className={`text-lg font-bold border-b pb-2 capitalize flex items-center gap-2 ${isTodayGroup ? 'text-leaf-700 border-leaf-300' : 'text-warm-600 border-warm-200'}`}>
                                 {isTodayGroup && <span className="bg-leaf-500 text-white text-xs px-2 py-0.5 rounded-full">HOY</span>}
-                                {day}
+                                {dayLabel}
                             </h2>
                             <div className="grid gap-3">
-                                {items.map((item) => (
+                                {items.map((item: any) => (
                                     <div
                                         key={item.id}
-                                        className={`card p-4 flex items-start gap-4 hover:shadow-soft transition-all border-l-4 ${item.completada ? 'opacity-60 bg-gray-50' : ''
-                                            } ${item.color.split(' ').find((c: string) => c.startsWith('border-')) || 'border-warm-300'}`}
+                                        className={`card p-4 flex items-start gap-4 hover:shadow-soft transition-all border-l-4 ${item.color.split(' ').find((c: string) => c.startsWith('border-')) || 'border-warm-300'}`}
                                     >
-                                        {/* Time */}
                                         <div className="flex-shrink-0 w-16 text-center">
                                             <p className="text-xl font-bold text-warm-800">
-                                                {item.hora || format(item.fecha, 'HH:mm')}
+                                                {item.horaDisplay}
                                             </p>
                                             <p className="text-xs text-warm-400 uppercase">hs</p>
                                         </div>
 
-                                        {/* Content */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex flex-wrap items-center gap-2 mb-1">
                                                 <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${item.color}`}>
                                                     {item.tipoLabel}
                                                 </span>
-                                                {item.prioridad === 'ALTA' && !item.completada && (
-                                                    <span className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">
-                                                        🔴 URGENTE
-                                                    </span>
-                                                )}
-                                                {item.completada && (
-                                                    <span className="text-[10px] bg-gray-400 text-white px-2 py-0.5 rounded-full font-bold">
-                                                        ✓ COMPLETADA
-                                                    </span>
-                                                )}
                                             </div>
-                                            <h3 className={`font-semibold ${item.completada ? 'line-through text-warm-500' : 'text-warm-800'}`}>
+                                            <h3 className="font-semibold text-warm-800">
                                                 {item.titulo}
                                             </h3>
-                                            {item.detalle && (
-                                                <p className="text-sm text-warm-500 mt-1">{item.detalle}</p>
-                                            )}
+                                            <p className="text-sm text-warm-500 mt-1">{item.detalle}</p>
                                         </div>
 
-                                        {/* Actions */}
                                         <div className="flex items-center gap-2 flex-shrink-0">
-                                            {item.tipo === 'TAREA' && (
-                                                <TaskActions taskId={item.id} isCompleted={item.completada} />
-                                            )}
-                                            {item.link !== '#' && (
-                                                <Link
-                                                    href={item.link}
-                                                    className="btn-outline text-xs px-3 py-1"
-                                                >
-                                                    Ver más
-                                                </Link>
-                                            )}
+                                            <button
+                                                onClick={() => setSelectedItem(item)}
+                                                className="btn-outline text-xs px-3 py-1"
+                                            >
+                                                Ver más
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -293,22 +143,68 @@ export default async function AgendaPage() {
                 }) : (
                     <div className="card py-12 text-center">
                         <p className="text-4xl mb-4">📭</p>
-                        <p className="text-warm-500">No hay actividades programadas para los próximos 7 días.</p>
-                        <p className="text-sm text-warm-400 mt-2">¡Usa el botón "Nueva Tarea" para agregar recordatorios!</p>
+                        <p className="text-warm-500">No hay clases programadas con alumnos para los próximos 7 días.</p>
                     </div>
                 )}
             </div>
+
+            {/* Attendance Modal */}
+            {selectedItem && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-warm-900/60 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
+                    <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+                        <div className={`p-6 text-white ${selectedItem.color.includes('orange') ? 'bg-orange-500' : selectedItem.color.includes('leaf') ? 'bg-leaf-600' : 'bg-lemon-600'}`}>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <span className="text-[10px] font-bold bg-white/20 px-2 py-1 rounded-full uppercase tracking-wider">{selectedItem.tipoLabel}</span>
+                                    <h2 className="text-2xl font-bold mt-2">{selectedItem.titulo}</h2>
+                                    <p className="opacity-90 mt-1 flex items-center gap-2">
+                                        <span>📅 {format(new Date(selectedItem.fecha), "EEEE d 'de' MMMM", { locale: es })}</span>
+                                        <span>•</span>
+                                        <span>⏰ {selectedItem.horaDisplay} hs</span>
+                                    </p>
+                                </div>
+                                <button onClick={() => setSelectedItem(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-6">
+                            <h3 className="text-sm font-bold text-warm-400 uppercase tracking-widest mb-4">Alumnos Inscriptos ({selectedItem.attendees?.length || 0})</h3>
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
+                                {selectedItem.attendees?.map((al: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-canvas-50 border border-canvas-100">
+                                        <div className="w-8 h-8 rounded-full bg-lemon-200 flex items-center justify-center text-lemon-700 font-bold text-xs uppercase">
+                                            {al.nombre[0]}
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-sm font-bold text-warm-800">{al.nombre}</p>
+                                            <div className="flex gap-2">
+                                                <span className="text-[10px] text-warm-500">DNI: {al.dni || 'S/D'}</span>
+                                            </div>
+                                        </div>
+                                        <Link href={`/admin/alumnos/${al.id}`} className="text-lemon-600 hover:scale-110 transition-transform">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setSelectedItem(null)}
+                                className="w-full mt-6 py-3 bg-warm-800 text-white font-bold rounded-xl hover:bg-warm-900 transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
-}
-
-function getCategoriaLabel(categoria: string): string {
-    const labels: { [key: string]: string } = {
-        'TALLER': '🎨 Taller',
-        'ALUMNO': '👤 Alumno',
-        'COMPRAS': '🛒 Compras',
-        'CONTACTO': '📞 Contacto',
-        'OTRO': '📋 Otro'
-    }
-    return labels[categoria] || 'Tarea'
 }

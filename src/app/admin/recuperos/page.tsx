@@ -26,7 +26,6 @@ interface SolicitudRecuperacion {
 
 const DIAS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
 const HORARIOS = [
-    { label: 'Mañana (10:00 - 11:30)', value: '10:00 - 11:30' },
     { label: 'Tarde 1 (16:00 - 17:30)', value: '16:00 - 17:30' },
     { label: 'Tarde 2 (17:30 - 19:00)', value: '17:30 - 19:00' },
     { label: 'Tarde 3 (19:00 - 20:30)', value: '19:00 - 20:30' },
@@ -245,29 +244,20 @@ export default function RecuperosAdminPage() {
                                 </div>
                             )}
 
-                            <div className="flex gap-4 pt-4">
+                            <div className="pt-4">
+                                <button
+                                    onClick={() => handleUpdate(selectedSol.id, 'APROBADA')}
+                                    disabled={processing || (esRecuperable && (!fechaRec || !horarioRec))}
+                                    className="w-full py-4 bg-lemon-500 text-warm-900 font-bold rounded-2xl hover:bg-lemon-600 shadow-lg shadow-lemon-200 transition-all disabled:opacity-50"
+                                >
+                                    {processing ? '...' : 'Aplicar'}
+                                </button>
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="flex-1 py-4 text-sm font-bold text-warm-500 hover:bg-warm-50 rounded-2xl transition-colors"
+                                    className="w-full mt-2 py-2 text-sm font-bold text-warm-400 hover:text-warm-600 transition-colors"
                                 >
                                     Cerrar
                                 </button>
-                                <div className="flex flex-[2] gap-2">
-                                    <button
-                                        onClick={() => handleUpdate(selectedSol.id, 'RECHAZADA')}
-                                        disabled={processing}
-                                        className="flex-1 py-4 bg-red-100 text-red-700 font-bold rounded-2xl hover:bg-red-200 transition-colors disabled:opacity-50"
-                                    >
-                                        Rechazar
-                                    </button>
-                                    <button
-                                        onClick={() => handleUpdate(selectedSol.id, 'APROBADA')}
-                                        disabled={processing || (esRecuperable && (!fechaRec || !horarioRec))}
-                                        className="flex-1 py-4 bg-lemon-500 text-warm-900 font-bold rounded-2xl hover:bg-lemon-600 shadow-lg shadow-lemon-200 transition-all disabled:opacity-50"
-                                    >
-                                        {processing ? '...' : 'Aprobar'}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>

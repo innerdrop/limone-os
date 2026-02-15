@@ -230,16 +230,23 @@ export default async function PortalDashboard({ searchParams }: { searchParams: 
     return (
         <div className="space-y-8 animate-fade-in">
             {availableCredits > 0 && (
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-xl shadow-purple-200 animate-in fade-in slide-in-from-top-4">
-                    <div className="flex items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-3xl">🎨</div>
-                            <div>
-                                <h3 className="text-xl font-bold">¡Tenés {availableCredits} {availableCredits === 1 ? 'clase extra disponible' : 'clases extra disponibles'}!</h3>
-                                <p className="text-purple-100 text-sm">Natalí marcó días no laborables y tenés créditos para recuperar tus clases.</p>
+                <div className="p-5 md:p-6 rounded-2xl bg-gradient-to-br from-purple-500 via-indigo-600 to-indigo-700 text-white shadow-xl shadow-purple-200 animate-in fade-in slide-in-from-top-4 overflow-hidden">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl md:text-3xl flex-shrink-0">🎨</div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-lg md:text-xl font-bold leading-tight">
+                                    ¡Tenés {availableCredits} {availableCredits === 1 ? 'clase extra disponible' : 'clases extra disponibles'}!
+                                </h3>
+                                <p className="text-purple-100 text-sm mt-0.5 line-clamp-2 md:line-clamp-none">
+                                    Días no laborables marcados por administración. Tenés créditos para recuperar tus clases.
+                                </p>
                             </div>
                         </div>
-                        <Link href="/portal/clases-extra" className="px-6 py-3 bg-white text-purple-600 font-bold rounded-xl hover:bg-purple-50 transition-colors whitespace-nowrap">
+                        <Link
+                            href="/portal/clases-extra"
+                            className="w-full md:w-auto px-6 py-3 bg-white text-purple-600 font-extrabold rounded-xl hover:bg-purple-50 transition-all text-center shadow-lg hover:scale-[1.02] active:scale-95 whitespace-nowrap"
+                        >
                             Agendar Ahora
                         </Link>
                     </div>

@@ -18,6 +18,8 @@ export default function AdminCalendarioPage() {
     const [motivoTemp, setMotivoTemp] = useState('')
     const [diaSeleccionado, setDiaSeleccionado] = useState<Date | null>(null)
     const [processing, setProcessing] = useState(false)
+    const [sendEmail, setSendEmail] = useState(true)
+    const [addCredit, setAddCredit] = useState(true)
 
     const fetchDias = async () => {
         try {
@@ -40,14 +42,26 @@ export default function AdminCalendarioPage() {
                 body: JSON.stringify({
                     fecha: fecha.toISOString(),
                     motivo: esQuitar ? undefined : motivoTemp,
-                    esLaborable: esQuitar
+                    esLaborable: esQuitar,
+                    sendEmail: esQuitar ? false : sendEmail,
+                    addCredit: esQuitar ? false : addCredit
                 })
             })
             if (res.ok) {
-                fetchDias()
+                const data = await res.json()
+                if (!esQuitar) {
+                    alert(`✅ Día no laborable guardado.\n\nAlumnos afectados: ${data.affectedCount || 0}\nCorreos enviados: ${data.emailsSent || 0}\nCréditos otorgados: ${data.creditsCreated || 0}`)
+                }
+                await fetchDias()
                 setDiaSeleccionado(null)
                 setMotivoTemp('')
+            } else {
+                const data = await res.json()
+                alert(data.error || 'Error al actualizar el calendario')
             }
+        } catch (error) {
+            console.error(error)
+            alert('Error de conexión al actualizar el calendario')
         } finally {
             setProcessing(false)
         }
@@ -92,8 +106,8 @@ export default function AdminCalendarioPage() {
                                     key={dia}
                                     onClick={() => setDiaSeleccionado(d)}
                                     className={`aspect-square p-2 rounded-xl text-sm font-bold transition-all border-2 flex items-center justify-center ${isNoLaborable
-                                            ? 'bg-red-50 border-red-200 text-red-600'
-                                            : 'bg-white border-warm-50 text-warm-700 hover:border-lemon-300'
+                                        ? 'bg-red-50 border-red-200 text-red-600'
+                                        : 'bg-white border-warm-50 text-warm-700 hover:border-lemon-300'
                                         }`}
                                 >
                                     {dia}
@@ -140,10 +154,26 @@ export default function AdminCalendarioPage() {
                                             className="input-field"
                                         />
                                     </div>
-                                    <div className="p-4 bg-lemon-50 rounded-xl border border-lemon-200">
-                                        <p className="text-xs text-lemon-800 leading-relaxed">
-                                            ⚠️ Al guardar, se enviará un mail a los alumnos afectados y se les otorgará un <strong>crédito de clase extra</strong>.
-                                        </p>
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-warm-100 bg-canvas-50 cursor-pointer hover:bg-canvas-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={sendEmail}
+                                                onChange={(e) => setSendEmail(e.target.checked)}
+                                                className="w-5 h-5 accent-lemon-500"
+                                            />
+                                            <span className="text-sm font-medium text-warm-700">Enviar aviso por mail a alumnos</span>
+                                        </label>
+
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-warm-100 bg-canvas-50 cursor-pointer hover:bg-canvas-100 transition-colors">
+                                            <input
+                                                type="checkbox"
+                                                checked={addCredit}
+                                                onChange={(e) => setAddCredit(e.target.checked)}
+                                                className="w-5 h-5 accent-lemon-500"
+                                            />
+                                            <span className="text-sm font-medium text-warm-700">Agregar crédito de clase extra a alumnos</span>
+                                        </label>
                                     </div>
                                     <button
                                         onClick={() => toggleDia(diaSeleccionado, false)}

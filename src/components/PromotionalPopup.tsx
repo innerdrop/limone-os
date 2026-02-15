@@ -6,17 +6,34 @@ import Link from 'next/link'
 
 export default function PromotionalPopup() {
     const [isOpen, setIsOpen] = useState(false)
+    const [config, setConfig] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Check if popup has been seen in this session
-        const hasSeenPopup = sessionStorage.getItem('promo_seen')
-        if (!hasSeenPopup) {
-            // Small delay to ensure smooth entrance
-            const timer = setTimeout(() => {
-                setIsOpen(true)
-            }, 1000)
-            return () => clearTimeout(timer)
+        const fetchConfig = async () => {
+            try {
+                const res = await fetch('/api/admin/popup')
+                if (res.ok) {
+                    const data = await res.json()
+                    setConfig(data)
+
+                    // Logic to show if active and not seen
+                    const hasSeenPopup = sessionStorage.getItem('promo_seen')
+                    if (data.active && !hasSeenPopup) {
+                        const timer = setTimeout(() => {
+                            setIsOpen(true)
+                        }, 1000)
+                        return () => clearTimeout(timer)
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading popup config:', error)
+            } finally {
+                setLoading(false)
+            }
         }
+
+        fetchConfig()
     }, [])
 
     const closePopup = () => {
@@ -24,7 +41,7 @@ export default function PromotionalPopup() {
         sessionStorage.setItem('promo_seen', 'true')
     }
 
-    if (!isOpen) return null
+    if (!isOpen || !config) return null
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-fade-in">
@@ -49,28 +66,27 @@ export default function PromotionalPopup() {
                 </button>
 
                 <div className="p-8 pb-6 flex flex-col items-center text-center">
-                    <span className="badge badge-lemon mb-4">Temporada 2026</span>
+                    <span className="badge badge-lemon mb-4">{config.badge}</span>
 
                     <h2 className="text-3xl font-bold text-warm-800 mb-3 leading-tight">
-                        Taller de <br />
-                        <span className="text-gradient">Verano</span>
+                        {config.title} <br />
+                        <span className="text-gradient">{config.subtitle}</span>
                     </h2>
 
                     <p className="text-warm-600 text-sm leading-relaxed mb-8 max-w-[240px]">
-                        Dibujo, pintura y creatividad.
-                        Para niñas y niños de 5 a 12 años en Ushuaia.
+                        {config.text}
                     </p>
 
                     <Link
-                        href="/taller-verano"
+                        href={config.btnLink || '/'}
                         onClick={closePopup}
                         className="btn-primary w-full py-4 text-base shadow-lg hover:shadow-glow-lemon"
                     >
-                        ¡Reservar mi lugar!
+                        {config.btnText}
                     </Link>
 
                     <p className="text-[10px] text-warm-400 mt-4 uppercase tracking-widest font-medium">
-                        Cupos limitados • Edición Especial
+                        {config.footer}
                     </p>
                 </div>
             </div>

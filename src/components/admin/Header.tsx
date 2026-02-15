@@ -100,7 +100,7 @@ function NotificationsDropdown() {
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-canvas-200 overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
+                    <div className="absolute right-0 max-sm:fixed max-sm:left-4 max-sm:right-4 max-sm:top-16 max-sm:w-auto mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-canvas-200 overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
                         <div className="p-4 border-b border-canvas-100 bg-canvas-50 flex justify-between items-center">
                             <h3 className="font-bold text-warm-800">Notificaciones</h3>
                             {notificaciones.length > 0 && (

@@ -172,7 +172,7 @@ export default function PortalHeader({ user }: { user: User }) {
 
                         {/* Notifications Dropdown */}
                         {showNotifications && (
-                            <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-canvas-200 overflow-hidden z-50 animate-slide-up origin-top-right">
+                            <div className="absolute right-0 max-md:fixed max-md:left-4 max-md:right-4 max-md:top-16 max-md:w-auto mt-2 w-80 md:w-96 bg-white rounded-xl shadow-xl border border-canvas-200 overflow-hidden z-50 animate-slide-up origin-top-right">
                                 <div className="p-4 border-b border-canvas-100 flex items-center justify-between bg-canvas-50">
                                     <h3 className="font-semibold text-warm-800">Notificaciones</h3>
                                     {unreadCount > 0 && (
