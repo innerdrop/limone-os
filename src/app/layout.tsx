@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
+import AnalyticsTracker from '@/components/AnalyticsTracker'
 
 export const metadata: Metadata = {
     title: {
@@ -25,11 +26,46 @@ export const metadata: Metadata = {
     },
 }
 
-export default function RootLayout({
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
+import { unstable_noStore as noStore } from 'next/cache'
+
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    noStore()
+    const headersList = await headers()
+    const pathname = headersList.get('x-pathname') || '/'
+
+    // Check maintenance mode
+    const config = await prisma.configuracion.findUnique({
+        where: { clave: 'mantenimiento_activado' }
+    })
+    const isMaintenance = config?.valor === 'true'
+
+    // Exclude paths
+    const isExcluded =
+        pathname === '/mantenimiento' ||
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/api') ||
+        pathname.startsWith('/login') ||
+        pathname.startsWith('/_next') ||
+        pathname.includes('favicon.ico')
+
+    if (isMaintenance && !isExcluded) {
+        // Check if user is admin - they can bypass maintenance
+        const session = await getServerSession(authOptions)
+        if (!session || session.user?.role !== 'ADMIN') {
+            redirect('/mantenimiento')
+        }
+    }
+
     return (
         <html lang="es" className="scroll-smooth">
             <head>
@@ -39,6 +75,7 @@ export default function RootLayout({
             </head>
             <body className="min-h-screen bg-canvas-100 text-warm-800 antialiased">
                 <Providers>
+                    <AnalyticsTracker />
                     {children}
                 </Providers>
             </body>

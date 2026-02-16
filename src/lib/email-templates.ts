@@ -30,8 +30,8 @@ function baseTemplate(content: string): string {
                     <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: ${colors.white}; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                         <!-- Header -->
                         <tr>
-                            <td style="background: linear-gradient(135deg, ${colors.yellow} 0%, ${colors.green} 100%); padding: 30px; text-align: center;">
-                                <img src="https://tallerlimone.com/logo.png" alt="Taller Limoné" width="180" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+                            <td style="background: linear-gradient(135deg, ${colors.yellow} 0%, ${colors.green} 100%); padding: 20px; text-align: center;">
+                                <img src="https://tallerlimone.com/logo.png" alt="Taller Limoné" width="90" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
                             </td>
                         </tr>
                         <!-- Content -->

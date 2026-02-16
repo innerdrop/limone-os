@@ -458,3 +458,15 @@ model CreditoClaseExtra {
 
   @@map("creditos_clase_extra")
 }
+
+model Visita {
+  id        String   @id @default(cuid())
+  fecha     DateTime @default(now())
+  referente String?  // "direct", "google", "facebook", "instagram", "other"
+  path      String?
+  userAgent String?
+  ipSession String?  // Hash or simple ID to group visits
+
+  @@index([fecha])
+  @@map("visitas")
+}

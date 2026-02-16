@@ -390,11 +390,19 @@ function Footer() {
     )
 }
 
+import { prisma } from '@/lib/prisma'
+
 // ==================== MAIN PAGE ====================
-export default function HomePage() {
+export default async function HomePage() {
+    // Check maintenance mode to pass to Header
+    const config = await prisma.configuracion.findUnique({
+        where: { clave: 'mantenimiento_activado' }
+    })
+    const isMaintenance = config?.valor === 'true'
+
     return (
         <>
-            <Header />
+            <Header isMaintenance={isMaintenance} />
             <PromotionalPopup />
             <main className="pt-16 md:pt-20">
                 <MainHero />

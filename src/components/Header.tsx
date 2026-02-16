@@ -3,9 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSession } from 'next-auth/react'
 
-export default function Header() {
+export default function Header({ isMaintenance = false }: { isMaintenance?: boolean }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
+    const { data: session, status } = useSession()
+
+    const isLoggedIn = status === 'authenticated'
+    const dashboardUrl = session?.user?.role === 'ADMIN' ? '/admin' : '/portal'
 
     return (
         <>
@@ -53,12 +58,31 @@ export default function Header() {
 
                         {/* Desktop CTA Buttons */}
                         <div className="hidden md:flex items-center gap-3">
-                            <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 border border-lemon-600 rounded-xl text-sm font-medium text-lemon-700 hover:bg-lemon-50 transition-colors mr-2">
-                                Iniciar sesión
-                            </Link>
-                            <Link href="/inscripcion" className="inline-flex btn-primary py-2.5 px-5 text-sm">
-                                Registrarme
-                            </Link>
+                            {isLoggedIn ? (
+                                <Link
+                                    href={dashboardUrl}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-canvas-50 border-2 border-lemon-400 rounded-xl text-sm font-bold text-warm-800 hover:bg-lemon-50 transition-all shadow-sm"
+                                >
+                                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    {session.user?.name || 'Mi Cuenta'}
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="inline-flex items-center justify-center px-4 py-2 border border-lemon-600 rounded-xl text-sm font-medium text-lemon-700 hover:bg-lemon-50 transition-colors mr-2">
+                                        Iniciar sesión
+                                    </Link>
+                                    {!isMaintenance && (
+                                        <Link href="/inscripcion" className="inline-flex btn-primary py-2.5 px-5 text-sm">
+                                            Registrarme
+                                        </Link>
+                                    )}
+                                    {isMaintenance && (
+                                        <div className="px-4 py-2 bg-amber-100 text-amber-700 rounded-xl text-xs font-bold border border-amber-200">
+                                            MODO MANTENIMIENTO
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
 
                         {/* Mobile Menu Button */}
@@ -134,20 +158,35 @@ export default function Header() {
                         <div className="h-px bg-gradient-to-r from-transparent via-warm-200 to-transparent my-2 shrink-0" />
 
                         <div className="flex flex-col gap-3 shrink-0">
-                            <Link
-                                href="/login"
-                                className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-lemon-400 rounded-xl text-lg font-bold text-lemon-700 hover:bg-lemon-50 transition-colors"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Iniciar sesión
-                            </Link>
-                            <Link
-                                href="/inscripcion"
-                                className="w-full btn-primary py-3 px-5 text-lg shadow-lg hover:shadow-lemon-400/30"
-                                onClick={() => setIsMenuOpen(false)}
-                            >
-                                Registrarme
-                            </Link>
+                            {isLoggedIn ? (
+                                <Link
+                                    href={dashboardUrl}
+                                    className="w-full inline-flex items-center justify-center gap-3 px-4 py-4 bg-lemon-50 border-2 border-lemon-400 rounded-2xl text-xl font-bold text-warm-900"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                                    {session.user?.name || 'Mi Panel'}
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link
+                                        href="/login"
+                                        className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-lemon-400 rounded-xl text-lg font-bold text-lemon-700 hover:bg-lemon-50 transition-colors"
+                                        onClick={() => setIsMenuOpen(false)}
+                                    >
+                                        Iniciar sesión
+                                    </Link>
+                                    {!isMaintenance && (
+                                        <Link
+                                            href="/inscripcion"
+                                            className="w-full btn-primary py-3 px-5 text-lg shadow-lg hover:shadow-lemon-400/30"
+                                            onClick={() => setIsMenuOpen(false)}
+                                        >
+                                            Registrarme
+                                        </Link>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </nav>
                 </div>

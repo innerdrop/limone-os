@@ -2,7 +2,7 @@ import { withAuth } from "next-auth/middleware"
 import { NextResponse } from "next/server"
 
 export default withAuth(
-    function middleware(req) {
+    async function middleware(req) {
         const token = req.nextauth.token
         const isAuth = !!token
         const isAuthPage = req.nextUrl.pathname.startsWith("/login")
@@ -28,7 +28,42 @@ export default withAuth(
             return NextResponse.redirect(new URL("/admin", req.url))
         }
 
-        return null
+        const requestHeaders = new Headers(req.headers)
+        requestHeaders.set('x-url', req.url)
+        requestHeaders.set('x-pathname', req.nextUrl.pathname)
+
+        // Robust Maintenance Check in Middleware
+        const pathname = req.nextUrl.pathname
+        const isExcludedFromMaint =
+            pathname.startsWith('/mantenimiento') ||
+            pathname.startsWith('/admin') ||
+            pathname.startsWith('/api') ||
+            pathname.startsWith('/login') ||
+            pathname.startsWith('/_next') ||
+            pathname.includes('favicon.ico')
+
+        if (!isExcludedFromMaint && token?.role !== 'ADMIN') {
+            try {
+                // Fetch public status from internal API (using absolute URL)
+                const maintRes = await fetch(new URL('/api/mantenimiento/status', req.url), {
+                    cache: 'no-store'
+                })
+                if (maintRes.ok) {
+                    const { activado } = await maintRes.json()
+                    if (activado) {
+                        return NextResponse.redirect(new URL('/mantenimiento', req.url))
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking maintenance in middleware:', error)
+            }
+        }
+
+        return NextResponse.next({
+            request: {
+                headers: requestHeaders,
+            },
+        })
     },
     {
         callbacks: {
@@ -43,5 +78,5 @@ export default withAuth(
 )
 
 export const config = {
-    matcher: ["/admin/:path*", "/portal/:path*", "/login"],
+    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }

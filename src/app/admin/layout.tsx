@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import AdminSidebar from '@/components/admin/Sidebar'
 import AdminHeader from '@/components/admin/Header'
 
+import { prisma } from '@/lib/prisma'
+
 export default async function AdminLayout({
     children,
 }: {
@@ -20,8 +22,21 @@ export default async function AdminLayout({
         redirect('/portal')
     }
 
+    // Check maintenance mode for warning banner
+    const config = await prisma.configuracion.findUnique({
+        where: { clave: 'mantenimiento_activado' }
+    })
+    const isMaintenance = config?.valor === 'true'
+
     return (
         <div className="min-h-screen bg-warm-50">
+            {/* Maintenance Warning Banner */}
+            {isMaintenance && (
+                <div className="bg-amber-500 text-white py-2 text-center text-sm font-bold sticky top-0 z-[60] shadow-md">
+                    ⚠️ MODO MANTENIMIENTO ACTIVO - El sitio es inaccesible para los alumnos
+                </div>
+            )}
+
             {/* Sidebar */}
             <AdminSidebar user={session.user} />
 

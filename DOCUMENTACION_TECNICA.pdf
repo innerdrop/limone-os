@@ -1,0 +1,502 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 399
+>>
+stream
+0.5670000000000001 w
+0 G
+BT
+/F2 26 Tf
+29.8999999999999986 TL
+0.176 g
+119.6699999999999449 615.1183464566928478 Td
+(DOCUMENTACIÓN TÉCNICA) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0.392 g
+180.1099999999999284 586.7718897637794271 Td
+(Arquitectura y Desarrollo - Limoné OS) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.392 g
+209.8399999999999466 113.3858267716535693 Td
+(Este manual está creado por Vsolutions) Tj
+ET
+endstream
+endobj
+5 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 6 0 R
+>>
+endobj
+6 0 obj
+<<
+/Length 4123
+>>
+stream
+0.5670000000000001 w
+0 G
+BT
+/F2 22 Tf
+25.2999999999999972 TL
+0.557 0.267 0.678 rg
+56.6929133858267775 756.8506299212598378 Td
+(Documentación Técnica de la Plataforma) Tj
+ET
+BT
+/F2 16 Tf
+18.3999999999999986 TL
+0.176 g
+56.6929133858267775 714.3309448818897636 Td
+(Limoné OS - Arquitectura y Tecnologías) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.314 g
+56.6929133858267775 671.8112598425196893 Td
+(Este documento técnico detalla la infraestructura, el stack tecnológico y la lógica de negocio que sustenta la) Tj
+T* (plataforma de gestión integral para Taller Limoné.) Tj
+ET
+0.9 G
+56.6929133858267775 609.4490551181102092 m
+538.5870866141731312 609.4490551181102092 l
+S
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.176 g
+56.6929133858267775 566.9293700787401349 Td
+(1. Vision General del Proyecto) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.314 g
+56.6929133858267775 544.2522047244094665 Td
+(Limoné OS es una aplicación web de alto rendimiento orientada a la gestión educativa y comercial. Combina) Tj
+T* (un robusto panel administrativo con un portal autogestionable para padres y alumnos, integrando pagos,) Tj
+T* (facturación y seguimiento académico.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.176 g
+56.6929133858267775 479.0553543307086102 Td
+(2. Stack Tecnológico \(The Stack\)) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 456.378188976377885 Td
+(  •  **Frontend & Backend**: Next.js 15 \(Arquitectura App Router\), aprovechando Server Components para) Tj
+T* (una carga ultrarrápida y optimización SEO.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 422.3624409448818255 Td
+(  •  **Base de Datos**: PostgreSQL, utilizando Prisma como ORM para una gestión de datos tipada y segura.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 405.3545669291337958 Td
+(  •  **Autenticación**: NextAuth.js con estrategia JWT \(JSON Web Tokens\) de alta seguridad.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 388.3466929133857661 Td
+(  •  **Procesamiento de Imágenes**: Cloudinary API para el almacenamiento y optimización de activos) Tj
+T* (visuales.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 354.3309448818897067 Td
+(  •  **Estilos**: Tailwind CSS para una interfaz moderna, responsiva y de carga ligera.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.176 g
+56.6929133858267775 323.1498425196849666 Td
+(3. Módulos Críticos del Sistema) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 300.4726771653542983 Td
+(  •  **Motor de Middleware**: Sistema de seguridad perimetral que gestiona roles de acceso y el estado de) Tj
+T* (mantenimiento global en el borde de la aplicación.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 266.4569291338582389 Td
+(  •  **Sistema de Facturación**: Integración con servicios de AFIP para la emisión de comprobantes) Tj
+T* (autorizados.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 232.4411811023621794 Td
+(  •  **Analytics Engine**: Rastreador de tráfico propio que analiza la procedencia de las visitas sin) Tj
+T* (comprometer la privacidad del usuario \(libre de cookies externas\).) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 198.4254330708660063 Td
+(  •  **Generador de Documentos**: Implementación de lógica en servidor para la creación dinámica de) Tj
+T* (archivos PDF \(Fichas de inscripción y reportes\).) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.176 g
+56.6929133858267775 150.2364566929132934 Td
+(4. Flujos de Trabajo Principales) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 127.559291338582625 Td
+(  •  **Inscripción Inteligente**: Un flujo paso a paso que valida la disponibilidad de cupos en tiempo real antes) Tj
+T* (de permitir el registro.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.235 g
+56.6929133858267775 93.5435433070865656 Td
+(  •  **Verificación de Pagos**: Sistema de dos pasos \(carga del alumno / verificación del admin\) para) Tj
+T* (asegurar el control total sobre los ingresos.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+56.6929133858267775 28.3464566929134207 Td
+(Documentación Técnica - Taller Limoné) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+507.3070866141731017 28.3464566929134207 Td
+(Página 2) Tj
+ET
+endstream
+endobj
+7 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 8 0 R
+>>
+endobj
+8 0 obj
+<<
+/Length 1195
+>>
+stream
+0.5670000000000001 w
+0.9 G
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+56.6929133858267775 756.8506299212598378 Td
+(  •  **Portal del Alumno**: Dashboard personalizado donde el alumno puede ver sus cobros pendientes, su) Tj
+T* (historial de asistencia y su galería de obras.) Tj
+ET
+BT
+/F2 12 Tf
+13.7999999999999989 TL
+0.176 g
+56.6929133858267775 708.6616535433070112 Td
+(5. Escalabilidad y Despliegue) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0.314 g
+56.6929133858267775 685.9844881889763428 Td
+(La aplicación está preparada para ser escalada horizontalmente. La persistencia de datos está desacoplada) Tj
+T* (de la lógica de aplicación, permitiendo migraciones de base de datos sin tiempos de inactividad perceptibles.) Tj
+ET
+0.9 G
+56.6929133858267775 623.6222834645668627 m
+538.5870866141731312 623.6222834645668627 l
+S
+BT
+/F1 10 Tf
+11.5 TL
+0.314 g
+56.6929133858267775 595.2758267716535556 Td
+(Este documento ha sido desarrollado por **Vsolutions** para Taller Limoné.) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+56.6929133858267775 28.3464566929134207 Td
+(Documentación Técnica - Taller Limoné) Tj
+ET
+BT
+/F1 8 Tf
+9.1999999999999993 TL
+0.588 g
+507.3070866141731017 28.3464566929134207 Td
+(Página 3) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R 5 0 R 7 0 R ]
+/Count 3
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+19 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+20 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+21 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+22 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 9 0 R
+/F2 10 0 R
+/F3 11 0 R
+/F4 12 0 R
+/F5 13 0 R
+/F6 14 0 R
+/F7 15 0 R
+/F8 16 0 R
+/F9 17 0 R
+/F10 18 0 R
+/F11 19 0 R
+/F12 20 0 R
+/F13 21 0 R
+/F14 22 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+23 0 obj
+<<
+/Producer (jsPDF 4.0.0)
+/CreationDate (D:20260216111308-03'00')
+>>
+endobj
+24 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 25
+0000000000 65535 f 
+0000006298 00000 n 
+0000008131 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000000602 00000 n 
+0000000739 00000 n 
+0000004914 00000 n 
+0000005051 00000 n 
+0000006367 00000 n 
+0000006492 00000 n 
+0000006623 00000 n 
+0000006757 00000 n 
+0000006895 00000 n 
+0000007019 00000 n 
+0000007148 00000 n 
+0000007280 00000 n 
+0000007416 00000 n 
+0000007544 00000 n 
+0000007671 00000 n 
+0000007800 00000 n 
+0000007933 00000 n 
+0000008035 00000 n 
+0000008383 00000 n 
+0000008469 00000 n 
+trailer
+<<
+/Size 25
+/Root 24 0 R
+/Info 23 0 R
+/ID [ <36C720B5735BADD77A5F95E454AC5D7F> <36C720B5735BADD77A5F95E454AC5D7F> ]
+>>
+startxref
+8573
+%%EOF
