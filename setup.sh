@@ -58,8 +58,8 @@ docker compose up -d --build
 echo -e "${BLUE}>>> Configurando base de datos interna...${NC}"
 # Esperar un momento a que el contenedor de la app esté listo para ejecutar comandos
 sleep 5
-docker exec limone-app npx prisma db push --accept-data-loss
-docker exec limone-app npx prisma db seed
+docker exec limone-app npx prisma@5 db push --accept-data-loss
+docker exec limone-app npx prisma@5 db seed
 
 echo -e "${GREEN}>>> Aplicación iniciada en Docker (Puerto 3081).${NC}"
 
