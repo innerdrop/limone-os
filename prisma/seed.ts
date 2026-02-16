@@ -7,7 +7,7 @@ async function main() {
     console.log('🌱 Seeding database with unified workshops...')
 
     // 1. Crear usuario admin (Natalia)
-    const adminPassword = await hash('admin123', 12)
+    const adminPassword = await hash('2026Limon3*', 12)
     const admin = await prisma.usuario.upsert({
         where: { email: 'natalia@tallerlimone.com' },
         update: {
