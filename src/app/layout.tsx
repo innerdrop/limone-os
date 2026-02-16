@@ -44,10 +44,17 @@ export default async function RootLayout({
     const pathname = headersList.get('x-pathname') || '/'
 
     // Check maintenance mode
-    const config = await prisma.configuracion.findUnique({
-        where: { clave: 'mantenimiento_activado' }
-    })
-    const isMaintenance = config?.valor === 'true'
+    let isMaintenance = false
+    try {
+        const config = await prisma.configuracion.findUnique({
+            where: { clave: 'mantenimiento_activado' }
+        })
+        isMaintenance = config?.valor === 'true'
+    } catch (error) {
+        console.error('Error fetching maintenance mode in RootLayout:', error)
+        // Default to false if DB is not ready
+        isMaintenance = false
+    }
 
     // Exclude paths
     const isExcluded =

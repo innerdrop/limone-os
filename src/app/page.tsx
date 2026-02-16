@@ -395,10 +395,16 @@ import { prisma } from '@/lib/prisma'
 // ==================== MAIN PAGE ====================
 export default async function HomePage() {
     // Check maintenance mode to pass to Header
-    const config = await prisma.configuracion.findUnique({
-        where: { clave: 'mantenimiento_activado' }
-    })
-    const isMaintenance = config?.valor === 'true'
+    let isMaintenance = false
+    try {
+        const config = await prisma.configuracion.findUnique({
+            where: { clave: 'mantenimiento_activado' }
+        })
+        isMaintenance = config?.valor === 'true'
+    } catch (error) {
+        console.error('Error fetching maintenance mode in HomePage:', error)
+        isMaintenance = false
+    }
 
     return (
         <>

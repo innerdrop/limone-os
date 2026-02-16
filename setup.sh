@@ -23,6 +23,14 @@ fi
 
 docker compose up -d
 
+# Esperar a que la base de datos esté lista
+echo -e "${BLUE}>>> Esperando a que la base de datos esté lista...${NC}"
+until docker exec limone-db pg_isready -U limone -d limone > /dev/null 2>&1; do
+  echo -ne "."
+  sleep 1
+done
+echo -e "\n${GREEN}>>> Base de datos lista!${NC}"
+
 # 2. Configurar Variables de Entorno
 if [ ! -f .env ]; then
     echo -e "${BLUE}>>> Creando archivo .env...${NC}"

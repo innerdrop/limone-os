@@ -58,9 +58,9 @@ services:
       EMAIL_FROM: ${EMAIL_FROM}
     env_file:
       - .env
-    # depends_on:
-    #   db:
-    #     condition: service_healthy
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       # Persistencia de archivos subidos
       - uploads_data:/app/public/uploads

@@ -1,56 +1,146 @@
-# Manual del Administrador
-## Sistema de Gestión Taller Limoné
+# Manual del Administrador - Limoné OS
 
-Estimada Natalia,
-
-Este documento ha sido diseñado para proporcionarte una guía clara y detallada sobre el funcionamiento de tu nueva plataforma de gestión. El objetivo es que puedas aprovechar al máximo todas las herramientas disponibles para simplificar el día a día de tu taller.
+Bienvenido al manual de administración de **Limoné OS**. Este documento detalla cada una de las secciones del panel administrativo para ayudarte a gestionar el taller de manera eficiente.
 
 ---
 
-### 1. Tablero de Control (Dashboard)
-Es el centro neurálgico de la aplicación. Al ingresar, tendrás una visión global y en tiempo real de lo que sucede:
-- **Resumen Estadístico**: Alumnos totales, nuevas inscripciones y recaudación.
-- **Centro de Notificaciones**: Alertas sobre pagos que requieren tu validación (comprobantes subidos por padres).
-- **Actividad Reciente**: Un resumen de las últimas 4 acciones importantes (clases dictadas, tareas, inscripciones).
-
-### 2. Gestión de Precios (Centralizado) ⭐
-Hemos centralizado todos los valores económicos en una sola pantalla para evitar errores y facilitar cambios rápidos.
-- **Precios Mensuales**: Define cuánto cuesta cursar 1 día o 2 días por semana para cada taller.
-- **Taller de Verano Especial**: Para el taller de verano, puedes configurar precios diferenciados para la **Modalidad Base** y la **Modalidad Extendida (Con Merienda)**.
-- **Simplificación de Cobro**: Siguiendo tu nueva política, **se han eliminado las Matrículas**. El sistema ya no cobrará inscripción por separado, simplificando el proceso para los padres.
-- **Clase Única**: Define el precio para las clases de prueba individuales.
-- **Impacto Inmediato**: Al presionar "Actualizar Precios", los cambios se aplican al instante en toda la plataforma y el portal de inscripciones.
-
-### 3. Gestión de Talleres
-Aquí gestionas la oferta académica de tu taller:
-- **Configuración Pedagógica**: El formulario se enfoca en lo pedagógico: nombre, descripción, cupo máximo, duración y horarios.
-- **Precios Protegidos**: Al editar un taller, verás un cartel informativo con el precio actual. Los precios ya no se editan aquí, sino en el panel central de "Gestión de Precios" para mantener la consistencia.
-- **Tipo de Taller**: Clasifica cada taller como **Regular** (Marzo-Diciembre) o **Verano** (Enero-Febrero). Esto determina cómo se muestran las opciones en el portal.
-- **Horarios Múltiples**: Puedes definir varios bloques de horarios para un mismo taller (ej. Martes 16:00 y Jueves 17:30).
-
-### 4. Pagos e Inscripciones
-- **Validación de Pagos**: Los padres suben sus comprobantes. Tú puedes ver la imagen, verificar que el monto coincida y aprobar el pago con un clic.
-- **Pago en 2 Partes (Cuotas)**: El sistema permite pagos parciales (50% al inscribirse). Estos aparecerán marcados como tales en tu lista de pagos para que sepas que hay un saldo pendiente.
-- **Fichas de Inscripción**: Descarga la ficha oficial en PDF firmada digitalmente por los padres, incluyendo autorizaciones médicas y de retiro.
-
-### 5. Inscripción de Alumnos (Portal)
-El proceso para los padres ahora es más fluido y transparente:
-1. **Selección**: Pueden inscribir a varios hijos desde una única cuenta.
-2. **Tipo de Camino**: Eligen entre Taller Regular, Taller de Verano o Clase Única.
-3. **Modalidad de Verano**: En verano, el sistema les permite elegir si quieren la modalidad simple o la **Extendida (2h + Merienda)**.
-4. **Resumen Claro**: El portal les muestra el total calculado automáticamente según las semanas restantes (proporcional) y la modalidad elegida.
-5. **Firma Digital**: Todo el proceso legal se completa online.
-
-### 6. Gestión de Contenidos y Web
-- **Galería Artística**: Sube las fotos de las obras de tus alumnos.
-- **Web Pública**: Edita el Slider principal y el Popup promocional de la entrada del sitio.
+## 📋 Índice
+1. [Tablero (Dashboard)](#1-tablero-dashboard)
+2. [Gestión de Alumnos y Usuarios](#2-gestión-de-alumnos-y-usuarios)
+3. [Agenda y Clases](#3-agenda-y-clases)
+4. [Módulo Financiero (Pagos y Cuotas)](#4-módulo-financiero-pagos-y-cuotas)
+5. [Configuración de Talleres y Precios](#5-configuración-de-talleres-y-precios)
+6. [Contenido y Galería](#6-contenido-y-galería)
+7. [Inscripciones y Clase Única](#7-inscripciones-y-clase-única)
+8. [Comunicación y Marketing](#8-comunicación-y-marketing)
+9. [Ajustes y Mantenimiento](#9-ajustes-y-mantenimiento)
 
 ---
 
-### Recomendaciones de Uso
-1. **Cambio de Temporada**: Al iniciar el verano o el año regular, ajusta primero los precios en "Gestión de Precios". Recuerda configurar tanto los precios base como los de merienda para el verano.
-2. **Validación Visual**: Siempre abre el comprobante PDF/Imagen que suben los padres antes de confirmar un pago.
-3. **Gestión Centralizada**: Si necesitas cambiar el valor de una cuota, hazlo siempre desde "Gestión de Precios" para que se actualice tanto en el portal como en las tarjetas de información de los talleres.
+## 1. Tablero (Dashboard)
+El centro de control de tu taller. Aquí encontrarás un resumen rápido del estado actual:
+- **Resumen Estadístico:** Cantidad de alumnos activos, inscripciones del mes y pagos pendientes.
+- **Próximas Clases:** Visualización de los talleres que se dictarán hoy y mañana.
+- **Actividad Reciente:** Registro de las últimas inscripciones, pagos confirmados y tareas completadas.
+- **Tareas Pendientes:** Una lista de recordatorios rápidos para la gestión diaria.
 
 ---
-Este manual ha sido actualizado para Taller Limoné reflejando la nueva estructura de precios simplificada y la modalidad extendida de verano.
+
+## 2. Gestión de Alumnos y Usuarios
+
+### Registros Usuarios (`/admin/registros`)
+Muestra la lista de **padres o tutores** registrados en la plataforma.
+- Podrás ver quién se registró recientemente.
+- Incluye el nombre del tutor y la cantidad de niños (alumnos) asociados a su cuenta.
+- Útil para seguimiento de contactos iniciales.
+
+### Lista de Alumnos (`/admin/alumnos`)
+Es la ficha central de cada niño/a. 
+- **Filtros Avanzados:** Buscá por nombre, estado de pago, taller principal o incluso por **fecha de actividad** (para saber quién viene hoy).
+- **Ficha del Alumno:** Al ingresar a "Ver ficha", podés editar datos médicos, nivel de arte (Principiante, Intermedio, Avanzado) y ver su historial de inasistencias.
+- **Exportación:** Botón para descargar la lista completa en formato Excel.
+
+---
+
+## 3. Agenda y Clases
+
+### Agenda (`/admin/agenda`)
+Vista detallada de lo que sucede cada día.
+- Muestra los talleres con alumnos confirmados.
+- **Citas de Nivelación:** Si hay nuevos alumnos con citas programadas, aparecerán aquí.
+- **Control de Asistencia:** Al hacer clic en "Ver más", verás la lista de alumnos que deben asistir a ese horario específico.
+
+### Recupero de Clases (`/admin/recuperos`)
+Gestión de inasistencias avisadas por los padres.
+- **Revisión:** Verás los motivos de la falta y la fecha original.
+- **Asignación de Recupero:** Podés decidir si la clase es recuperable y asignar una nueva fecha y bloque horario.
+- El sistema notificará automáticamente al usuario sobre la aprobación del recupero.
+
+---
+
+## 4. Módulo Financiero (Pagos y Cuotas)
+
+### Pagos y Cuotas (`/admin/finanzas`)
+Gestión de ingresos y facturación.
+- **Historial de Pagos:** Lista de todas las transacciones.
+- **Verificación de Transferencias:** Cuando un usuario sube un comprobante, el estado aparecerá como "VERIFICAR". Al confirmarlo, el pago impacta en la cuenta del alumno.
+- **Inscripciones Pendientes:** Lista rápida de alumnos que se inscribieron pero aún no registraron el pago.
+- **Facturación Electrónica:** Botón para generar facturas de AFIP (si está configurado) o cargar comprobantes PDF manualmente.
+- **Reportes:** Gráfico de recaudación mensual de los últimos 6 meses.
+
+---
+
+## 5. Configuración de Talleres y Precios
+
+### Configuración Talleres (`/admin/talleres`)
+Definición de la oferta educativa.
+- **Creación/Edición:** Nombre, descripción, cupo máximo y duración.
+- **Horarios Dinámicos:** Podés configurar múltiples días y bloques horarios para un mismo taller.
+- **Asignación de Precios:** Vinculá el taller a una configuración de precios específica.
+
+### Gestión de Precios (`/admin/precios`)
+Centraliza los costos de todos los servicios.
+- Permite definir precios por cantidad de días (1 día/semana, 2 días/semana).
+- **Precios de Verano:** Configuración especial para talleres temporales, incluyendo precios para jornadas extendidas.
+
+---
+
+## 6. Contenido y Galería
+
+### Galería de Obras (`/admin/contenido`)
+Gestión de la parte visual del taller.
+- **Subir Obras:** Permite cargar fotos de las creaciones de los alumnos, asignándolas a su ficha personal.
+- **Galería Principal:** Gestión de las fotos que aparecen en la página pública para atraer nuevos alumnos.
+
+### Tienda (`/admin/tienda`)
+Administración de la tienda online (E-commerce).
+- **Productos:** Carga de materiales artísticos u obras originales.
+- **Stock y Precios:** Control de inventario y valores de venta.
+- **Destacados:** Opción para mostrar productos específicos en la portada de la tienda.
+
+### Slider / Publicidad (`/admin/slider`)
+Gestión del banner principal de la página de inicio.
+- Permite cargar hasta 7 imágenes con títulos, botones y enlaces personalizados.
+- Podés cambiar el orden de aparición y personalizar los colores de los textos para que combinen con la imagen de fondo.
+
+---
+
+## 7. Inscripciones y Clase Única
+
+### Opciones Inscripción (`/admin/opciones-inscripcion`)
+Personaliza los botones que ven los usuarios al iniciar su inscripción.
+- Podés crear opciones como "Taller Regular", "Taller de Verano" o "Clase Única".
+- Permite asignar colores, iconos (emojis) y badges de "NUEVO".
+
+### Aprobar Clase Única (`/admin/clase-unica`)
+Flujo de seguridad para nuevos alumnos.
+- Lista de alumnos que realizaron su clase de prueba.
+- Una vez que el alumno es aprobado por el docente, podés habilitarlo aquí para que pueda inscribirse al Taller Regular.
+
+---
+
+## 8. Comunicación y Marketing
+
+### Comunicación (`/admin/comunicacion`)
+Herramienta de envío de correos institucionales.
+- **Destinatarios:** Podés enviar mensajes a **todos** los alumnos, a un **taller específico** o a un **alumno individual**.
+- **Diseño Corporativo:** El sistema aplica automáticamente el diseño de Taller Limoné (colores, logo y tipografía).
+- **Botones de Acción:** Incluí botones con enlaces directos (por ejemplo, para invitarlos a un evento).
+
+### Gestión de Popup (`/admin/popup`)
+Configura el cartel informativo que aparece apenas se carga la web.
+- Ideal para anunciar inscripciones abiertas, feriados o promociones.
+- Podés activarlo y desactivarlo al instante.
+
+---
+
+## 9. Ajustes y Mantenimiento
+
+### Ajustes del Sistema (`/admin/ajustes`)
+Configuraciones técnicas globales.
+- **Modo Mantenimiento:** Actívalo si estás realizando cambios grandes y querés que los usuarios no ingresen temporalmente (verán una página de "Volvemos pronto").
+- **Estadísticas de Tráfico:** Conocé cuántas personas visitaron la web hoy y desde qué fuentes (Google, Instagram, Directo, etc.).
+- **Datos de Contacto:** (Próximamente) Centralización de teléfono y redes sociales.
+
+---
+*Manual generado para la administración de Taller Limoné.*

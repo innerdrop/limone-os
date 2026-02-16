@@ -23,10 +23,16 @@ export default async function AdminLayout({
     }
 
     // Check maintenance mode for warning banner
-    const config = await prisma.configuracion.findUnique({
-        where: { clave: 'mantenimiento_activado' }
-    })
-    const isMaintenance = config?.valor === 'true'
+    let isMaintenance = false
+    try {
+        const config = await prisma.configuracion.findUnique({
+            where: { clave: 'mantenimiento_activado' }
+        })
+        isMaintenance = config?.valor === 'true'
+    } catch (error) {
+        console.error('Error fetching maintenance mode in AdminLayout:', error)
+        isMaintenance = false
+    }
 
     return (
         <div className="min-h-screen bg-warm-50">
