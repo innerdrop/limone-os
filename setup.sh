@@ -37,7 +37,7 @@ if [ ! -f .env ]; then
     AUTH_SECRET=$(openssl rand -base64 32)
     cat > .env << EOL
 # --- DATABASE ---
-DATABASE_URL="postgresql://limone:limone_dev_2025@127.0.0.1:5433/limone?schema=public"
+DATABASE_URL="postgresql://limone:limone_dev_2025@db:5432/limone?schema=public"
 
 # --- NEXTAUTH ---
 NEXTAUTH_URL="https://tallerlimone.com"
@@ -50,24 +50,18 @@ PORT=3081
 EOL
 fi
 
-# 3. Instalación y Build de la App
-echo -e "${BLUE}>>> Instalando dependencias y construyendo...${NC}"
-npm install
-npx prisma generate
-npx prisma db push --accept-data-loss
-npx prisma db seed
-npm run build
+# 3. Construir e Iniciar con Docker (Todo el stack)
+echo -e "${BLUE}>>> Construyendo e iniciando contenedores (App + DB)...${NC}"
+docker compose up -d --build
 
-# 4. Iniciar con PM2
-echo -e "${BLUE}>>> Iniciando aplicación con PM2...${NC}"
-if command -v pm2 &> /dev/null; then
-    pm2 delete limone-web 2>/dev/null || true
-    pm2 start npm --name "limone-web" -- start -- -p 3081
-    pm2 save
-    echo -e "${GREEN}>>> Aplicación iniciada en puerto 3081.${NC}"
-else
-    echo -e "${RED}PM2 no encontrado. Instalalo con: npm install -g pm2${NC}"
-fi
+# 4. Configurar Base de Datos (Adentro del contenedor)
+echo -e "${BLUE}>>> Configurando base de datos interna...${NC}"
+# Esperar un momento a que el contenedor de la app esté listo para ejecutar comandos
+sleep 5
+docker exec limone-app npx prisma db push --accept-data-loss
+docker exec limone-app npx prisma db seed
+
+echo -e "${GREEN}>>> Aplicación iniciada en Docker (Puerto 3081).${NC}"
 
 # 5. Configurar Nginx
 NGINX_CONF="/etc/nginx/sites-available/tallerlimone.com"

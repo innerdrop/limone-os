@@ -9,12 +9,12 @@ async function main() {
     // 1. Crear usuario admin (Natalia)
     const adminPassword = await hash('admin123', 12)
     const admin = await prisma.usuario.upsert({
-        where: { email: 'natalia@limone.usev.app' },
+        where: { email: 'natalia@tallerlimone.com' },
         update: {
             password: adminPassword,
         },
         create: {
-            email: 'natalia@limone.usev.app',
+            email: 'natalia@tallerlimone.com',
             password: adminPassword,
             nombre: 'Natalia Fusari',
             rol: 'ADMIN',
