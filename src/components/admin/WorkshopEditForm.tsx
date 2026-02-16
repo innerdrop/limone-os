@@ -8,6 +8,7 @@ interface Taller {
     id: string
     nombre: string
     descripcion: string | null
+    imagen?: string | null
     cupoMaximo: number
     duracion: number
     activo: boolean
@@ -18,8 +19,10 @@ interface Taller {
     precio: number
     precio1dia: number
     precio2dia: number
-    precio1diaExt?: number
-    precio2diaExt?: number
+    precio1diaExt?: number | null
+    precio2diaExt?: number | null
+    creadoEn?: Date | string
+    actualizadoEn?: Date | string
 }
 
 const DIAS_DISPONIBLES = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
@@ -124,6 +127,11 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
                                 : `${formatMoney(taller.precio1dia)} / mes`
                             }
                         </h4>
+                        {taller.tipo === 'VERANO' && taller.precio1diaExt && (
+                            <p className="text-[10px] font-bold text-orange-500 uppercase">
+                                Extendido: {formatMoney(taller.precio1diaExt)} / mes
+                            </p>
+                        )}
                     </div>
                 </div>
                 <Link

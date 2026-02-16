@@ -24,6 +24,7 @@ export async function PATCH(
                 cupoMaximo: body.cupoMaximo,
                 duracion: body.duracion,
                 activo: body.activo,
+                tipo: body.tipo,
                 diasSemana: body.diasSemana,
                 horaInicio: body.horaInicio,
                 horarios: body.horarios

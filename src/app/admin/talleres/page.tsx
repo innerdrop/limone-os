@@ -85,8 +85,16 @@ export default async function TalleresPage() {
                                         if (t.nombre.toLowerCase().includes('única')) {
                                             return `${formatMoney(t.precio)} / clase`
                                         }
-                                        const displayPrice = t.precio1dia || t.precio || 0;
-                                        return `${formatMoney(displayPrice)} / mes`
+                                        const basePrice = t.precio1dia || t.precio || 0;
+                                        if (t.tipo === 'VERANO' && t.precio1diaExt) {
+                                            return (
+                                                <div className="flex flex-col">
+                                                    <span>{formatMoney(basePrice)} / mes</span>
+                                                    <span className="text-[10px] text-orange-500 font-bold uppercase">Ext: {formatMoney(t.precio1diaExt)}</span>
+                                                </div>
+                                            )
+                                        }
+                                        return `${formatMoney(basePrice)} / mes`
                                     })()}
                                 </div>
                             </div>
