@@ -31,7 +31,7 @@ function baseTemplate(content: string): string {
                         <!-- Header -->
                         <tr>
                             <td style="background: linear-gradient(135deg, ${colors.yellow} 0%, ${colors.green} 100%); padding: 30px; text-align: center;">
-                                <img src="https://limone.usev.app/logo.png" alt="Taller Limoné" width="180" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
+                                <img src="https://tallerlimone.com/logo.png" alt="Taller Limoné" width="180" style="display: block; margin: 0 auto; max-width: 100%; height: auto;">
                             </td>
                         </tr>
                         <!-- Content -->
@@ -143,7 +143,7 @@ export function enrollmentEmail(data: EnrollmentEmailData): string {
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Para confirmar tu lugar, realizá el pago correspondiente. Podés subir el comprobante desde tu portal o enviárnoslo por WhatsApp.
         </p>
-        ${button('Ver mi Inscripción', 'https://limone.usev.app/portal')}
+        ${button('Ver mi Inscripción', 'https://tallerlimone.com/portal')}
     `)
 }
 
@@ -210,7 +210,7 @@ export function paymentConfirmedEmail(data: PaymentConfirmedEmailData): string {
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Las clases ya aparecen en tu calendario. ¡Nos vemos pronto!
         </p>
-        ${button('Ver mi Calendario', 'https://limone.usev.app/portal/calendario')}
+        ${button('Ver mi Calendario', 'https://tallerlimone.com/portal/calendario')}
     `)
 }
 
@@ -305,7 +305,7 @@ export function passwordChangedEmail(data: PasswordChangedEmailData): string {
                 ⚠️ Si no realizaste este cambio, contactanos inmediatamente al <strong>+54 9 2901 588969</strong> o respondiendo a este correo.
             </p>
         `, '#FCE4EC')}
-        ${button('Iniciar Sesión', 'https://limone.usev.app/login')}
+        ${button('Iniciar Sesión', 'https://tallerlimone.com/login')}
     `)
 }
 
@@ -398,12 +398,12 @@ export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Se ha acreditado una <strong>clase extra</strong> en tu cuenta para que puedas recuperarla en cualquier otro horario disponible del mes.
         </p>
-        ${button('Ver mi Calendario', 'https://limone.usev.app/portal/calendario', colors.yellow)}
+        ${button('Ver mi Calendario', 'https://tallerlimone.com/portal/calendario', colors.yellow)}
         ` : `
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Podés verificar los cambios en tu calendario desde el portal.
         </p>
-        ${button('Ir al Portal', 'https://limone.usev.app/portal/calendario', colors.yellow)}
+        ${button('Ir al Portal', 'https://tallerlimone.com/portal/calendario', colors.yellow)}
         `}
         <p style="color: #888; font-size: 14px; margin: 24px 0 0 0;">
             ¡Nos vemos pronto en el taller! 🖌️

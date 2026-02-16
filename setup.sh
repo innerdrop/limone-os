@@ -32,11 +32,11 @@ if [ ! -f .env ]; then
 DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5435/limone?schema=public"
 
 # --- NEXTAUTH ---
-NEXTAUTH_URL="https://limone.usev.app"
+NEXTAUTH_URL="https://tallerlimone.com"
 NEXTAUTH_SECRET="${AUTH_SECRET}"
 
 # --- APP ---
-NEXT_PUBLIC_APP_URL="https://limone.usev.app"
+NEXT_PUBLIC_APP_URL="https://tallerlimone.com"
 NODE_ENV="production"
 PORT=3081
 EOL
@@ -62,7 +62,7 @@ else
 fi
 
 # 5. Configurar Nginx
-NGINX_CONF="/etc/nginx/sites-available/limone.usev.app"
+NGINX_CONF="/etc/nginx/sites-available/tallerlimone.com"
 
 if [ -d "/etc/nginx/sites-available" ]; then
     echo -e "${BLUE}>>> Configurando Nginx...${NC}"
@@ -76,7 +76,7 @@ if [ -d "/etc/nginx/sites-available" ]; then
 
     $SUDO bash -c "cat > $NGINX_CONF" << EOL
 server {
-    server_name limone.usev.app;
+    server_name tallerlimone.com;
     client_max_body_size 20M;
 
     location / {
@@ -90,7 +90,7 @@ server {
 }
 EOL
 
-    if [ ! -f "/etc/nginx/sites-enabled/limone.usev.app" ]; then
+    if [ ! -f "/etc/nginx/sites-enabled/tallerlimone.com" ]; then
         $SUDO ln -s $NGINX_CONF /etc/nginx/sites-enabled/
     fi
 
@@ -98,4 +98,4 @@ EOL
 fi
 
 echo -e "${GREEN}>>> DESPLIEGUE FINALIZADO${NC}"
-echo -e "Para activar SSL: ${BLUE}sudo certbot --nginx -d limone.usev.app${NC}"
+echo -e "Para activar SSL: ${BLUE}sudo certbot --nginx -d tallerlimone.com${NC}"

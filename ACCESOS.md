@@ -16,7 +16,7 @@
 ### 🔴 Administrador (Natalia)
 | Campo | Valor |
 |-------|-------|
-| **Email** | `natalia@limone.usev.app` |
+| **Email** | `natalia@tallerlimone.com` |
 | **Contraseña** | `admin123` |
 | **Rol** | ADMIN |
 | **Acceso** | Panel Admin completo |
@@ -26,7 +26,7 @@
 ### 🟡 Docente (Demo)
 | Campo | Valor |
 |-------|-------|
-| **Email** | `docente@limone.usev.app` |
+| **Email** | `docente@tallerlimone.com` |
 | **Contraseña** | `docente123` |
 | **Rol** | DOCENTE |
 | **Acceso** | Panel de clases y asistencia |

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     openGraph: {
         type: 'website',
         locale: 'es_AR',
-        url: 'https://limone.usev.app',
+        url: 'https://tallerlimone.com',
         siteName: 'Taller Limoné',
         title: 'Taller Limoné | Arte en Ushuaia',
         description: 'Taller de arte en Ushuaia dirigido por Natalia Fusari. Clases de pintura, dibujo y técnicas mixtas para todas las edades.',

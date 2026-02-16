@@ -102,7 +102,7 @@ ssh usuario@tu-vps-ip "docker-compose -f /var/www/limone/docker-compose.yml ps"
 ssh usuario@tu-vps-ip "docker-compose -f /var/www/limone/docker-compose.yml logs -f app"
 
 # Verificar health check
-curl https://limone.usev.app/api/health
+curl https://tallerlimone.com/api/health
 ```
 
 ---
