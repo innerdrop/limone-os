@@ -28,16 +28,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
         }
 
-        const { fecha, motivo, esLaborable, sendEmail: shouldSendEmail, addCredit: shouldAddCredit } = await req.json()
+        const { fecha, motivo, esLaborable, sendEmail: shouldSendEmail, addCredit: shouldAddCredit, trasladarA } = await req.json()
 
         // Import email tools
         const { sendEmail } = await import('@/lib/email')
         const { nonWorkingDayEmail } = await import('@/lib/email-templates')
 
         const date = new Date(fecha)
-        // Adjust for timezone offset to ensure we get the correct UTC date if needed, 
-        // but since it's from a date picker 'YYYY-MM-DD', new Date(fecha) usually works fine for LOCAL day.
-        date.setHours(12, 0, 0, 0) // Use noon to avoid early/late day shifts with timezones
+        date.setHours(12, 0, 0, 0)
+
+        // Date format for emails
+        const formattedTargetDate = trasladarA ? new Date(trasladarA + 'T12:00:00').toLocaleDateString('es-AR') : null
 
         if (esLaborable) {
             const startOfDay = new Date(date)
@@ -63,33 +64,30 @@ export async function POST(req: Request) {
             })
 
             // IMPACT LOGIC: Identify affected students
-            // 0: Sunday, 1: Monday, ..., 6: Saturday
             const dayNamesEs = ['DOMINGO', 'LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
             const daySpanish = dayNamesEs[date.getDay()]
-
-            console.log(`[CALENDAR API] Processing date: ${date.toISOString()}, Day found: ${daySpanish}`)
 
             const affectedInscriptions = await prisma.inscripcion.findMany({
                 where: {
                     estado: 'ACTIVA',
-                    // Removed pagado: true to be safe, everyone active should know
                     OR: [
                         { dia: { contains: daySpanish, mode: 'insensitive' } },
-                        // Also try with accents just in case database has MIÉRCOLES or SÁBADO
                         { dia: { contains: daySpanish.replace('MIERCOLES', 'MIÉRCOLES').replace('SABADO', 'SÁBADO'), mode: 'insensitive' } }
                     ]
                 },
-                include: { alumno: { include: { usuario: true } } }
+                include: {
+                    alumno: { include: { usuario: true } },
+                    taller: true
+                }
             })
-
-            console.log(`[CALENDAR API] Found ${affectedInscriptions.length} affected inscriptions`)
 
             const processedUsers = new Set<string>()
             let emailCount = 0
             let creditCount = 0
+            let transferCount = 0
 
             for (const ins of affectedInscriptions) {
-                // 1. Add credit if requested
+                // 1. Add credit IF no transfer is requested (usually you don't do both, but we respect the flags)
                 if (shouldAddCredit) {
                     await (prisma as any).creditoClaseExtra.create({
                         data: {
@@ -101,16 +99,37 @@ export async function POST(req: Request) {
                     creditCount++
                 }
 
-                // 2. Notify student (Email and Portal Notification)
+                // 2. Automated Transfer (New Logic)
+                if (trasladarA) {
+                    await (prisma as any).creditoClaseExtra.create({
+                        data: {
+                            alumnoId: ins.alumnoId,
+                            tallerId: ins.tallerId,
+                            motivo: `Traslado de clase del ${date.toLocaleDateString('es-AR')}`,
+                            usado: true, // Marked as used because it's already programmed
+                            fechaProgramada: new Date(trasladarA + 'T12:00:00'),
+                            horarioProgramado: ins.horario?.split('-')[0] || '16:00'
+                        }
+                    })
+                    transferCount++
+                }
+
+                // 3. Notify student
                 if (!processedUsers.has(ins.alumno.usuarioId)) {
                     processedUsers.add(ins.alumno.usuarioId)
 
-                    // Create database notification
+                    let notificationMessage = `El ${date.toLocaleDateString('es-AR')} no habrá clases por ${motivo || 'Feriado'}.`
+                    if (trasladarA) {
+                        notificationMessage += ` La clase se traslada al día ${formattedTargetDate}.`
+                    } else if (shouldAddCredit) {
+                        notificationMessage += ` Tenés un crédito disponible para agendar.`
+                    }
+
                     await prisma.notificacion.create({
                         data: {
                             usuarioId: ins.alumno.usuarioId,
-                            titulo: shouldAddCredit ? '🎨 Clase Extra Disponible' : '⚠️ Aviso: Clase Cancelada',
-                            mensaje: `El ${date.toLocaleDateString('es-AR')} no habrá clases por ${motivo || 'Feriado'}.${shouldAddCredit ? ' Tenés un crédito disponible para agendar.' : ''}`,
+                            titulo: trasladarA ? '📅 Clase Reprogramada' : (shouldAddCredit ? '🎨 Clase Extra Disponible' : '⚠️ Aviso: Clase Cancelada'),
+                            mensaje: notificationMessage,
                             tipo: 'INFO'
                         }
                     })
@@ -125,7 +144,8 @@ export async function POST(req: Request) {
                                     nombre: ins.alumno.nombre || 'Estudiante',
                                     fecha: date.toLocaleDateString('es-AR'),
                                     motivo: (motivo as string) || 'Feriado/Asueto',
-                                    tieneCredito: !!shouldAddCredit
+                                    tieneCredito: !!shouldAddCredit,
+                                    fechaTraslado: formattedTargetDate || undefined
                                 })
                             })
                             if (sent) emailCount++
@@ -136,13 +156,12 @@ export async function POST(req: Request) {
                 }
             }
 
-            console.log(`[CALENDAR API] Done. Credits: ${creditCount}, Emails: ${emailCount}`)
-
             return NextResponse.json({
                 success: true,
                 affectedCount: affectedInscriptions.length,
                 emailsSent: emailCount,
-                creditsCreated: creditCount
+                creditsCreated: creditCount,
+                transfersCreated: transferCount
             })
         }
     } catch (error) {

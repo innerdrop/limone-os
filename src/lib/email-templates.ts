@@ -196,7 +196,10 @@ export function paymentConfirmedEmail(data: PaymentConfirmedEmailData): string {
             Hola <strong>${data.nombre}</strong>,
         </p>
         <p style="color: #666; line-height: 1.6; margin: 0 0 16px 0;">
-            Tu pago ha sido confirmado exitosamente. La inscripción de <strong>${data.alumnoNombre}</strong> está activa.
+            ¡Tenemos excelentes noticias! Tu pago ha sido confirmado exitosamente.
+        </p>
+        <p style="color: #666; line-height: 1.6; margin: 0 0 16px 0;">
+            A partir de este momento, <strong>${data.alumnoNombre}</strong> ya es un <strong>participante activo del Taller Limoné</strong>.
         </p>
         ${infoBox(`
             <p style="margin: 0 0 8px 0; color: ${colors.charcoal};"><strong>Detalle del pago:</strong></p>
@@ -367,7 +370,7 @@ export function genericEmail(data: { titulo: string, mensaje: string, botonTexto
     `)
 }
 
-export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo: string, tieneCredito: boolean }): string {
+export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo: string, tieneCredito: boolean, fechaTraslado?: string }): string {
     return baseTemplate(`
         <h2 style="color: ${colors.purple}; margin: 0 0 16px 0;">Aviso de Clase Cancelada 🎨</h2>
         <p style="color: #666; line-height: 1.6; margin: 0 0 16px 0;">
@@ -381,6 +384,16 @@ export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo
                 ${data.motivo}
             </p>
         `, '#F4ECF7')}
+
+        ${data.fechaTraslado ? `
+        <div style="background-color: #E8F8F5; border-radius: 12px; padding: 20px; margin: 20px 0; border: 1px solid #A3E4D7;">
+            <p style="margin: 0 0 8px 0; color: #16A085; font-weight: bold;">✅ Clase Trasladada:</p>
+            <p style="margin: 0; color: #16A085;">
+                Hemos reprogramado automáticamente tu clase para el día: <strong>${data.fechaTraslado}</strong> en tu mismo horario habitual.
+            </p>
+        </div>
+        ` : ''}
+
         ${data.tieneCredito ? `
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
             Se ha acreditado una <strong>clase extra</strong> en tu cuenta para que puedas recuperarla en cualquier otro horario disponible del mes.
@@ -388,8 +401,9 @@ export function nonWorkingDayEmail(data: { nombre: string, fecha: string, motivo
         ${button('Ver mi Calendario', 'https://limone.usev.app/portal/calendario', colors.yellow)}
         ` : `
         <p style="color: #666; line-height: 1.6; margin: 16px 0;">
-            Ante cualquier consulta, no dudes en contactarnos.
+            Podés verificar los cambios en tu calendario desde el portal.
         </p>
+        ${button('Ir al Portal', 'https://limone.usev.app/portal/calendario', colors.yellow)}
         `}
         <p style="color: #888; font-size: 14px; margin: 24px 0 0 0;">
             ¡Nos vemos pronto en el taller! 🖌️

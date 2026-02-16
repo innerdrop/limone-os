@@ -5,6 +5,7 @@ import { startOfDay, addDays, format, isToday } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import QuickTaskForm from '@/components/admin/QuickTaskForm'
+import DeleteTaskButton from '@/components/admin/DeleteTaskButton'
 
 export default function AgendaPage() {
     const [loading, setLoading] = useState(true)
@@ -128,6 +129,12 @@ export default function AgendaPage() {
                                         </div>
 
                                         <div className="flex items-center gap-2 flex-shrink-0">
+                                            {item.tipo === 'TAREA' && (
+                                                <DeleteTaskButton
+                                                    taskId={item.id.replace('tarea-', '')}
+                                                    onSuccess={fetchAgenda}
+                                                />
+                                            )}
                                             <button
                                                 onClick={() => setSelectedItem(item)}
                                                 className="btn-outline text-xs px-3 py-1"
@@ -194,6 +201,19 @@ export default function AgendaPage() {
                                     </div>
                                 ))}
                             </div>
+
+                            {selectedItem.tipo === 'TAREA' && (
+                                <div className="mt-4 pt-4 border-t border-canvas-100 flex justify-center">
+                                    <DeleteTaskButton
+                                        taskId={selectedItem.id.replace('tarea-', '')}
+                                        variant="text"
+                                        onSuccess={() => {
+                                            setSelectedItem(null)
+                                            fetchAgenda()
+                                        }}
+                                    />
+                                </div>
+                            )}
 
                             <button
                                 onClick={() => setSelectedItem(null)}

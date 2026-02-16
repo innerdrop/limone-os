@@ -48,8 +48,8 @@ export async function POST(
         await prisma.notificacion.create({
             data: {
                 usuarioId: pago.alumno.usuarioId,
-                titulo: '¡Pago Confirmado!',
-                mensaje: `Tu pago de $${pago.monto.toLocaleString('es-AR')} ha sido confirmado. Tu inscripción está activa y tus clases ya aparecen en el calendario.`,
+                titulo: '¡Pago Confirmado! ✅',
+                mensaje: `Tu pago de $${pago.monto.toLocaleString('es-AR')} ha sido confirmado. ¡Ya sos un participante activo del Taller Limoné!`,
                 tipo: 'SUCCESS'
             }
         })
@@ -58,17 +58,21 @@ export async function POST(
         const alumno = pago.alumno as any
         const inscripcion = pago.inscripcion as any
         if (alumno?.usuario?.email) {
-            sendEmail({
-                to: alumno.usuario.email,
-                subject: '¡Pago Confirmado! ✅ - Taller Limoné',
-                html: paymentConfirmedEmail({
-                    nombre: alumno.usuario.nombre || 'Alumno',
-                    alumnoNombre: `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim() || 'Alumno',
-                    monto: Number(pago.monto),
-                    concepto: inscripcion?.taller?.nombre || inscripcion?.fase || 'Taller',
-                    fecha: format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })
+            try {
+                await sendEmail({
+                    to: alumno.usuario.email,
+                    subject: '¡Pago Confirmado! ✅ - Taller Limoné',
+                    html: paymentConfirmedEmail({
+                        nombre: alumno.usuario.nombre || 'Alumno',
+                        alumnoNombre: `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim() || 'Alumno',
+                        monto: Number(pago.monto),
+                        concepto: inscripcion?.taller?.nombre || inscripcion?.fase || 'Taller',
+                        fecha: format(new Date(), "d 'de' MMMM 'de' yyyy", { locale: es })
+                    })
                 })
-            }).catch(err => console.error('Error sending payment email:', err))
+            } catch (err) {
+                console.error('Error sending payment email:', err)
+            }
         }
 
         return NextResponse.json({ success: true, pago })

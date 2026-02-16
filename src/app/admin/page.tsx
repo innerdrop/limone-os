@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import prisma from '@/lib/prisma'
 import { startOfMonth, subDays } from 'date-fns'
+import DeleteTaskButton from '@/components/admin/DeleteTaskButton'
 
 export default async function AdminDashboard() {
     const now = new Date()
@@ -293,7 +294,7 @@ export default async function AdminDashboard() {
                             }
 
                             return activities.map((act) => (
-                                <div key={act.id} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors ${act.completada ? 'bg-canvas-50/50 border-transparent opacity-60' : 'bg-canvas-50 border-canvas-100 hover:bg-canvas-100 hover:border-canvas-300'}`}>
+                                <div key={act.id} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors group ${act.completada ? 'bg-canvas-50/50 border-transparent opacity-60' : 'bg-canvas-50 border-canvas-100 hover:bg-canvas-100 hover:border-canvas-300'}`}>
                                     <div className={`w-9 h-9 rounded-xl ${act.color} flex items-center justify-center text-lg flex-shrink-0 mt-0.5 shadow-sm`}>
                                         {act.icon}
                                     </div>
@@ -304,14 +305,22 @@ export default async function AdminDashboard() {
                                                 {act.badgeText}
                                             </span>
                                         </div>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <p className="text-xs font-medium text-lemon-700">
-                                                {act.date.toLocaleString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                            </p>
-                                            <span className="text-[10px] text-warm-300">•</span>
-                                            <p className="text-xs text-warm-500 font-bold">
-                                                {act.date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
-                                            </p>
+                                        <div className="flex items-center justify-between gap-2 mt-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-medium text-lemon-700">
+                                                    {act.date.toLocaleString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                </p>
+                                                <span className="text-[10px] text-warm-300">•</span>
+                                                <p className="text-xs text-warm-500 font-bold">
+                                                    {act.date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs
+                                                </p>
+                                            </div>
+
+                                            {act.type === 'tarea' && (
+                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <DeleteTaskButton taskId={act.id} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

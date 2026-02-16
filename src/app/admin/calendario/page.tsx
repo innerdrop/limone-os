@@ -17,6 +17,8 @@ export default function AdminCalendarioPage() {
     const [loading, setLoading] = useState(true)
     const [motivoTemp, setMotivoTemp] = useState('')
     const [diaSeleccionado, setDiaSeleccionado] = useState<Date | null>(null)
+    const [isTransferEnabled, setIsTransferEnabled] = useState(false)
+    const [trasladarA, setTrasladarA] = useState('')
     const [processing, setProcessing] = useState(false)
     const [sendEmail, setSendEmail] = useState(true)
     const [addCredit, setAddCredit] = useState(true)
@@ -44,17 +46,23 @@ export default function AdminCalendarioPage() {
                     motivo: esQuitar ? undefined : motivoTemp,
                     esLaborable: esQuitar,
                     sendEmail: esQuitar ? false : sendEmail,
-                    addCredit: esQuitar ? false : addCredit
+                    addCredit: esQuitar ? false : addCredit,
+                    trasladarA: (isTransferEnabled && trasladarA) ? trasladarA : null
                 })
             })
             if (res.ok) {
                 const data = await res.json()
                 if (!esQuitar) {
-                    alert(`✅ Día no laborable guardado.\n\nAlumnos afectados: ${data.affectedCount || 0}\nCorreos enviados: ${data.emailsSent || 0}\nCréditos otorgados: ${data.creditsCreated || 0}`)
+                    let msg = `✅ Día no laborable guardado.\n\nAlumnos afectados: ${data.affectedCount || 0}\nCorreos enviados: ${data.emailsSent || 0}`
+                    if (data.creditsCreated) msg += `\nCréditos otorgados: ${data.creditsCreated}`
+                    if (data.transfersCreated) msg += `\nClases trasladadas: ${data.transfersCreated}`
+                    alert(msg)
                 }
                 await fetchDias()
                 setDiaSeleccionado(null)
                 setMotivoTemp('')
+                setIsTransferEnabled(false)
+                setTrasladarA('')
             } else {
                 const data = await res.json()
                 alert(data.error || 'Error al actualizar el calendario')
@@ -174,11 +182,38 @@ export default function AdminCalendarioPage() {
                                             />
                                             <span className="text-sm font-medium text-warm-700">Agregar crédito de clase extra a alumnos</span>
                                         </label>
+
+                                        <div className="space-y-2">
+                                            <label className="flex items-center gap-3 p-3 rounded-xl border border-warm-100 bg-canvas-50 cursor-pointer hover:bg-canvas-100 transition-colors">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isTransferEnabled}
+                                                    onChange={(e) => setIsTransferEnabled(e.target.checked)}
+                                                    className="w-5 h-5 accent-lemon-500"
+                                                />
+                                                <span className="text-sm font-medium text-warm-700">Trasladar a:</span>
+                                            </label>
+
+                                            {isTransferEnabled && (
+                                                <div className="pl-8 animate-fade-in">
+                                                    <input
+                                                        type="date"
+                                                        value={trasladarA}
+                                                        onChange={(e) => setTrasladarA(e.target.value)}
+                                                        className="input-field"
+                                                        min={new Date().toISOString().split('T')[0]}
+                                                    />
+                                                    <p className="text-xs text-warm-400 mt-1 mt-1">
+                                                        Los alumnos verán esta fecha en su calendario automáticamente.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <button
                                         onClick={() => toggleDia(diaSeleccionado, false)}
-                                        disabled={processing}
-                                        className="w-full py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200"
+                                        disabled={processing || (isTransferEnabled && !trasladarA)}
+                                        className="w-full py-4 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-lg shadow-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Confirmar No Laborable
                                     </button>
