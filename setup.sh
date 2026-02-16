@@ -37,7 +37,7 @@ if [ ! -f .env ]; then
     AUTH_SECRET=$(openssl rand -base64 32)
     cat > .env << EOL
 # --- DATABASE ---
-DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5435/limone?schema=public"
+DATABASE_URL="postgresql://limone:limone_dev_2025@127.0.0.1:5433/limone?schema=public"
 
 # --- NEXTAUTH ---
 NEXTAUTH_URL="https://tallerlimone.com"
