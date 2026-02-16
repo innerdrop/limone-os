@@ -8,13 +8,18 @@ interface Taller {
     id: string
     nombre: string
     descripcion: string | null
-    precio: number
     cupoMaximo: number
     duracion: number
     activo: boolean
+    tipo: string
     diasSemana: string | null
     horaInicio: string | null
     horarios?: any
+    precio: number
+    precio1dia: number
+    precio2dia: number
+    precio1diaExt?: number
+    precio2diaExt?: number
 }
 
 const DIAS_DISPONIBLES = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO']
@@ -30,10 +35,10 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
     const [formData, setFormData] = useState({
         nombre: taller.nombre,
         descripcion: taller.descripcion || '',
-        precio: taller.precio,
         cupoMaximo: taller.cupoMaximo,
         duracion: taller.duracion,
         activo: taller.activo,
+        tipo: taller.tipo || 'REGULAR',
         diasSemana: initialDays,
         horarios: initialHorarios,
     })
@@ -95,8 +100,40 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
         }
     }
 
+    const formatMoney = (amount: number) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            minimumFractionDigits: 0,
+        }).format(amount)
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Informational Price Banner */}
+            <div className="bg-warm-50 border-2 border-warm-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-2xl">
+                        💰
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-black text-warm-400 uppercase tracking-widest">Precio Centralizado</p>
+                        <h4 className="text-lg font-black text-warm-800">
+                            {taller.nombre.toLowerCase().includes('única')
+                                ? `${formatMoney(taller.precio)} / clase`
+                                : `${formatMoney(taller.precio1dia)} / mes`
+                            }
+                        </h4>
+                    </div>
+                </div>
+                <Link
+                    href="/admin/precios"
+                    className="text-xs font-bold text-lemon-600 hover:text-lemon-700 bg-white px-4 py-2 rounded-xl shadow-sm border border-lemon-100 transition-all"
+                >
+                    Cambiar Precios →
+                </Link>
+            </div>
+
             <div className="card">
                 <div className="grid md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
@@ -120,14 +157,15 @@ export default function WorkshopEditForm({ taller }: { taller: Taller }) {
                     </div>
 
                     <div>
-                        <label className="label">Precio Mensual ($)</label>
-                        <input
-                            type="number"
-                            required
+                        <label className="label">Tipo de Taller</label>
+                        <select
                             className="input-field"
-                            value={formData.precio}
-                            onChange={(e) => setFormData({ ...formData, precio: parseFloat(e.target.value) })}
-                        />
+                            value={formData.tipo}
+                            onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                        >
+                            <option value="REGULAR">🌳 Taller Regular</option>
+                            <option value="VERANO">☀️ Taller de Verano</option>
+                        </select>
                     </div>
 
                     <div>

@@ -9,34 +9,48 @@ Este documento ha sido diseñado para proporcionarte una guía clara y detallada
 
 ### 1. Tablero de Control (Dashboard)
 Es el centro neurálgico de la aplicación. Al ingresar, tendrás una visión global y en tiempo real de lo que sucede:
-- **Resumen Estadístico**: Visualización rápida del total de alumnos, nuevas inscripciones del mes y la recaudación actual.
-- **Centro de Notificaciones**: Alertas directas sobre pagos que requieren tu validación manual.
-- **Agenda Unificada**: Un desglose de las próximas clases, tareas administrativas pendientes e ingresos programados.
+- **Resumen Estadístico**: Alumnos totales, nuevas inscripciones y recaudación.
+- **Centro de Notificaciones**: Alertas sobre pagos que requieren tu validación (comprobantes subidos por padres).
+- **Actividad Reciente**: Un resumen de las últimas 4 acciones importantes (clases dictadas, tareas, inscripciones).
 
-### 2. Gestión de Alumnos y Usuarios
-- **Base de Datos de Alumnos**: Acceso completo a las fichas técnicas. Aquí puedes gestionar la información médica, contactos de emergencia y descargar la ficha de inscripción oficial en formato PDF para tu archivo físico.
-- **Seguimiento de Asistencia y Progreso**: Registro histórico de la participación de cada alumno en las distintas clases.
+### 2. Gestión de Precios (Centralizado) ⭐
+Hemos centralizado todos los valores económicos en una sola pantalla para evitar errores y facilitar cambios rápidos.
+- **Precios Mensuales**: Define cuánto cuesta cursar 1 día o 2 días por semana para cada taller.
+- **Taller de Verano Especial**: Para el taller de verano, puedes configurar precios diferenciados para la **Modalidad Base** y la **Modalidad Extendida (Con Merienda)**.
+- **Simplificación de Cobro**: Siguiendo tu nueva política, **se han eliminado las Matrículas**. El sistema ya no cobrará inscripción por separado, simplificando el proceso para los padres.
+- **Clase Única**: Define el precio para las clases de prueba individuales.
+- **Impacto Inmediato**: Al presionar "Actualizar Precios", los cambios se aplican al instante en toda la plataforma y el portal de inscripciones.
 
-### 3. Administración Financiera
-- **Control de Pagos**: Módulo para la verificación y aprobación de cuotas. Los padres suben sus comprobantes y tú confirmas la acreditación con un solo clic.
-- **Configuración de Precios**: Flexibilidad total para actualizar los valores de las cuotas, matrículas y servicios especiales según la temporada.
+### 3. Gestión de Talleres
+Aquí gestionas la oferta académica de tu taller:
+- **Configuración Pedagógica**: El formulario se enfoca en lo pedagógico: nombre, descripción, cupo máximo, duración y horarios.
+- **Precios Protegidos**: Al editar un taller, verás un cartel informativo con el precio actual. Los precios ya no se editan aquí, sino en el panel central de "Gestión de Precios" para mantener la consistencia.
+- **Tipo de Taller**: Clasifica cada taller como **Regular** (Marzo-Diciembre) o **Verano** (Enero-Febrero). Esto determina cómo se muestran las opciones en el portal.
+- **Horarios Múltiples**: Puedes definir varios bloques de horarios para un mismo taller (ej. Martes 16:00 y Jueves 17:30).
 
-### 4. Gestión de Contenidos y Web
-- **Galería Artística**: Sube y administra las fotos de los trabajos realizados en el taller para que los alumnos puedan visualizarlos en su portal privado.
-- **Personalización de la Web**: Control sobre el banner principal (Slider) y el cartel promocional (Popup) de la página de inicio.
-- **Oferta Educativa**: Creación y edición de los talleres disponibles, definiendo cupos máximos y horarios específicos.
+### 4. Pagos e Inscripciones
+- **Validación de Pagos**: Los padres suben sus comprobantes. Tú puedes ver la imagen, verificar que el monto coincida y aprobar el pago con un clic.
+- **Pago en 2 Partes (Cuotas)**: El sistema permite pagos parciales (50% al inscribirse). Estos aparecerán marcados como tales en tu lista de pagos para que sepas que hay un saldo pendiente.
+- **Fichas de Inscripción**: Descarga la ficha oficial en PDF firmada digitalmente por los padres, incluyendo autorizaciones médicas y de retiro.
 
-### 5. Herramientas Avanzadas y Ajustes
-- **Modo Mantenimiento**: Permite pausar el acceso público a la web durante periodos vacacionales o cambios técnicos.
-- **Analíticas de Tráfico**: Información estratégica sobre cuántas personas visitan tu sitio y desde qué redes sociales (Instagram, Facebook o Google) provienen.
-- **Gestión de Recuperos**: Sistema para administrar las solicitudes de clases de recuperación de manera organizada.
+### 5. Inscripción de Alumnos (Portal)
+El proceso para los padres ahora es más fluido y transparente:
+1. **Selección**: Pueden inscribir a varios hijos desde una única cuenta.
+2. **Tipo de Camino**: Eligen entre Taller Regular, Taller de Verano o Clase Única.
+3. **Modalidad de Verano**: En verano, el sistema les permite elegir si quieren la modalidad simple o la **Extendida (2h + Merienda)**.
+4. **Resumen Claro**: El portal les muestra el total calculado automáticamente según las semanas restantes (proporcional) y la modalidad elegida.
+5. **Firma Digital**: Todo el proceso legal se completa online.
+
+### 6. Gestión de Contenidos y Web
+- **Galería Artística**: Sube las fotos de las obras de tus alumnos.
+- **Web Pública**: Edita el Slider principal y el Popup promocional de la entrada del sitio.
 
 ---
 
-### Recomendaciones de Seguridad y Uso
-1. **Validación de Comprobantes**: Te recomendamos visualizar siempre la imagen del comprobante antes de aprobar un pago para mantener la integridad contable.
-2. **Uso del Modo Mantenimiento**: Actívalo antes de realizar cambios estructurales en los precios o talleres para evitar inscripciones inconsistentes durante la edición.
-3. **Respaldo Físico**: Utiliza la función de impresión de fichas para tener siempre a mano la información de contacto de emergencia de los niños presentes en el aula.
+### Recomendaciones de Uso
+1. **Cambio de Temporada**: Al iniciar el verano o el año regular, ajusta primero los precios en "Gestión de Precios". Recuerda configurar tanto los precios base como los de merienda para el verano.
+2. **Validación Visual**: Siempre abre el comprobante PDF/Imagen que suben los padres antes de confirmar un pago.
+3. **Gestión Centralizada**: Si necesitas cambiar el valor de una cuota, hazlo siempre desde "Gestión de Precios" para que se actualice tanto en el portal como en las tarjetas de información de los talleres.
 
 ---
-Este manual ha sido desarrollado por **Vsolutions** para Taller Limoné.
+Este manual ha sido actualizado para Taller Limoné reflejando la nueva estructura de precios simplificada y la modalidad extendida de verano.

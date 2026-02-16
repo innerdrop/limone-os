@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { type, studentId, studentData, authData, signature } = body
+        const { type, studentId, studentData, authData, signature, pagarEnPartes } = body
 
         // Find or Create student
         let alumno;
@@ -122,8 +122,8 @@ export async function POST(request: NextRequest) {
 
             if (!taller) return NextResponse.json({ error: 'Taller no encontrado' }, { status: 404 })
 
-            const precioConfig = await prisma.configuracion.findUnique({ where: { clave: 'PRECIO_CLASE_UNICA' } })
-            const precio = precioConfig ? parseFloat(precioConfig.valor) : 15000
+            const config = await prisma.configuracion.findUnique({ where: { clave: 'precio_clase_unica' } })
+            const precio = config ? parseFloat(config.valor) : (taller.precio || 15000)
 
             await prisma.$transaction(async (tx) => {
                 const asientoOcupado = await tx.inscripcion.findFirst({
@@ -177,13 +177,19 @@ export async function POST(request: NextRequest) {
 
                 const SUMMER_END_DATE = new Date(2026, 1, 28)
                 const startDate = new Date(summerStartDate)
-                const RATES: any = { 'BASE': { '1x': 75000, '2x': 130000 }, 'EXTENDED': { '1x': 145000, '2x': 210000 } }
-                const PROMOS: any = { 'BASE': { '1x': 150000, '2x': 260000 }, 'EXTENDED': { '1x': 260000, '2x': 380000 } }
+                const tallerRows: any[] = await prisma.$queryRaw`SELECT * FROM talleres WHERE id = ${taller.id}`
+                const pricing = tallerRows[0]
 
-                const monthlyRate = RATES[summerModality][summerFrequency || '1x'] || 75000
-                const promoPrice = PROMOS[summerModality][summerFrequency || '1x'] || 150000
+                // Use extended rates if modality is EXTENDED
+                const r1 = summerModality === 'EXTENDED' ? (pricing?.precio1diaExt || 0) : (pricing?.precio1dia || 0)
+                const r2 = summerModality === 'EXTENDED' ? (pricing?.precio2diaExt || 0) : (pricing?.precio2dia || 0)
+
+                const monthlyRate = summerFrequency === '2x' ? r2 : r1
+                const promoPrice = monthlyRate * 2 // Proportional to 8 weeks
+
                 const weeksRemaining = Math.max(1, Math.ceil((SUMMER_END_DATE.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000)))
-                const monto = weeksRemaining >= 7 ? promoPrice : Math.min(Math.round(weeksRemaining * (monthlyRate / 4)), promoPrice)
+                let rawTotal = weeksRemaining >= 7 ? promoPrice : Math.min(Math.round(weeksRemaining * (monthlyRate / 4)), promoPrice)
+                const monto = pagarEnPartes ? rawTotal / 2 : rawTotal
 
                 await prisma.$transaction(async (tx) => {
                     const diasCombinados = summerDays.join(', ')
@@ -204,9 +210,11 @@ export async function POST(request: NextRequest) {
                             alumnoId: alumno.id,
                             inscripcionId: inscripcion.id,
                             monto,
+                            esPagoParcial: !!pagarEnPartes,
+                            totalOriginal: !!pagarEnPartes ? rawTotal : undefined,
                             mesCubierto: new Date().getMonth() + 1,
                             anioCubierto: new Date().getFullYear(),
-                            concepto: `Taller Verano (${summerFrequency}) - ${summerModality} - ${diasCombinados}`
+                            concepto: `Taller Verano (${summerFrequency}) - ${summerModality}${pagarEnPartes ? ' (Pago Partes)' : ''}`
                         }
                     })
 
@@ -250,15 +258,20 @@ export async function POST(request: NextRequest) {
                         if (i === 0) firstInscId = newInsc.id;
                     }
 
-                    const totalAmount = 25000 * enrollmentSlots.length
+                    const basePrice = enrollmentSlots.length === 2 ? (taller.precio2dia || 45000) : (taller.precio1dia || 25000)
+                    let rawTotal = basePrice
+                    const monto = pagarEnPartes ? rawTotal / 2 : rawTotal
+
                     await tx.pago.create({
                         data: {
                             alumnoId: alumno.id,
                             inscripcionId: firstInscId,
-                            monto: totalAmount,
+                            monto,
+                            esPagoParcial: !!pagarEnPartes,
+                            totalOriginal: !!pagarEnPartes ? rawTotal : undefined,
                             mesCubierto: new Date().getMonth() + 1,
                             anioCubierto: new Date().getFullYear(),
-                            concepto: `Cuota Mensual - ${taller.nombre} - ${fase} (${allDays})`
+                            concepto: `Cuota Mensual - ${taller.nombre} - ${fase}${pagarEnPartes ? ' (Pago Partes)' : ''}`
                         }
                     })
 

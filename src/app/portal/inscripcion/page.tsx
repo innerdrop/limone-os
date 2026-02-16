@@ -95,25 +95,20 @@ const SUMMER_END_DATE = new Date(2026, 1, 28) // Feb 28, 2026
 const SUMMER_START_DATE = new Date(2026, 0, 6) // Jan 6, 2026
 const SUMMER_TOTAL_WEEKS = 8
 
-const calculateSummerPrice = (startDate: string, modality: 'BASE' | 'EXTENDED', frequency: '1x' | '2x') => {
+const calculateSummerPrice = (startDate: string, modality: 'BASE' | 'EXTENDED', frequency: '1x' | '2x', talleres: any[]) => {
     if (!startDate) return 0
+
+    const tallerVerano = talleres.find(t => t.tipo === 'VERANO' || t.nombre.toLowerCase().includes('verano'))
+    if (!tallerVerano) return 0
 
     const start = new Date(startDate)
 
-    // Monthly Rates
-    const RATES = {
-        'BASE': { '1x': 75000, '2x': 130000 },
-        'EXTENDED': { '1x': 145000, '2x': 210000 }
-    }
+    // Dynamic Rates from Database
+    const rate1x = modality === 'EXTENDED' ? (tallerVerano.precio1diaExt || 0) : (tallerVerano.precio1dia || 0)
+    const rate2x = modality === 'EXTENDED' ? (tallerVerano.precio2diaExt || 0) : (tallerVerano.precio2dia || 0)
 
-    // Full Season Promo Caps (Jan+Feb)
-    const PROMOS = {
-        'BASE': { '1x': 150000, '2x': 260000 },
-        'EXTENDED': { '1x': 260000, '2x': 380000 }
-    }
-
-    const monthlyRate = RATES[modality][frequency]
-    const promoPrice = PROMOS[modality][frequency]
+    const monthlyRate = frequency === '2x' ? rate2x : rate1x
+    const promoPrice = monthlyRate * 2 // Proportional to 8 weeks
 
     // Calculate weeks remaining from start date to end of summer
     const msPerWeek = 7 * 24 * 60 * 60 * 1000
@@ -121,14 +116,7 @@ const calculateSummerPrice = (startDate: string, modality: 'BASE' | 'EXTENDED', 
 
     // Standard weekly price derived from monthly rate (approx 4 weeks/month)
     const pricePerWeek = monthlyRate / 4
-
     const calculatedPrice = Math.round(weeksRemaining * pricePerWeek)
-
-    // If calculated partial price exceeds the full season promo (unlikely unless starting very early), cap it.
-    // Also, if weeksRemaining is near full duration (e.g. 7-8 weeks), we should probably respect the promo price logic if it's cheaper than raw calculation.
-
-    // For simplicity: If starting in first 2 weeks of Jan, use Promo Price logic if cheaper.
-    // Otherwise use proportional.
 
     return Math.min(calculatedPrice, promoPrice)
 }
@@ -212,6 +200,8 @@ export default function EnrollmentPage() {
     // Enrollment options from admin
     const [opcionesInscripcion, setOpcionesInscripcion] = useState<OpcionInscripcion[]>([])
     const [talleres, setTalleres] = useState<any[]>([])
+    const [globalPrices, setGlobalPrices] = useState<any>({})
+    const [pagarEnPartes, setPagarEnPartes] = useState(false)
 
     // Scroll to top when step changes
     useEffect(() => {
@@ -232,7 +222,10 @@ export default function EnrollmentPage() {
                 setExistingStudents(alumnos)
                 if (Array.isArray(opciones)) setOpcionesInscripcion(opciones)
                 if (Array.isArray(workshops)) setTalleres(workshops)
-                if (precios?.precio_clase_unica) setPrecioClaseUnica(precios.precio_clase_unica)
+                if (precios) {
+                    setGlobalPrices(precios)
+                    if (precios.is_clase_unica) setPrecioClaseUnica(precios.is_clase_unica)
+                }
 
                 if (alumnos.length === 0) {
                     setIsProfileComplete(false)
@@ -402,6 +395,7 @@ export default function EnrollmentPage() {
                     slots: isClaseUnica ? [{ id: 'unica', dia: tempDia, horario: tempHorario, asiento: tempAsiento }] : isSummer ? [] : slots,
                     studentId: selectedStudentId,
                     studentData: selectedStudentId === 'new' ? studentData : null,
+                    pagarEnPartes,
                     // Construct final authData with latest values
                     authData: selectedStudentId === 'new' ? {
                         ...authData,
@@ -1383,17 +1377,43 @@ export default function EnrollmentPage() {
                                     )}
                                 </div>
                                 <div className="pt-6 border-t border-dashed border-warm-200">
-                                    <div className="flex justify-between items-end">
-                                        <span className="font-bold text-warm-500">Total</span>
+                                    <div className="flex justify-between items-end mb-4">
+                                        <span className="font-bold text-warm-500">
+                                            {pagarEnPartes ? 'Total (50% ahora)' : 'Total'}
+                                        </span>
                                         <span className="text-3xl font-black text-warm-900">
-                                            {isClaseUnica
-                                                ? `$${precioClaseUnica.toLocaleString('es-AR')}`
-                                                : isSummer
-                                                    ? `$${calculateSummerPrice(summerStartDate, summerModality, summerFrequency).toLocaleString('es-AR')}`
-                                                    : `$${(slots.length * 25000).toLocaleString('es-AR')}`
-                                            }
+                                            {(() => {
+                                                let total = 0
+                                                if (isClaseUnica) {
+                                                    total = precioClaseUnica
+                                                } else if (isSummer) {
+                                                    total = calculateSummerPrice(summerStartDate, summerModality, summerFrequency, talleres)
+                                                } else {
+                                                    const taller = talleres.find(t => t.nombre === 'Taller Regular')
+                                                    const basePrice = slots.length === 2 ? (taller?.precio2dia || 45000) : (taller?.precio1dia || 25000)
+                                                    total = basePrice
+                                                }
+
+                                                return `$${(pagarEnPartes ? total / 2 : total).toLocaleString('es-AR')}`
+                                            })()}
                                         </span>
                                     </div>
+
+                                    {!isClaseUnica && (
+                                        <label className="flex items-center gap-3 p-4 bg-canvas-50 rounded-2xl border-2 border-warm-100 cursor-pointer hover:border-lemon-400 transition-all">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-warm-300 text-lemon-600 focus:ring-lemon-500"
+                                                checked={pagarEnPartes}
+                                                onChange={(e) => setPagarEnPartes(e.target.checked)}
+                                            />
+                                            <div>
+                                                <p className="text-sm font-bold text-warm-800">Pagar en 2 partes</p>
+                                                <p className="text-[10px] text-warm-500">Pagás la mitad ahora y la otra mitad en 15 días.</p>
+                                            </div>
+                                        </label>
+                                    )}
+
                                     {isSummer && summerStartDate && (
                                         <p className="text-xs text-warm-400 text-right mt-2">
                                             Precio proporcional según semanas restantes

@@ -117,7 +117,12 @@ model Taller {
   descripcion   String?
   imagen        String?
   cupoMaximo    Int           @default(10)
-  precio        Float         @default(0)
+  precio        Float         @default(0)  // Precio base o clase suelta
+  precio1dia    Float         @default(0)  // Precio mensual 1 vez por semana
+  precio2dia    Float         @default(0)  // Precio mensual 2 veces por semana
+  precio1diaExt Float?        @default(0)  // Precio extendido (merienda) 1 v/s
+  precio2diaExt Float?        @default(0)  // Precio extendido (merienda) 2 v/s
+  tipo          String        @default("REGULAR") // REGULAR o VERANO
   duracion      Int           @default(90)
   activo        Boolean       @default(true)
   diasSemana    String?
@@ -212,6 +217,8 @@ model Pago {
   mesCubierto    Int
   anioCubierto   Int
   concepto       String?
+  esPagoParcial  Boolean     @default(false)
+  totalOriginal  Float?      // El monto total si se dividió en partes
   
   // Datos de Facturación AFIP
   cae            String?     // Código de Autorización Electrónico

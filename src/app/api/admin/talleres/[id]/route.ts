@@ -21,7 +21,6 @@ export async function PATCH(
             data: {
                 nombre: body.nombre,
                 descripcion: body.descripcion,
-                precio: body.precio,
                 cupoMaximo: body.cupoMaximo,
                 duracion: body.duracion,
                 activo: body.activo,
