@@ -19,6 +19,20 @@ export const metadata: Metadata = {
         siteName: 'Taller Limoné',
         title: 'Taller Limoné | Arte en Ushuaia',
         description: 'Taller de arte en Ushuaia dirigido por Natalia Fusari. Clases de pintura, dibujo y técnicas mixtas para todas las edades.',
+        images: [
+            {
+                url: '/logo.png',
+                width: 800,
+                height: 800,
+                alt: 'Taller Limoné Logo',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Taller Limoné | Arte en Ushuaia',
+        description: 'Taller de arte en Ushuaia dirigido por Natalia Fusari. Clases de pintura, dibujo y técnicas mixtas para todas las edades.',
+        images: ['/logo.png'],
     },
     robots: {
         index: true,
@@ -63,7 +77,8 @@ export default async function RootLayout({
         pathname.startsWith('/api') ||
         pathname.startsWith('/login') ||
         pathname.startsWith('/_next') ||
-        pathname.includes('favicon.ico')
+        pathname.includes('favicon.ico') ||
+        /\.(png|jpg|jpeg|gif|svg|ico|webp)$/i.test(pathname)
 
     if (isMaintenance && !isExcluded) {
         // Check if user is admin - they can bypass maintenance

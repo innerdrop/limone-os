@@ -40,7 +40,8 @@ export default withAuth(
             pathname.startsWith('/api') ||
             pathname.startsWith('/login') ||
             pathname.startsWith('/_next') ||
-            pathname.includes('favicon.ico')
+            pathname.includes('favicon.ico') ||
+            /\.(png|jpg|jpeg|gif|svg|ico|webp)$/i.test(pathname)
 
         if (!isExcludedFromMaint && token?.role !== 'ADMIN') {
             try {
