@@ -374,7 +374,7 @@ model OrdenProducto {
 // Slides del Hero principal - completamente administrables
 model Slide {
   id            String   @id @default(cuid())
-  titulo        String   // Título principal grande
+  titulo        String?  // Título principal grande (opcional)
   subtitulo     String?  // Subtítulo (ej: "Limoné | Edición 2026")
   descripcion   String?  // Descripción/tagline
   tags          String?  // JSON array de tags/badges (ej: ["📅 6 Ene", "🧒 5-12 años"])

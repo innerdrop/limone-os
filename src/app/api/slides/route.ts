@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
             activo
         } = body
 
-        if (!titulo || !imagenUrl) {
-            return NextResponse.json({ error: 'Título e imagen son requeridos' }, { status: 400 })
+        if (!imagenUrl) {
+            return NextResponse.json({ error: 'La imagen es requerida' }, { status: 400 })
         }
 
         // Get max order if not provided

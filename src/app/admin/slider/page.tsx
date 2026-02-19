@@ -5,7 +5,7 @@ import Image from 'next/image'
 
 interface Slide {
     id: string
-    titulo: string
+    titulo: string | null
     subtitulo: string | null
     descripcion: string | null
     tags: string[]
@@ -175,8 +175,8 @@ export default function SliderAdminPage() {
 
         console.log('Form submission:', { titulo: tituloFinal, imagenUrl: imagenUrlFinal, formData })
 
-        if (!tituloFinal || !imagenUrlFinal) {
-            setError(`Título e imagen son requeridos. Título: "${tituloFinal}", Imagen: "${imagenUrlFinal}"`)
+        if (!imagenUrlFinal) {
+            setError('La imagen es requerida')
             return
         }
 
