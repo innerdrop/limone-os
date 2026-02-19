@@ -28,6 +28,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Install OpenSSL for Prisma runtime
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*

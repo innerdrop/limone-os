@@ -91,6 +91,7 @@ export default async function RootLayout({
     return (
         <html lang="es" className="scroll-smooth">
             <head>
+                <meta charSet="utf-8" />
                 <link rel="icon" href="/favicon.ico" />
                 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
                 <link href="https://fonts.googleapis.com/css2?family=Gigi&display=swap" rel="stylesheet" />
