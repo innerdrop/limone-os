@@ -12,7 +12,8 @@ interface Slide {
     badgeTexto: string | null
     textoBoton: string | null
     enlace: string | null
-    imagenUrl: string
+    imagenUrl: string | null
+    codigoHtml: string | null
     estiloOverlay: string
     colorTitulo: string
     colorSubtitulo: string
@@ -33,6 +34,7 @@ const emptySlide = {
     textoBoton: '',
     enlace: '',
     imagenUrl: '',
+    codigoHtml: '',
     estiloOverlay: 'light',
     colorTitulo: '#2D2D2D',
     colorSubtitulo: '#8E44AD',
@@ -59,6 +61,7 @@ export default function SliderAdminPage() {
     // Image upload
     const [uploading, setUploading] = useState(false)
     const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+    const [useHtml, setUseHtml] = useState(false)
 
     const MAX_SLIDES = 7
 
@@ -128,14 +131,15 @@ export default function SliderAdminPage() {
         setEditingSlide(slide)
         setIsCreating(false)
         setFormData({
-            titulo: slide.titulo,
+            titulo: slide.titulo || '',
             subtitulo: slide.subtitulo || '',
             descripcion: slide.descripcion || '',
             tags: slide.tags || [],
             badgeTexto: slide.badgeTexto || '',
             textoBoton: slide.textoBoton || '',
             enlace: slide.enlace || '',
-            imagenUrl: slide.imagenUrl,
+            imagenUrl: slide.imagenUrl || '',
+            codigoHtml: slide.codigoHtml || '',
             estiloOverlay: slide.estiloOverlay,
             colorTitulo: slide.colorTitulo || '#2D2D2D',
             colorSubtitulo: slide.colorSubtitulo || '#8E44AD',
@@ -145,7 +149,8 @@ export default function SliderAdminPage() {
             colorFondoBoton: slide.colorFondoBoton || '#F1C40F',
             activo: slide.activo,
         })
-        setPreviewUrl(slide.imagenUrl)
+        setPreviewUrl(slide.imagenUrl || null)
+        setUseHtml(!!slide.codigoHtml)
     }
 
     const cancelEdit = () => {
@@ -728,12 +733,17 @@ export default function SliderAdminPage() {
                             >
                                 {/* Thumbnail */}
                                 <div className="relative w-full md:w-48 aspect-video rounded-lg overflow-hidden bg-warm-100 flex-shrink-0">
-                                    <Image
-                                        src={slide.imagenUrl}
-                                        alt={slide.titulo}
-                                        fill
-                                        className="object-cover"
-                                    />
+                                    {slide.imagenUrl ? (
+                                        <Image
+                                            src={slide.imagenUrl}
+                                            alt={slide.titulo || 'Slide'}
+                                            fill
+                                            sizes="192px"
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-warm-400 text-xs">&lt;/&gt; HTML</div>
+                                    )}
                                     <div className="absolute top-2 left-2 bg-black/50 text-white text-xs font-bold px-2 py-1 rounded">
                                         #{index + 1}
                                     </div>
