@@ -1,0 +1,70 @@
+# Script para Iniciar Nuevos Cambios - Limoné
+# Ejecutar: .\scripts\start.ps1
+
+Write-Host ""
+Write-Host "[START] INICIAR NUEVOS CAMBIOS" -ForegroundColor Cyan
+Write-Host "===============================" -ForegroundColor Cyan
+
+# Colector de errores
+$errorSummary = @()
+function Add-Error { param($msg) $script:errorSummary += $msg }
+Write-Host ""
+
+# 1. Sincronizar develop primero
+Write-Host "[GIT] Actualizando develop..." -ForegroundColor Yellow
+git checkout develop 2>$null
+git pull origin develop
+if ($LASTEXITCODE -ne 0) { Add-Error "[GIT] Error al sincronizar develop" }
+
+# 2. Seleccionar tipo de rama
+Write-Host ""
+Write-Host "Selecciona el tipo de cambio:" -ForegroundColor Cyan
+Write-Host "  1. feature  - Nueva funcionalidad"
+Write-Host "  2. fix      - Correccion de bug"
+Write-Host "  3. hotfix   - Correccion urgente"
+Write-Host "  4. refactor - Mejora de codigo"
+Write-Host ""
+
+$option = Read-Host "Opcion (1-4)"
+
+switch ($option) {
+    "1" { $prefix = "feature" }
+    "2" { $prefix = "fix" }
+    "3" { $prefix = "hotfix" }
+    "4" { $prefix = "refactor" }
+    default { 
+        Write-Host "[ERROR] Opcion invalida" -ForegroundColor Red
+        exit 1
+    }
+}
+
+# 3. Nombre de la rama
+Write-Host ""
+$name = Read-Host "Nombre corto del cambio (sin espacios, ej: nueva-seccion-galeria)"
+
+if ([string]::IsNullOrWhiteSpace($name)) {
+    Write-Host "[ERROR] El nombre no puede estar vacio" -ForegroundColor Red
+    exit 1
+}
+
+$branchName = "$prefix/$name"
+
+# 4. Crear y cambiar a la nueva rama
+Write-Host ""
+Write-Host "[GIT] Creando rama: $branchName" -ForegroundColor Yellow
+git checkout -b $branchName
+
+if ($errorSummary.Count -gt 0) {
+    Write-Host "`n--------------------------------------" -ForegroundColor Red
+    Write-Host "[REPORTE DE ERRORES]" -ForegroundColor Red
+    foreach ($err in $errorSummary) {
+        Write-Host " - $err" -ForegroundColor Red
+    }
+    Write-Host "--------------------------------------" -ForegroundColor Red
+} else {
+    Write-Host ""
+    Write-Host "[OK] RAMA CREADA EXITOSAMENTE" -ForegroundColor Green
+    Write-Host "[INFO] Ahora estas en: $branchName" -ForegroundColor Cyan
+    Write-Host "[INFO] Cuando termines, ejecuta: .\scripts\finish.ps1" -ForegroundColor Cyan
+    Write-Host ""
+}
