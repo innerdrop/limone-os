@@ -11,41 +11,27 @@ Para mantener la estabilidad del proyecto y permitir el trabajo en equipo, segui
 * **`develop`**: Rama base para el desarrollo. Aquí es donde se integran las nuevas funcionalidades.
 
 ## 2. Crear una nueva funcionalidad
-Siempre que empieces una tarea nueva, create una rama desde `develop`:
+Siempre que empieces una tarea nueva, usa el script `start`:
 
 // turbo
-```bash
-git checkout develop
-git pull origin develop
-git checkout -b feature/nombre-de-la-tarea
+```powershell
+.\scripts\start.ps1
 ```
 
 ## 3. Integración de cambios
-Cuando termines tu tarea y esté probada localmente:
+Cuando termines tu tarea y esté probada localmente, usa `finish`:
 
-1. Subí tu rama al repositorio:
-```bash
-git push origin feature/nombre-de-la-tarea
-```
-
-2. Integrá en `develop` (puedes usar un Pull Request en GitHub o hacerlo manualmente si estás seguro):
 // turbo
-```bash
-git checkout develop
-git pull origin develop
-git merge feature/nombre-de-la-tarea
-git push origin develop
+```powershell
+.\scripts\finish.ps1
 ```
 
 ## 4. Paso a Producción
-Solo cuando `develop` esté estable y verificado, se pasa a `main`:
+Solo cuando `develop` esté estable y verificado, se pasa a `main` con `devmain`:
 
 // turbo
-```bash
-git checkout main
-git pull origin main
-git merge develop
-git push origin main
+```powershell
+.\scripts\devmain.ps1
 ```
 
 ## 5. Limpieza

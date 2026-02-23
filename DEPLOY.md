@@ -81,14 +81,17 @@ npm run dev
 ```
 
 ### Deploy a producción:
-```bash
-# Simplemente hacer push a main
-git add .
-git commit -m "Nueva funcionalidad"
-git push origin main
 
-# ¡El pipeline hace todo automáticamente! 🎉
+Ya no se hace push directo a main. Usamos el script que sincroniza todo:
+
+```powershell
+.\scripts\devmain.ps1
 ```
+
+**Este script:**
+1. Sincroniza `develop` con `main` localmente.
+2. Sube los cambios a GitHub.
+3. Te muestra los comandos para copiar y pegar en el VPS (SSH).
 
 ---
 

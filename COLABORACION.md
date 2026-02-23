@@ -93,28 +93,57 @@ npm run dev
 
 ---
 
-## 🔄 PASO 6: Flujo de Trabajo Diario
+## 🔄 Paso 6: Flujo de Trabajo con Ramas (Scripts)
 
-### Antes de empezar a trabajar:
-```bash
-git pull origin main
+Para automatizar el trabajo y mantener la estabilidad, usamos scripts de PowerShell en la carpeta `scripts/`.
+
+### 1. Iniciar una tarea
+Crea una rama desde `develop` (feature, fix, hotfix o refactor).
+```powershell
+.\scripts\start.ps1
 ```
 
-### Después de hacer cambios:
-```bash
-git add .
-git commit -m "Descripción del cambio"
-git push origin main
+### 2. Guardar progreso (mientras trabajas)
+Agrega todos los cambios, crea un commit y hace push a tu rama actual.
+```powershell
+.\scripts\publish.ps1 -Message "descripcion corta"
 ```
 
-### Si hay conflictos:
-```bash
-git pull origin main
-# Resolver conflictos manualmente
-git add .
-git commit -m "Merge conflicts resolved"
-git push origin main
+### 3. Sincronizar cambios de otros (opcional)
+Si un compañero subió algo a `develop` y lo necesitás en tu rama sin perder tu trabajo:
+```powershell
+.\scripts\refresh.ps1
 ```
+
+### 4. Finalizar tarea
+Mergea tu rama en `develop`, sube los cambios a GitHub y opcionalmente borra la rama local/remota.
+```powershell
+.\scripts\finish.ps1
+```
+
+### 5. Deploy a Producción
+Sincroniza `develop` con `main`, sube a GitHub y muestra los comandos para el VPS.
+```powershell
+.\scripts\devmain.ps1
+```
+
+### 6. Sincronizar entorno local (Comienzo del día)
+Trae lo último de `develop`, instala dependencias, sincroniza la DB y levanta el servidor.
+```powershell
+# Uso normal
+.\scripts\sync.ps1
+
+# Reset completo de DB (borra todo y hace seed)
+.\scripts\sync.ps1 -ResetDB
+```
+
+---
+
+## 🏛️ Estructura de Ramas
+
+* **`main`**: Código estable en producción. **No tocar directamente.**
+* **`develop`**: Rama de integración. Todo se prueba aquí antes de pasar a `main`.
+* **`feature/*`**, **`fix/*`**, etc: Ramas temporales para tareas específicas.
 
 ---
 
