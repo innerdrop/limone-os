@@ -50,9 +50,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Copy Prisma CLI for db push on startup
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
+# Install Prisma CLI for db push on startup
+RUN npm install -g prisma@5.22.0
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
