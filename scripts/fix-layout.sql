@@ -1,0 +1,1 @@
+ALTER TABLE slides ADD COLUMN IF NOT EXISTS "layoutConfig" TEXT DEFAULT '{}';

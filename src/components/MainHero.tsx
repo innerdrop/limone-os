@@ -269,7 +269,7 @@ export default function MainHero() {
 
     if (loading) {
         return (
-            <section className="relative w-full h-[600px] md:h-[700px] lg:h-[80vh] flex items-center overflow-hidden bg-warm-100 animate-pulse">
+            <section className="relative w-full h-screen flex items-center overflow-hidden bg-warm-100 animate-pulse">
                 <div className="w-full max-w-6xl mx-auto px-4 text-center">
                     <div className="h-4 w-32 bg-warm-200 rounded-full mx-auto mb-4"></div>
                     <div className="h-12 w-3/4 bg-warm-200 rounded-2xl mx-auto mb-6"></div>
@@ -280,7 +280,7 @@ export default function MainHero() {
     }
 
     return (
-        <section className="relative w-full h-[600px] md:h-[700px] lg:h-[80vh] flex items-center overflow-hidden bg-warm-50 group">
+        <section className="relative w-full h-screen flex items-center overflow-hidden bg-warm-50 group">
             {/* Slides */}
             {slides.map((slide, index) => renderSlide(slide, index))}
 
