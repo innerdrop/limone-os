@@ -48,7 +48,7 @@ export default function FloatingShip() {
 
     useEffect(() => {
         const initialTimeout = setTimeout(startFlight, 500)
-        const interval = setInterval(startFlight, 9000) // 8s flight + 1s pause
+        const interval = setInterval(startFlight, 11000) // 8s flight + 3s pause
 
         return () => {
             clearTimeout(initialTimeout)
@@ -56,8 +56,8 @@ export default function FloatingShip() {
         }
     }, [startFlight])
 
-    // Hide on admin pages
-    if (pathname.startsWith('/admin') || pathname.startsWith('/login')) {
+    // Only show on home page
+    if (pathname !== '/' || pathname.startsWith('/admin') || pathname.startsWith('/login')) {
         return null
     }
 

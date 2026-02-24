@@ -24,6 +24,7 @@ interface Slide {
     orden: number
     aplicarBlur?: boolean
     botonOffset?: number
+    layoutConfig?: string
 }
 
 // Default slides for when database is empty
@@ -122,109 +123,145 @@ export default function MainHero() {
                         }`}></div>
                 </div>
 
-                <div className="relative z-10 w-full h-full flex items-center justify-center">
-                    <div className={`w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center ${isDark ? 'text-white' : ''}`}>
-                        {/* Badge */}
-                        {slide.badgeTexto && (
-                            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                                <div
-                                    className="inline-block font-black px-4 py-1.5 rounded-full uppercase tracking-wider text-xs md:text-sm mb-4 shadow-lg transform -rotate-2"
-                                    style={{ backgroundColor: slide.colorBadge || '#F1C40F', color: slide.estiloOverlay === 'dark' ? '#000' : '#fff' }}
-                                >
-                                    {slide.badgeTexto}
-                                </div>
-                            </div>
-                        )}
+                <div className={`relative z-10 w-full h-full flex ${(() => {
+                    let lc: any = {}
+                    try { lc = JSON.parse(slide.layoutConfig || '{}') } catch { }
+                    const posV = lc?.contenedor?.posV || 'center'
+                    const posH = lc?.contenedor?.posH || 'center'
+                    const vClass = posV === 'top' ? 'items-start pt-20 md:pt-24' : posV === 'bottom' ? 'items-end pb-20 md:pb-24' : 'items-center'
+                    const hClass = posH === 'left' ? 'justify-start' : posH === 'right' ? 'justify-end' : 'justify-center'
+                    return `${vClass} ${hClass}`
+                })()}`}>
+                    {(() => {
+                        let lc: any = {}
+                        try { lc = JSON.parse(slide.layoutConfig || '{}') } catch { }
 
-                        {/* Title */}
-                        <div className="space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                            {slide.titulo && (
-                                <h1
-                                    className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight drop-shadow-md"
-                                    style={{ color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
-                                >
-                                    {slide.titulo}
-                                </h1>
-                            )}
-                            {slide.subtitulo && (
-                                <div className="flex items-center justify-center gap-3">
-                                    {slide.subtitulo.includes('|') ? (
-                                        <>
-                                            <span
-                                                className="text-3xl md:text-4xl font-bold"
-                                                style={{ color: slide.colorSubtitulo || (isDark ? '#FFFFFF' : '#8E44AD') }}
-                                            >
-                                                {slide.subtitulo.split('|')[0].trim()}
-                                            </span>
-                                            <span
-                                                className={`text-xl md:text-2xl font-medium border-l-2 pl-3 ${isDark ? 'border-white/30' : 'border-warm-300'}`}
-                                                style={{ color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#57534E') }}
-                                            >
-                                                {slide.subtitulo.split('|')[1].trim()}
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <span
-                                            className="text-xl md:text-2xl font-medium"
-                                            style={{ color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#8E44AD') }}
+                        const getAlign = (el: string) => {
+                            const a = lc?.[el]?.alineacion || 'center'
+                            return a === 'left' ? 'text-left' : a === 'right' ? 'text-right' : 'text-center'
+                        }
+                        const getJustify = (el: string) => {
+                            const a = lc?.[el]?.alineacion || 'center'
+                            return a === 'left' ? 'justify-start' : a === 'right' ? 'justify-end' : 'justify-center'
+                        }
+                        const sizeMap: Record<string, string> = {
+                            'xs': '0.75rem', 'sm': '0.875rem', 'base': '1rem', 'lg': '1.125rem',
+                            'xl': '1.25rem', '2xl': '1.5rem', '3xl': '1.875rem', '4xl': '2.25rem',
+                            '5xl': '3rem', '6xl': '3.75rem', '7xl': '4.5rem'
+                        }
+                        const getFontSize = (el: string, deskDefault: string) => sizeMap[lc?.[el]?.tamano || deskDefault] || sizeMap[deskDefault]
+                        const getMobileFontSize = (el: string, mobDefault: string) => sizeMap[lc?.[el]?.tamanoMobile || mobDefault] || sizeMap[mobDefault]
+                        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+                        const posH = lc?.contenedor?.posH || 'center'
+                        const containerAlign = posH === 'left' ? 'text-left' : posH === 'right' ? 'text-right' : 'text-center'
+                        const containerMaxW = posH === 'center' ? 'max-w-6xl mx-auto' : 'max-w-4xl'
+                        const btnOffsetY = lc?.boton?.offsetY ?? slide.botonOffset ?? 0
+
+                        const fs = (el: string, deskDefault: string, mobDefault: string) =>
+                            isMobile ? getMobileFontSize(el, mobDefault) : getFontSize(el, deskDefault)
+
+                        return (
+                            <div className={`w-full ${containerMaxW} px-4 sm:px-6 lg:px-8 ${containerAlign} ${isDark ? 'text-white' : ''}`}>
+                                {/* Badge */}
+                                {slide.badgeTexto && (
+                                    <div className={`animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 ${getAlign('badge')}`}>
+                                        <div
+                                            className="inline-block font-black px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 shadow-lg transform -rotate-2"
+                                            style={{ fontSize: fs('badge', 'sm', 'xs'), backgroundColor: slide.colorBadge || '#F1C40F', color: slide.estiloOverlay === 'dark' ? '#000' : '#fff' }}
                                         >
-                                            {slide.subtitulo}
-                                        </span>
+                                            {slide.badgeTexto}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Title */}
+                                <div className={`space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 ${getAlign('titulo')}`}>
+                                    {slide.titulo && (
+                                        <h1
+                                            className="font-black leading-tight tracking-tight drop-shadow-md"
+                                            style={{ fontSize: fs('titulo', '7xl', '3xl'), color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
+                                        >
+                                            {slide.titulo}
+                                        </h1>
+                                    )}
+                                    {slide.subtitulo && (
+                                        <div className={`flex items-center ${getJustify('subtitulo')} gap-3`}>
+                                            {slide.subtitulo.includes('|') ? (
+                                                <>
+                                                    <span
+                                                        className="font-bold"
+                                                        style={{ fontSize: fs('subtitulo', '4xl', '3xl'), color: slide.colorSubtitulo || (isDark ? '#FFFFFF' : '#8E44AD') }}
+                                                    >
+                                                        {slide.subtitulo.split('|')[0].trim()}
+                                                    </span>
+                                                    <span
+                                                        className={`font-medium border-l-2 pl-3 ${isDark ? 'border-white/30' : 'border-warm-300'}`}
+                                                        style={{ fontSize: fs('subtitulo', '2xl', 'xl'), color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#57534E') }}
+                                                    >
+                                                        {slide.subtitulo.split('|')[1].trim()}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span
+                                                    className="font-medium"
+                                                    style={{ fontSize: fs('subtitulo', '2xl', 'xl'), color: slide.colorSubtitulo || (isDark ? 'rgba(255,255,255,0.8)' : '#8E44AD') }}
+                                                >
+                                                    {slide.subtitulo}
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
-                            )}
-                        </div>
 
-                        {/* Description */}
-                        {slide.descripcion && (
-                            <p
-                                className="text-base sm:text-lg md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed mt-3 mb-5 sm:mt-4 sm:mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md"
-                                style={{ color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E') }}
-                            >
-                                {slide.descripcion}
-                            </p>
-                        )}
-
-                        {/* Tags */}
-                        {slide.tags && slide.tags.length > 0 && (
-                            <div className="flex flex-wrap justify-center gap-3 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500">
-                                {slide.tags.map((tag, tagIndex) => (
-                                    <div
-                                        key={tagIndex}
-                                        className={`backdrop-blur-md px-4 py-2 rounded-xl shadow-sm ${isDark
-                                            ? 'bg-white/20 border border-white/30'
-                                            : 'bg-white/80 border border-white/50'
-                                            }`}
+                                {/* Description */}
+                                {slide.descripcion && (
+                                    <p
+                                        className={`font-medium max-w-3xl leading-relaxed mt-3 mb-5 sm:mt-4 sm:mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md ${getAlign('descripcion')} ${lc?.descripcion?.alineacion === 'center' ? 'mx-auto' : ''}`}
+                                        style={{ fontSize: fs('descripcion', '2xl', 'lg'), color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E') }}
                                     >
-                                        <span className={`block font-bold text-sm md:text-base ${isDark ? 'text-white' : 'text-warm-900'}`}>
-                                            {tag}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                        {slide.descripcion}
+                                    </p>
+                                )}
 
-                        {/* CTA Button */}
-                        {slide.textoBoton && slide.enlace && (
-                            <div className="animate-in fade-in zoom-in duration-700 delay-700">
-                                <Link
-                                    href={slide.enlace}
-                                    className="inline-flex items-center gap-2 px-8 py-3 font-bold text-lg md:text-xl rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all group/btn"
-                                    style={{
-                                        backgroundColor: slide.colorFondoBoton || '#F1C40F',
-                                        color: slide.colorBoton || '#2D2D2D',
-                                        transform: slide.botonOffset ? `translateY(${slide.botonOffset}px)` : undefined
-                                    }}
-                                >
-                                    <span className="text-xl">{isDark ? '👩‍🎨' : '☀️'}</span>
-                                    {slide.textoBoton}
-                                    <svg className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                                    </svg>
-                                </Link>
+                                {/* Tags */}
+                                {slide.tags && slide.tags.length > 0 && (
+                                    <div className={`flex flex-wrap ${getJustify('tags')} gap-3 mb-8 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500`}>
+                                        {slide.tags.map((tag, tagIndex) => (
+                                            <div
+                                                key={tagIndex}
+                                                className={`backdrop-blur-md px-4 py-2 rounded-xl shadow-sm ${isDark
+                                                    ? 'bg-white/20 border border-white/30'
+                                                    : 'bg-white/80 border border-white/50'
+                                                    }`}
+                                            >
+                                                <span className={`block font-bold text-sm md:text-base ${isDark ? 'text-white' : 'text-warm-900'}`}>
+                                                    {tag}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* CTA Button */}
+                                {slide.textoBoton && slide.enlace && (
+                                    <div className={`animate-in fade-in zoom-in duration-700 delay-700 ${getAlign('boton')}`}>
+                                        <Link
+                                            href={slide.enlace}
+                                            className="inline-flex items-center gap-2 px-8 py-3 font-bold rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all group/btn"
+                                            style={{
+                                                fontSize: fs('boton', 'xl', 'lg'),
+                                                backgroundColor: slide.colorFondoBoton || '#F1C40F',
+                                                color: slide.colorBoton || '#2D2D2D',
+                                                transform: btnOffsetY ? `translateY(${btnOffsetY}px)` : undefined
+                                            }}
+                                        >
+                                            {slide.textoBoton}
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        )
+                    })()}
                 </div>
             </div>
         )

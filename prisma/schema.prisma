@@ -393,6 +393,7 @@ model Slide {
   activo        Boolean  @default(true)
   aplicarBlur   Boolean  @default(true)
   botonOffset   Int      @default(0)
+  layoutConfig  String?  @default("{}")
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
 

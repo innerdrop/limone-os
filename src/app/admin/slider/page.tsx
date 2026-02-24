@@ -3,6 +3,32 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 
+interface ElementLayout {
+    alineacion: 'left' | 'center' | 'right'
+    tamano: string
+    tamanoMobile: string
+}
+
+interface LayoutConfig {
+    contenedor: { posV: 'top' | 'center' | 'bottom'; posH: 'left' | 'center' | 'right' }
+    titulo: ElementLayout
+    subtitulo: ElementLayout
+    descripcion: ElementLayout
+    badge: ElementLayout
+    tags: { alineacion: 'left' | 'center' | 'right' }
+    boton: ElementLayout & { offsetY: number }
+}
+
+const defaultLayoutConfig: LayoutConfig = {
+    contenedor: { posV: 'center', posH: 'center' },
+    titulo: { alineacion: 'center', tamano: '7xl', tamanoMobile: '3xl' },
+    subtitulo: { alineacion: 'center', tamano: '2xl', tamanoMobile: 'xl' },
+    descripcion: { alineacion: 'center', tamano: '2xl', tamanoMobile: 'lg' },
+    badge: { alineacion: 'center', tamano: 'sm', tamanoMobile: 'xs' },
+    tags: { alineacion: 'center' },
+    boton: { alineacion: 'center', tamano: 'xl', tamanoMobile: 'lg', offsetY: 0 },
+}
+
 interface Slide {
     id: string
     titulo: string | null
@@ -25,6 +51,7 @@ interface Slide {
     activo: boolean
     aplicarBlur: boolean
     botonOffset: number
+    layoutConfig?: string
 }
 
 const emptySlide = {
@@ -47,6 +74,7 @@ const emptySlide = {
     activo: true,
     aplicarBlur: true,
     botonOffset: 0,
+    layoutConfig: JSON.stringify(defaultLayoutConfig),
 }
 
 export default function SliderAdminPage() {
@@ -154,6 +182,7 @@ export default function SliderAdminPage() {
             activo: slide.activo,
             aplicarBlur: slide.aplicarBlur !== false,
             botonOffset: slide.botonOffset || 0,
+            layoutConfig: slide.layoutConfig || JSON.stringify(defaultLayoutConfig),
         })
         setPreviewUrl(slide.imagenUrl || null)
         setUseHtml(!!slide.codigoHtml)
@@ -613,35 +642,132 @@ export default function SliderAdminPage() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-warm-700 mb-1">
-                                    Posición del Botón (Offset Vertical)
-                                </label>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, botonOffset: prev.botonOffset - 10 }))}
-                                        className="p-2 bg-warm-100 rounded-lg hover:bg-warm-200"
-                                        title="Subir botón"
-                                    >
-                                        ↑
-                                    </button>
-                                    <input
-                                        type="number"
-                                        value={formData.botonOffset}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, botonOffset: parseInt(e.target.value) || 0 }))}
-                                        className="w-20 text-center px-2 py-2 border border-warm-300 rounded-lg focus:ring-2 focus:ring-brand-purple"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, botonOffset: prev.botonOffset + 10 }))}
-                                        className="p-2 bg-warm-100 rounded-lg hover:bg-warm-200"
-                                        title="Bajar botón"
-                                    >
-                                        ↓
-                                    </button>
-                                    <span className="text-xs text-warm-500">px (positivo baja, negativo sube)</span>
-                                </div>
+                            {/* ========== LAYOUT & POSITION SECTION ========== */}
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+                                <h3 className="text-lg font-bold text-blue-900 mb-4">📐 Posición y Layout</h3>
+
+                                {(() => {
+                                    const lc: LayoutConfig = (() => {
+                                        try { return { ...defaultLayoutConfig, ...JSON.parse(formData.layoutConfig || '{}') } } catch { return defaultLayoutConfig }
+                                    })()
+
+                                    const updateLC = (path: string, value: any) => {
+                                        const parts = path.split('.')
+                                        const updated = JSON.parse(JSON.stringify(lc))
+                                        let obj = updated
+                                        for (let i = 0; i < parts.length - 1; i++) obj = obj[parts[i]]
+                                        obj[parts[parts.length - 1]] = value
+                                        setFormData(prev => ({ ...prev, layoutConfig: JSON.stringify(updated) }))
+                                    }
+
+                                    const sizes = ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', '7xl']
+
+                                    const AlignButtons = ({ value, onChange }: { value: string, onChange: (v: string) => void }) => (
+                                        <div className="flex gap-1">
+                                            {(['left', 'center', 'right'] as const).map(a => (
+                                                <button key={a} type="button" onClick={() => onChange(a)}
+                                                    className={`px-2 py-1 text-xs rounded font-medium transition-colors ${value === a ? 'bg-blue-600 text-white' : 'bg-white text-warm-600 hover:bg-blue-100 border border-warm-300'}`}>
+                                                    {a === 'left' ? '◀' : a === 'center' ? '◆' : '▶'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )
+
+                                    const SizeSelect = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => (
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[9px] text-warm-500 uppercase font-bold whitespace-nowrap">{label}:</span>
+                                            <select value={value} onChange={e => onChange(e.target.value)}
+                                                className="text-xs px-1 py-0.5 border border-warm-300 rounded bg-white">
+                                                {sizes.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                        </div>
+                                    )
+
+                                    const ElementControl = ({ label, element, hasSize = true }: { label: string, element: string, hasSize?: boolean }) => {
+                                        const el = (lc as any)[element]
+                                        return (
+                                            <div className="flex items-center justify-between gap-2 py-2 border-b border-blue-100 last:border-0">
+                                                <span className="text-sm font-medium text-warm-700 min-w-[80px]">{label}</span>
+                                                <div className="flex items-center gap-2 flex-wrap justify-end">
+                                                    <AlignButtons value={el.alineacion} onChange={v => updateLC(`${element}.alineacion`, v)} />
+                                                    {hasSize && (
+                                                        <>
+                                                            <SizeSelect label="PC" value={el.tamano} onChange={v => updateLC(`${element}.tamano`, v)} />
+                                                            <SizeSelect label="Móvil" value={el.tamanoMobile} onChange={v => updateLC(`${element}.tamanoMobile`, v)} />
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+
+                                    return (
+                                        <div className="space-y-4">
+                                            {/* Container Position Grid */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-warm-700 mb-2">
+                                                    Posición del Contenido
+                                                </label>
+                                                <div className="inline-grid grid-cols-3 gap-1 bg-white rounded-lg p-2 border border-warm-300">
+                                                    {(['top', 'center', 'bottom'] as const).map(v =>
+                                                        (['left', 'center', 'right'] as const).map(h => (
+                                                            <button key={`${v}-${h}`} type="button"
+                                                                onClick={() => {
+                                                                    const updated = JSON.parse(JSON.stringify(lc))
+                                                                    updated.contenedor.posV = v
+                                                                    updated.contenedor.posH = h
+                                                                    setFormData(prev => ({ ...prev, layoutConfig: JSON.stringify(updated) }))
+                                                                }}
+                                                                className={`w-9 h-9 rounded text-xs font-bold transition-all ${lc.contenedor.posV === v && lc.contenedor.posH === h
+                                                                    ? 'bg-blue-600 text-white shadow-md scale-110'
+                                                                    : 'bg-warm-100 text-warm-400 hover:bg-blue-100'
+                                                                    }`}
+                                                                title={`${v}-${h}`}
+                                                            >
+                                                                ●
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                                <span className="text-xs text-warm-500 ml-2">
+                                                    {lc.contenedor.posV === 'top' ? 'Arriba' : lc.contenedor.posV === 'center' ? 'Centro' : 'Abajo'}-{lc.contenedor.posH === 'left' ? 'Izq' : lc.contenedor.posH === 'center' ? 'Centro' : 'Der'}
+                                                </span>
+                                            </div>
+
+                                            {/* Per-Element Controls */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-warm-700 mb-2">
+                                                    Alineación y Tamaño por Elemento
+                                                </label>
+                                                <div className="bg-white rounded-lg p-3 border border-warm-300">
+                                                    <ElementControl label="Título" element="titulo" />
+                                                    <ElementControl label="Subtítulo" element="subtitulo" />
+                                                    <ElementControl label="Descripción" element="descripcion" />
+                                                    <ElementControl label="Badge" element="badge" />
+                                                    <ElementControl label="Tags" element="tags" hasSize={false} />
+                                                    <ElementControl label="Botón" element="boton" />
+                                                </div>
+                                            </div>
+
+                                            {/* Button Offset */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-warm-700 mb-1">
+                                                    Offset Vertical del Botón
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <button type="button" onClick={() => updateLC('boton.offsetY', (lc.boton.offsetY || 0) - 10)}
+                                                        className="p-1.5 bg-white rounded border border-warm-300 hover:bg-warm-100 text-sm">↑</button>
+                                                    <input type="number" value={lc.boton.offsetY || 0}
+                                                        onChange={e => updateLC('boton.offsetY', parseInt(e.target.value) || 0)}
+                                                        className="w-16 text-center px-1 py-1 border border-warm-300 rounded text-sm" />
+                                                    <button type="button" onClick={() => updateLC('boton.offsetY', (lc.boton.offsetY || 0) + 10)}
+                                                        className="p-1.5 bg-white rounded border border-warm-300 hover:bg-warm-100 text-sm">↓</button>
+                                                    <span className="text-xs text-warm-500">px</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })()}
                             </div>
 
                             <div>

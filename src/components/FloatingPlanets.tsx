@@ -50,8 +50,8 @@ const planets = [
 export default function FloatingPlanets() {
     const pathname = usePathname()
 
-    // Hide planets on admin pages
-    if (pathname.startsWith('/admin') || pathname.startsWith('/login')) {
+    // Only show planets on home page
+    if (pathname !== '/') {
         return null
     }
 

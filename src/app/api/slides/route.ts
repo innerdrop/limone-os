@@ -90,7 +90,8 @@ export async function POST(request: NextRequest) {
                 orden: slideOrder,
                 activo: activo !== false,
                 aplicarBlur: body.aplicarBlur !== false,
-                botonOffset: botonOffset || 0
+                botonOffset: botonOffset || 0,
+                layoutConfig: body.layoutConfig || '{}'
             }
         })
 
