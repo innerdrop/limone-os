@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import AnalyticsTracker from '@/components/AnalyticsTracker'
+import FloatingShip from '@/components/FloatingShip'
+import FloatingPlanets from '@/components/FloatingPlanets'
 
 export const metadata: Metadata = {
     title: {
@@ -99,6 +101,8 @@ export default async function RootLayout({
             <body className="min-h-screen bg-canvas-100 text-warm-800 antialiased">
                 <Providers>
                     <AnalyticsTracker />
+                    <FloatingShip />
+                    <FloatingPlanets />
                     {children}
                 </Providers>
             </body>

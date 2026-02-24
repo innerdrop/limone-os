@@ -22,6 +22,8 @@ interface Slide {
     colorBoton?: string
     colorFondoBoton?: string
     orden: number
+    aplicarBlur?: boolean
+    botonOffset?: number
 }
 
 // Default slides for when database is empty
@@ -103,15 +105,20 @@ export default function MainHero() {
                 <div className="absolute inset-0">
                     <Image
                         src={slide.imagenUrl}
-                        alt={slide.titulo}
+                        alt={slide.titulo || 'Slide'}
                         fill
                         className="object-cover"
                         priority={index === 0}
                     />
                     {/* Overlay based on style */}
-                    <div className={`absolute inset-0 ${isDark
-                        ? 'bg-gradient-to-r from-emerald-900/40 to-teal-900/40 backdrop-blur-[3px]'
-                        : 'bg-white/30 backdrop-blur-[2px]'
+                    <div className={`absolute inset-0 ${slide.estiloOverlay === 'dark'
+                        ? 'bg-gradient-to-r from-emerald-900/40 to-teal-900/40'
+                        : slide.estiloOverlay === 'light'
+                            ? 'bg-white/30'
+                            : ''
+                        } ${slide.aplicarBlur !== false
+                            ? (isDark ? 'backdrop-blur-[3px]' : 'backdrop-blur-[2px]')
+                            : ''
                         }`}></div>
                 </div>
 
@@ -131,12 +138,14 @@ export default function MainHero() {
 
                         {/* Title */}
                         <div className="space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-                            <h1
-                                className="text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight drop-shadow-md"
-                                style={{ color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
-                            >
-                                {slide.titulo}
-                            </h1>
+                            {slide.titulo && (
+                                <h1
+                                    className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight drop-shadow-md"
+                                    style={{ color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
+                                >
+                                    {slide.titulo}
+                                </h1>
+                            )}
                             {slide.subtitulo && (
                                 <div className="flex items-center justify-center gap-3">
                                     {slide.subtitulo.includes('|') ? (
@@ -169,7 +178,7 @@ export default function MainHero() {
                         {/* Description */}
                         {slide.descripcion && (
                             <p
-                                className="text-lg md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed mt-4 mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md"
+                                className="text-base sm:text-lg md:text-2xl font-medium max-w-3xl mx-auto leading-relaxed mt-3 mb-5 sm:mt-4 sm:mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md"
                                 style={{ color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E') }}
                             >
                                 {slide.descripcion}
@@ -201,7 +210,11 @@ export default function MainHero() {
                                 <Link
                                     href={slide.enlace}
                                     className="inline-flex items-center gap-2 px-8 py-3 font-bold text-lg md:text-xl rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all group/btn"
-                                    style={{ backgroundColor: slide.colorFondoBoton || '#F1C40F', color: slide.colorBoton || '#2D2D2D' }}
+                                    style={{
+                                        backgroundColor: slide.colorFondoBoton || '#F1C40F',
+                                        color: slide.colorBoton || '#2D2D2D',
+                                        transform: slide.botonOffset ? `translateY(${slide.botonOffset}px)` : undefined
+                                    }}
                                 >
                                     <span className="text-xl">{isDark ? '👩‍🎨' : '☀️'}</span>
                                     {slide.textoBoton}

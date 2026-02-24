@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
             colorBoton,
             colorFondoBoton,
             orden,
-            activo
+            activo,
+            botonOffset
         } = body
 
         if (!imagenUrl) {
@@ -87,7 +88,9 @@ export async function POST(request: NextRequest) {
                 colorBoton: colorBoton || '#2D2D2D',
                 colorFondoBoton: colorFondoBoton || '#F1C40F',
                 orden: slideOrder,
-                activo: activo !== false
+                activo: activo !== false,
+                aplicarBlur: body.aplicarBlur !== false,
+                botonOffset: botonOffset || 0
             }
         })
 

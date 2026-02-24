@@ -23,6 +23,8 @@ interface Slide {
     colorFondoBoton: string
     orden: number
     activo: boolean
+    aplicarBlur: boolean
+    botonOffset: number
 }
 
 const emptySlide = {
@@ -43,6 +45,8 @@ const emptySlide = {
     colorBoton: '#2D2D2D',
     colorFondoBoton: '#F1C40F',
     activo: true,
+    aplicarBlur: true,
+    botonOffset: 0,
 }
 
 export default function SliderAdminPage() {
@@ -148,6 +152,8 @@ export default function SliderAdminPage() {
             colorBoton: slide.colorBoton || '#2D2D2D',
             colorFondoBoton: slide.colorFondoBoton || '#F1C40F',
             activo: slide.activo,
+            aplicarBlur: slide.aplicarBlur !== false,
+            botonOffset: slide.botonOffset || 0,
         })
         setPreviewUrl(slide.imagenUrl || null)
         setUseHtml(!!slide.codigoHtml)
@@ -323,8 +329,10 @@ export default function SliderAdminPage() {
                             {/* Overlay preview */}
                             <div className={`absolute inset-0 ${formData.estiloOverlay === 'dark'
                                 ? 'bg-gradient-to-r from-warm-900/50 to-warm-800/40'
-                                : 'bg-white/30'
-                                }`}></div>
+                                : formData.estiloOverlay === 'light'
+                                    ? 'bg-white/30'
+                                    : 'bg-transparent'
+                                } ${formData.aplicarBlur ? 'backdrop-blur-[2px]' : ''}`}></div>
                             {/* Content preview */}
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="text-center p-4">
@@ -352,8 +360,12 @@ export default function SliderAdminPage() {
                                     )}
                                     {formData.textoBoton && (
                                         <div
-                                            className="mt-3 inline-block px-4 py-1.5 rounded-lg text-xs font-bold"
-                                            style={{ backgroundColor: formData.colorFondoBoton, color: formData.colorBoton }}
+                                            className="mt-3 inline-block px-4 py-1.5 rounded-lg text-xs font-bold transition-transform duration-300"
+                                            style={{
+                                                backgroundColor: formData.colorFondoBoton,
+                                                color: formData.colorBoton,
+                                                transform: `translateY(${formData.botonOffset}px)`
+                                            }}
                                         >
                                             {formData.textoBoton}
                                         </div>
@@ -415,7 +427,7 @@ export default function SliderAdminPage() {
                             <div className="md:col-span-2">
                                 <div className="flex items-center justify-between mb-1">
                                     <label className="block text-sm font-medium text-warm-700">
-                                        Título Principal *
+                                        Título Principal
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] text-warm-500 uppercase font-bold">Color:</span>
@@ -433,7 +445,7 @@ export default function SliderAdminPage() {
                                     onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
                                     placeholder="Ej: Taller de Verano"
                                     className="w-full px-4 py-2 border border-warm-300 rounded-lg focus:ring-2 focus:ring-brand-purple"
-                                    required
+
                                 />
                             </div>
 
@@ -602,6 +614,37 @@ export default function SliderAdminPage() {
                             </div>
 
                             <div>
+                                <label className="block text-sm font-medium text-warm-700 mb-1">
+                                    Posición del Botón (Offset Vertical)
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, botonOffset: prev.botonOffset - 10 }))}
+                                        className="p-2 bg-warm-100 rounded-lg hover:bg-warm-200"
+                                        title="Subir botón"
+                                    >
+                                        ↑
+                                    </button>
+                                    <input
+                                        type="number"
+                                        value={formData.botonOffset}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, botonOffset: parseInt(e.target.value) || 0 }))}
+                                        className="w-20 text-center px-2 py-2 border border-warm-300 rounded-lg focus:ring-2 focus:ring-brand-purple"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, botonOffset: prev.botonOffset + 10 }))}
+                                        className="p-2 bg-warm-100 rounded-lg hover:bg-warm-200"
+                                        title="Bajar botón"
+                                    >
+                                        ↓
+                                    </button>
+                                    <span className="text-xs text-warm-500">px (positivo baja, negativo sube)</span>
+                                </div>
+                            </div>
+
+                            <div>
                                 <label className="block text-sm font-medium text-warm-700 mb-2">
                                     Estilo de Overlay
                                 </label>
@@ -628,7 +671,30 @@ export default function SliderAdminPage() {
                                         />
                                         <span className="text-sm">🌙 Oscuro (texto blanco)</span>
                                     </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="estiloOverlay"
+                                            value="none"
+                                            checked={formData.estiloOverlay === 'none'}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, estiloOverlay: e.target.value }))}
+                                            className="text-brand-purple"
+                                        />
+                                        <span className="text-sm">🌈 Original (Sin overlay)</span>
+                                    </label>
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer mt-6">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.aplicarBlur}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, aplicarBlur: e.target.checked }))}
+                                        className="w-5 h-5 text-brand-purple rounded"
+                                    />
+                                    <span className="font-medium text-sm">Aplicar desenfoque (blur)</span>
+                                </label>
                             </div>
 
                             <div>
@@ -639,7 +705,7 @@ export default function SliderAdminPage() {
                                         onChange={(e) => setFormData(prev => ({ ...prev, activo: e.target.checked }))}
                                         className="w-5 h-5 text-brand-purple rounded"
                                     />
-                                    <span className="font-medium">Slide activo (visible en la web)</span>
+                                    <span className="font-medium text-sm">Slide activo (visible en la web)</span>
                                 </label>
                             </div>
                         </div>

@@ -391,6 +391,8 @@ model Slide {
   colorFondoBoton String  @default("#F1C40F")
   orden         Int      @default(0)
   activo        Boolean  @default(true)
+  aplicarBlur   Boolean  @default(true)
+  botonOffset   Int      @default(0)
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt
 

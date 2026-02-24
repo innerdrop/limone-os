@@ -80,6 +80,8 @@ export async function PUT(
         if (colorFondoBoton !== undefined) updateData.colorFondoBoton = colorFondoBoton
         if (orden !== undefined) updateData.orden = orden
         if (activo !== undefined) updateData.activo = activo
+        if (body.aplicarBlur !== undefined) updateData.aplicarBlur = body.aplicarBlur
+        if (body.botonOffset !== undefined) updateData.botonOffset = body.botonOffset
 
         const updatedSlide = await prisma.slide.update({
             where: { id },
