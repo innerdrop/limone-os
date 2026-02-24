@@ -55,19 +55,7 @@ if ($LASTEXITCODE -ne 0) { Add-Error "[GIT] Error al subir main a GitHub" }
 Write-Host "`n[GIT] Volviendo a develop..." -ForegroundColor Yellow
 git checkout develop
 
-# 6. Mostrar comandos para el VPS
-Write-Host ""
-Write-Host "=============================================" -ForegroundColor Green
-Write-Host "[VPS] EJECUTA ESTOS COMANDOS EN EL SERVIDOR:" -ForegroundColor Green
-Write-Host "=============================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "  ssh root@$VPS_HOST" -ForegroundColor White
-Write-Host "  cd $VPS_PATH" -ForegroundColor White
-Write-Host "  git pull origin main" -ForegroundColor White
-Write-Host "  docker-compose down" -ForegroundColor White
-Write-Host "  docker-compose up -d --build" -ForegroundColor White
-Write-Host ""
-
+# 6. Deploy al VPS via SSH
 if ($errorSummary.Count -gt 0) {
     Write-Host "`n--------------------------------------" -ForegroundColor Red
     Write-Host "[REPORTE DE ERRORES]" -ForegroundColor Red
@@ -75,10 +63,32 @@ if ($errorSummary.Count -gt 0) {
         Write-Host " - $err" -ForegroundColor Red
     }
     Write-Host "--------------------------------------" -ForegroundColor Red
+    Write-Host "[INFO] Corrige los errores antes de deployar." -ForegroundColor Yellow
 }
 else {
-    Write-Host "[OK] Main actualizado en GitHub." -ForegroundColor Green
-    Write-Host "[INFO] Ejecuta los comandos de arriba en el VPS para completar el deploy." -ForegroundColor Cyan
-    Write-Host "[INFO] Sitio: https://tallerlimone.com" -ForegroundColor Gray
+    Write-Host "`n[OK] Main actualizado en GitHub." -ForegroundColor Green
+
+    $deploy = Read-Host "Deployar al VPS ahora? (s/n)"
+    if ($deploy -eq 's') {
+        Write-Host "`n[VPS] Conectando a $VPS_HOST..." -ForegroundColor Cyan
+        Write-Host "[VPS] Ingresa la clave cuando se te pida.`n" -ForegroundColor Yellow
+
+        ssh root@$VPS_HOST "cd $VPS_PATH && echo '[VPS] Pulling main...' && git pull origin main && echo '[VPS] Rebuilding containers...' && docker-compose down && docker-compose up -d --build && echo '[VPS] Deploy completado!'"
+
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "`n[OK] DEPLOY EXITOSO" -ForegroundColor Green
+            Write-Host "[INFO] Sitio: https://tallerlimone.com" -ForegroundColor Gray
+        } else {
+            Write-Host "`n[ERROR] Hubo un problema con el deploy. Revisa la salida de arriba." -ForegroundColor Red
+        }
+    } else {
+        Write-Host "`n[INFO] Deploy cancelado. Comandos manuales:" -ForegroundColor Yellow
+        Write-Host "  ssh root@$VPS_HOST" -ForegroundColor White
+        Write-Host "  cd $VPS_PATH" -ForegroundColor White
+        Write-Host "  git pull origin main" -ForegroundColor White
+        Write-Host "  docker-compose down" -ForegroundColor White
+        Write-Host "  docker-compose up -d --build" -ForegroundColor White
+        Write-Host "[INFO] Sitio: https://tallerlimone.com" -ForegroundColor Gray
+    }
 }
 Write-Host ""
