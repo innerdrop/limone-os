@@ -14,8 +14,11 @@ export default function FloatingShip() {
     const [phase, setPhase] = useState<FlightPhase>('ltr')
     const [startY, setStartY] = useState(50)
     const [endY, setEndY] = useState(20)
+    const [isFlyingAway, setIsFlyingAway] = useState(false)
 
     const startFlight = useCallback(() => {
+        if (isFlyingAway) return // Don't restart if flying away
+
         setPhase(prev => {
             const nextPhase: FlightPhase = prev === 'ltr' ? 'rtl' : 'ltr'
 
@@ -44,7 +47,7 @@ export default function FloatingShip() {
         setTimeout(() => {
             setIsFlying(false)
         }, 8000)
-    }, [])
+    }, [isFlyingAway])
 
     useEffect(() => {
         const initialTimeout = setTimeout(startFlight, 500)
@@ -56,29 +59,48 @@ export default function FloatingShip() {
         }
     }, [startFlight])
 
+    // Handle tap/click: ship accelerates and flies off screen
+    const handleShipClick = useCallback(() => {
+        if (isFlyingAway) return
+        setIsFlyingAway(true)
+
+        // After fly-away animation completes, reset and resume normal flights
+        setTimeout(() => {
+            setIsFlyingAway(false)
+            setIsFlying(false)
+        }, 1200)
+    }, [isFlyingAway])
+
     // Only show on home page
     if (pathname !== '/' || pathname.startsWith('/admin') || pathname.startsWith('/login')) {
         return null
     }
 
-    if (!isFlying) return null
+    if (!isFlying && !isFlyingAway) return null
 
     const isRTL = phase === 'rtl'
-    const animationName = isRTL ? 'shipFlyRTL' : 'shipFlyLTR'
+    const animationName = isFlyingAway
+        ? (isRTL ? 'shipZoomLeft' : 'shipZoomRight')
+        : (isRTL ? 'shipFlyRTL' : 'shipFlyLTR')
+    const animationDuration = isFlyingAway ? '0.8s' : '8s'
+    const animationTiming = isFlyingAway ? 'cubic-bezier(0.4, 0, 1, 1)' : 'linear'
 
     return (
         <div
-            className="fixed pointer-events-none z-[9999]"
+            className="fixed z-[9999]"
             style={{
                 top: `${startY}%`,
-                animation: `${animationName} 8s linear forwards`,
+                animation: `${animationName} ${animationDuration} ${animationTiming} forwards`,
                 ['--ship-start-y' as string]: `${startY}%`,
                 ['--ship-end-y' as string]: `${endY}%`,
+                pointerEvents: isFlyingAway ? 'none' : 'auto',
+                cursor: 'pointer',
             }}
+            onClick={handleShipClick}
         >
             <div
                 className="relative"
-                style={{ animation: 'shipBob 1.2s ease-in-out infinite' }}
+                style={{ animation: isFlyingAway ? 'none' : 'shipBob 1.2s ease-in-out infinite' }}
             >
                 {/* Ship image — flipped when going R→L */}
                 <div
@@ -95,8 +117,6 @@ export default function FloatingShip() {
                         sizes="(max-width: 768px) 208px, (max-width: 1024px) 320px, 420px"
                     />
                 </div>
-
-                {/* ===== EXHAUST / PROPULSION SYSTEM ===== */}
 
                 {/* ===== EXHAUST / PROPULSION SYSTEM ===== */}
                 <div
@@ -116,7 +136,9 @@ export default function FloatingShip() {
                                 background: 'radial-gradient(circle, rgba(255,80,0,0.4) 0%, transparent 70%)',
                                 filter: 'blur(10px)',
                                 animation: 'fireFlicker 0.3s ease-in-out infinite alternate',
-                                opacity: 0.6,
+                                opacity: isFlyingAway ? 1 : 0.6,
+                                transform: isFlyingAway ? 'scale(2)' : 'scale(1)',
+                                transition: 'all 0.3s ease',
                             }}
                         />
 
@@ -124,10 +146,14 @@ export default function FloatingShip() {
                         <div
                             className="relative w-14 h-6 md:w-24 md:h-10 lg:w-32 lg:h-14 rounded-full"
                             style={{
-                                background: 'radial-gradient(ellipse at right, #FF4500 0%, #FF8C00 40%, transparent 80%)',
+                                background: isFlyingAway
+                                    ? 'radial-gradient(ellipse at right, #FFFFFF 0%, #FF4500 30%, #FF8C00 60%, transparent 90%)'
+                                    : 'radial-gradient(ellipse at right, #FF4500 0%, #FF8C00 40%, transparent 80%)',
                                 filter: 'blur(2px)',
                                 animation: 'fireFlicker 0.15s ease-in-out infinite alternate',
                                 opacity: 0.9,
+                                transform: isFlyingAway ? 'scaleX(3)' : 'scaleX(1)',
+                                transition: 'transform 0.3s ease',
                             }}
                         />
 
@@ -150,7 +176,7 @@ export default function FloatingShip() {
                                 style={{
                                     width: `${2 + i}px`,
                                     height: `${2 + i}px`,
-                                    left: `-${15 + i * 10}px`,
+                                    left: `${isFlyingAway ? -(25 + i * 15) : -(15 + i * 10)}px`,
                                     background: '#FFD700',
                                     filter: 'blur(1px)',
                                     opacity: 0.8 - i * 0.2,

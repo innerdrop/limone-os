@@ -84,6 +84,7 @@ export async function PUT(
         if (body.botonOffset !== undefined) updateData.botonOffset = body.botonOffset
         if (body.tituloImagenUrl !== undefined) updateData.tituloImagenUrl = body.tituloImagenUrl
         if (body.layoutConfig !== undefined) updateData.layoutConfig = body.layoutConfig
+        console.log('[PUT /api/slides] tituloImagenUrl received:', body.tituloImagenUrl, '| updateData:', JSON.stringify(updateData))
 
         const updatedSlide = await prisma.slide.update({
             where: { id },

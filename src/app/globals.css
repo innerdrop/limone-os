@@ -10,89 +10,89 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Caveat:wght@400;700&display=swap');
 
 @font-face {
-  font-family: 'Gigi';
-  src: url('/GIGI.TTF') format('truetype');
-  font-weight: normal;
-  font-style: normal;
+    font-family: 'Gigi';
+    src: url('/GIGI.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
 }
 
 :root {
-  /* Colores de Marca (Extraídos del logo) */
-  --brand-charcoal: #2D2D2D;
-  --brand-purple: #8E44AD;
-  --brand-red: #E74C3C;
-  --brand-orange: #F39C12;
-  --brand-yellow: #F1C40F;
-  --brand-green: #27AE60;
+    /* Colores de Marca (Extraídos del logo) */
+    --brand-charcoal: #2D2D2D;
+    --brand-purple: #8E44AD;
+    --brand-red: #E74C3C;
+    --brand-orange: #F39C12;
+    --brand-yellow: #F1C40F;
+    --brand-green: #27AE60;
 
-  /* Aliases Funcionales */
-  --lemon-500: var(--brand-yellow);
-  --leaf-500: var(--brand-green);
+    /* Aliases Funcionales */
+    --lemon-500: var(--brand-yellow);
+    --leaf-500: var(--brand-green);
 
-  /* Colores Limón (Escala extendida) */
-  --lemon-50: #FFFEF5;
-  --lemon-100: #FFF9C4;
-  --lemon-200: #FFF59D;
-  --lemon-300: #FFF176;
-  --lemon-400: #FFEE58;
-  --lemon-600: #FDD835;
-  --lemon-700: #FBC02D;
+    /* Colores Limón (Escala extendida) */
+    --lemon-50: #FFFEF5;
+    --lemon-100: #FFF9C4;
+    --lemon-200: #FFF59D;
+    --lemon-300: #FFF176;
+    --lemon-400: #FFEE58;
+    --lemon-600: #FDD835;
+    --lemon-700: #FBC02D;
 
-  /* Colores Hoja (Escala extendida) */
-  --leaf-50: #F1F8E9;
-  --leaf-100: #DCEDC8;
-  --leaf-400: #9CCC65;
-  --leaf-600: #7CB342;
-  --leaf-700: #689F38;
+    /* Colores Hoja (Escala extendida) */
+    --leaf-50: #F1F8E9;
+    --leaf-100: #DCEDC8;
+    --leaf-400: #9CCC65;
+    --leaf-600: #7CB342;
+    --leaf-700: #689F38;
 
-  /* Colores Canvas */
-  --canvas-50: #FEFEFE;
-  --canvas-100: #FAF8F5;
-  --canvas-200: #F5F0E8;
-  --canvas-300: #EBE4D8;
+    /* Colores Canvas */
+    --canvas-50: #FEFEFE;
+    --canvas-100: #FAF8F5;
+    --canvas-200: #F5F0E8;
+    --canvas-300: #EBE4D8;
 
-  /* Warm Neutrals */
-  --warm-600: #57534E;
-  --warm-700: #44403C;
-  --warm-800: var(--brand-charcoal);
-  --warm-900: #1C1917;
+    /* Warm Neutrals */
+    --warm-600: #57534E;
+    --warm-700: #44403C;
+    --warm-800: var(--brand-charcoal);
+    --warm-900: #1C1917;
 
-  /* Spacing */
-  --header-height: 80px;
+    /* Spacing */
+    --header-height: 80px;
 }
 
 /* Base Styles */
 * {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
 }
 
 html {
-  scroll-behavior: smooth;
-  overflow-x: hidden;
-  position: relative;
-  width: 100%;
-  max-width: 100vw;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+    max-width: 100vw;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--canvas-100);
-  color: var(--warm-800);
-  line-height: 1.6;
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
-  position: relative;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--canvas-100);
+    color: var(--warm-800);
+    line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
 }
 
 #__next,
 main,
 [data-nextjs-scroll-focus-boundary] {
-  overflow-x: hidden;
-  width: 100%;
-  max-width: 100vw;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* Typography */
@@ -102,17 +102,17 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-weight: 600;
-  line-height: 1.2;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    line-height: 1.2;
 }
 
 .font-artistic {
-  font-family: 'Caveat', cursive;
+    font-family: 'Caveat', cursive;
 }
 
 .font-gigi {
-  font-family: Gigi, cursive;
+    font-family: Gigi, cursive;
 }
 
 /* ========================================
@@ -121,77 +121,77 @@ h6 {
 
 @layer components {
 
-  .btn-primary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brand-yellow hover:bg-lemon-600 text-brand-charcoal font-semibold rounded-full transition-all duration-300 ease-out shadow-soft hover:shadow-glow-lemon focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:ring-offset-2;
-  }
+    .btn-primary {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-brand-yellow hover:bg-lemon-600 text-brand-charcoal font-semibold rounded-full transition-all duration-300 ease-out shadow-soft hover:shadow-glow-lemon focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:ring-offset-2;
+    }
 
-  .btn-secondary {
-    @apply inline-flex items-center justify-center px-6 py-3 bg-brand-purple hover:bg-brand-purple/90 text-white font-semibold rounded-full transition-all duration-300 ease-out shadow-soft hover:shadow-glow-purple focus:outline-none focus:ring-2 focus:ring-brand-purple/50 focus:ring-offset-2;
-  }
+    .btn-secondary {
+        @apply inline-flex items-center justify-center px-6 py-3 bg-brand-purple hover:bg-brand-purple/90 text-white font-semibold rounded-full transition-all duration-300 ease-out shadow-soft hover:shadow-glow-purple focus:outline-none focus:ring-2 focus:ring-brand-purple/50 focus:ring-offset-2;
+    }
 
-  .btn-outline {
-    @apply inline-flex items-center justify-center px-6 py-3 border-2 border-brand-charcoal bg-transparent text-brand-charcoal font-semibold rounded-full transition-all duration-300 ease-out hover:bg-brand-charcoal hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-charcoal/50 focus:ring-offset-2;
-  }
+    .btn-outline {
+        @apply inline-flex items-center justify-center px-6 py-3 border-2 border-brand-charcoal bg-transparent text-brand-charcoal font-semibold rounded-full transition-all duration-300 ease-out hover:bg-brand-charcoal hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-charcoal/50 focus:ring-offset-2;
+    }
 
-  /* Cards */
-  .card {
-    @apply bg-white rounded-2xl shadow-soft p-6 transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 border border-canvas-200/50;
-  }
+    /* Cards */
+    .card {
+        @apply bg-white rounded-2xl shadow-soft p-6 transition-all duration-300 ease-out hover:shadow-lg hover:-translate-y-1 border border-canvas-200/50;
+    }
 
-  .card-glass {
-    @apply bg-white/80 backdrop-blur-md rounded-2xl shadow-soft p-6 border border-white/20 transition-all duration-300 ease-out;
-  }
+    .card-glass {
+        @apply bg-white/80 backdrop-blur-md rounded-2xl shadow-soft p-6 border border-white/20 transition-all duration-300 ease-out;
+    }
 
-  /* Form Elements */
-  .input-field {
-    @apply w-full px-4 py-3 rounded-xl bg-canvas-100 border border-canvas-300 text-warm-800 placeholder-warm-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lemon-400 focus:border-transparent;
-  }
+    /* Form Elements */
+    .input-field {
+        @apply w-full px-4 py-3 rounded-xl bg-canvas-100 border border-canvas-300 text-warm-800 placeholder-warm-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lemon-400 focus:border-transparent;
+    }
 
-  .label {
-    @apply block text-sm font-medium text-warm-600 mb-2;
-  }
+    .label {
+        @apply block text-sm font-medium text-warm-600 mb-2;
+    }
 
-  /* Section Styles */
-  .section {
-    @apply py-16 md:py-24;
-  }
+    /* Section Styles */
+    .section {
+        @apply py-16 md:py-24;
+    }
 
-  .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold text-brand-charcoal mb-4;
-  }
+    .section-title {
+        @apply text-3xl md:text-4xl lg:text-5xl font-bold text-brand-charcoal mb-4;
+    }
 
-  .section-subtitle {
-    @apply text-lg md:text-xl text-warm-500 max-w-2xl;
-  }
+    .section-subtitle {
+        @apply text-lg md:text-xl text-warm-500 max-w-2xl;
+    }
 
-  /* Badge */
-  .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
-  }
+    /* Badge */
+    .badge {
+        @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+    }
 
-  .badge-lemon {
-    @apply bg-brand-yellow/10 text-brand-orange border border-brand-yellow/20;
-  }
+    .badge-lemon {
+        @apply bg-brand-yellow/10 text-brand-orange border border-brand-yellow/20;
+    }
 
-  .badge-leaf {
-    @apply bg-leaf-100 text-leaf-700;
-  }
+    .badge-leaf {
+        @apply bg-leaf-100 text-leaf-700;
+    }
 
-  .badge-success {
-    @apply bg-green-100 text-green-700;
-  }
+    .badge-success {
+        @apply bg-green-100 text-green-700;
+    }
 
-  .badge-warning {
-    @apply bg-amber-100 text-amber-700;
-  }
+    .badge-warning {
+        @apply bg-amber-100 text-amber-700;
+    }
 
-  .badge-error {
-    @apply bg-red-100 text-red-700;
-  }
+    .badge-error {
+        @apply bg-red-100 text-red-700;
+    }
 
-  .badge-brand {
-    @apply bg-brand-purple/10 text-brand-purple border border-brand-purple/20;
-  }
+    .badge-brand {
+        @apply bg-brand-purple/10 text-brand-purple border border-brand-purple/20;
+    }
 }
 
 /* ========================================
@@ -199,59 +199,59 @@ h6 {
    ======================================== */
 
 @layer utilities {
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
+    .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
 
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out;
-  }
+    .animate-slide-up {
+        animation: slideUp 0.5s ease-out;
+    }
 
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
 
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-purple via-brand-red to-brand-orange;
-  }
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-purple via-brand-red to-brand-orange;
+    }
 
-  .bg-gradient-lemon {
-    @apply bg-gradient-to-br from-lemon-100 via-canvas-50 to-leaf-50;
-  }
+    .bg-gradient-lemon {
+        @apply bg-gradient-to-br from-lemon-100 via-canvas-50 to-leaf-50;
+    }
 }
 
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
+    0% {
+        opacity: 0;
+    }
 
-  100% {
-    opacity: 1;
-  }
+    100% {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-  0% {
-    transform: translateY(30px);
-    opacity: 0;
-  }
+    0% {
+        transform: translateY(30px);
+        opacity: 0;
+    }
 
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 @keyframes float {
 
-  0%,
-  100% {
-    transform: translateY(0);
-  }
+    0%,
+    100% {
+        transform: translateY(0);
+    }
 
-  50% {
-    transform: translateY(-10px);
-  }
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 /* ========================================
@@ -259,21 +259,21 @@ h6 {
    ======================================== */
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--canvas-100);
+    background: var(--canvas-100);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--lemon-400);
-  border-radius: 4px;
+    background: var(--lemon-400);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--lemon-500);
+    background: var(--lemon-500);
 }
 
 /* ========================================
@@ -281,8 +281,8 @@ h6 {
    ======================================== */
 
 ::selection {
-  background-color: var(--lemon-300);
-  color: var(--warm-800);
+    background-color: var(--lemon-300);
+    color: var(--warm-800);
 }
 
 /* ========================================
@@ -291,94 +291,129 @@ h6 {
 
 /* Phase 1: Left → Right (diagonal climb, constant size) */
 @keyframes shipFlyLTR {
-  0% {
-    left: -450px;
-    top: var(--ship-start-y);
-    opacity: 0;
-    transform: scale(1);
-  }
+    0% {
+        left: -450px;
+        top: var(--ship-start-y);
+        opacity: 0;
+        transform: scale(1);
+    }
 
-  3% {
-    opacity: 1;
-  }
+    3% {
+        opacity: 1;
+    }
 
-  97% {
-    opacity: 1;
-  }
+    97% {
+        opacity: 1;
+    }
 
-  100% {
-    left: 110vw;
-    top: var(--ship-end-y);
-    opacity: 0;
-    transform: scale(1);
-  }
+    100% {
+        left: 110vw;
+        top: var(--ship-end-y);
+        opacity: 0;
+        transform: scale(1);
+    }
 }
 
 /* Phase 2: Right → Left (approaching viewer, grows dramatically) */
 @keyframes shipFlyRTL {
-  0% {
-    right: -450px;
-    left: auto;
-    top: var(--ship-start-y);
-    opacity: 0;
-    transform: scale(0.6);
-  }
+    0% {
+        right: -450px;
+        left: auto;
+        top: var(--ship-start-y);
+        opacity: 0;
+        transform: scale(0.6);
+    }
 
-  5% {
-    opacity: 1;
-  }
+    5% {
+        opacity: 1;
+    }
 
-  50% {
-    transform: scale(1.2);
-  }
+    50% {
+        transform: scale(1.2);
+    }
 
-  90% {
-    opacity: 1;
-  }
+    90% {
+        opacity: 1;
+    }
 
-  100% {
-    right: 110vw;
-    left: auto;
-    top: var(--ship-end-y);
-    opacity: 0;
-    transform: scale(1.8);
-  }
+    100% {
+        right: 110vw;
+        left: auto;
+        top: var(--ship-end-y);
+        opacity: 0;
+        transform: scale(1.8);
+    }
 }
 
 @keyframes shipBob {
 
-  0%,
-  100% {
-    transform: translateY(0);
-  }
+    0%,
+    100% {
+        transform: translateY(0);
+    }
 
-  50% {
-    transform: translateY(-10px);
-  }
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 @keyframes fireFlicker {
-  0% {
-    transform: scaleX(0.85) scaleY(0.9);
-    opacity: 0.8;
-  }
+    0% {
+        transform: scaleX(0.85) scaleY(0.9);
+        opacity: 0.8;
+    }
 
-  100% {
-    transform: scaleX(1.15) scaleY(1.1);
-    opacity: 1;
-  }
+    100% {
+        transform: scaleX(1.15) scaleY(1.1);
+        opacity: 1;
+    }
 }
 
 @keyframes smokePuff {
-  0% {
-    transform: translateX(0) scale(1);
-    opacity: 0.3;
-  }
+    0% {
+        transform: translateX(0) scale(1);
+        opacity: 0.3;
+    }
 
-  100% {
-    transform: translateX(-20px) scale(2);
-    opacity: 0;
-  }
+    100% {
+        transform: translateX(-20px) scale(2);
+        opacity: 0;
+    }
+}
+
+/* Ship fly-away on tap */
+@keyframes shipZoomRight {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    20% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.3) translateX(200vw) translateY(-30vh);
+        opacity: 0;
+    }
+}
+
+@keyframes shipZoomLeft {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    20% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(0.3) translateX(-200vw) translateY(-30vh);
+        opacity: 0;
+    }
 }
 
 /* ========================================
@@ -387,30 +422,30 @@ h6 {
 
 @keyframes planetFloat {
 
-  0%,
-  100% {
-    transform: translateY(0) translateX(0);
-  }
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+    }
 
-  25% {
-    transform: translateY(-15px) translateX(5px);
-  }
+    25% {
+        transform: translateY(-15px) translateX(5px);
+    }
 
-  50% {
-    transform: translateY(-8px) translateX(-3px);
-  }
+    50% {
+        transform: translateY(-8px) translateX(-3px);
+    }
 
-  75% {
-    transform: translateY(-20px) translateX(2px);
-  }
+    75% {
+        transform: translateY(-20px) translateX(2px);
+    }
 }
 
 @keyframes planetSpin {
-  0% {
-    transform: rotate(0deg);
-  }
+    0% {
+        transform: rotate(0deg);
+    }
 
-  100% {
-    transform: rotate(360deg);
-  }
+    100% {
+        transform: rotate(360deg);
+    }
 }

@@ -218,7 +218,7 @@ export default function SliderAdminPage() {
         const imagenUrlFinal = formData.imagenUrl || previewUrl || ''
         const tituloFinal = formData.titulo.trim()
 
-        console.log('Form submission:', { titulo: tituloFinal, imagenUrl: imagenUrlFinal, formData })
+        console.log('Form submission:', { titulo: tituloFinal, imagenUrl: imagenUrlFinal, tituloImagenUrl: formData.tituloImagenUrl, formData })
 
         if (!imagenUrlFinal) {
             setError('La imagen es requerida')
@@ -237,6 +237,7 @@ export default function SliderAdminPage() {
                 ...formData,
                 titulo: tituloFinal,
                 imagenUrl: imagenUrlFinal,
+                tituloImagenUrl: formData.tituloImagenUrl || null,
             }
 
             const res = await fetch(url, {
@@ -495,7 +496,7 @@ export default function SliderAdminPage() {
                                     )}
                                     <input
                                         type="file"
-                                        accept="image/png,image/webp"
+                                        accept="image/png,image/webp,image/jpeg"
                                         onChange={async (e) => {
                                             const file = e.target.files?.[0]
                                             if (!file) return
@@ -503,10 +504,15 @@ export default function SliderAdminPage() {
                                             uploadData.append('file', file)
                                             try {
                                                 const res = await fetch('/api/admin/slider/upload', { method: 'POST', body: uploadData })
-                                                if (!res.ok) throw new Error()
+                                                if (!res.ok) {
+                                                    const errData = await res.json().catch(() => ({}))
+                                                    throw new Error(errData.error || `Error ${res.status}`)
+                                                }
                                                 const { url } = await res.json()
                                                 setFormData(prev => ({ ...prev, tituloImagenUrl: url }))
-                                            } catch { setError('Error al subir imagen de título') }
+                                                setSuccess('✅ Imagen de título subida correctamente')
+                                                setTimeout(() => setSuccess(null), 3000)
+                                            } catch (err: any) { setError(err.message || 'Error al subir imagen de título') }
                                         }}
                                         className="text-sm"
                                     />
