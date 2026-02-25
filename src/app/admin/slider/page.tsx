@@ -17,6 +17,7 @@ interface LayoutConfig {
     badge: ElementLayout
     tags: { alineacion: 'left' | 'center' | 'right' }
     boton: ElementLayout & { offsetY: number }
+    espaciado: { badgeTitulo: number; tituloSubtitulo: number; subtituloDescripcion: number; descripcionBoton: number }
 }
 
 const defaultLayoutConfig: LayoutConfig = {
@@ -27,6 +28,7 @@ const defaultLayoutConfig: LayoutConfig = {
     badge: { alineacion: 'center', tamano: 'sm', tamanoMobile: 'xs' },
     tags: { alineacion: 'center' },
     boton: { alineacion: 'center', tamano: 'xl', tamanoMobile: 'lg', offsetY: 0 },
+    espaciado: { badgeTitulo: 16, tituloSubtitulo: 8, subtituloDescripcion: 12, descripcionBoton: 24 },
 }
 
 interface Slide {
@@ -39,6 +41,7 @@ interface Slide {
     textoBoton: string | null
     enlace: string | null
     imagenUrl: string | null
+    tituloImagenUrl: string | null
     codigoHtml: string | null
     estiloOverlay: string
     colorTitulo: string
@@ -63,6 +66,7 @@ const emptySlide = {
     textoBoton: '',
     enlace: '',
     imagenUrl: '',
+    tituloImagenUrl: '',
     codigoHtml: '',
     estiloOverlay: 'light',
     colorTitulo: '#2D2D2D',
@@ -171,6 +175,7 @@ export default function SliderAdminPage() {
             textoBoton: slide.textoBoton || '',
             enlace: slide.enlace || '',
             imagenUrl: slide.imagenUrl || '',
+            tituloImagenUrl: slide.tituloImagenUrl || '',
             codigoHtml: slide.codigoHtml || '',
             estiloOverlay: slide.estiloOverlay,
             colorTitulo: slide.colorTitulo || '#2D2D2D',
@@ -474,8 +479,39 @@ export default function SliderAdminPage() {
                                     onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
                                     placeholder="Ej: Taller de Verano"
                                     className="w-full px-4 py-2 border border-warm-300 rounded-lg focus:ring-2 focus:ring-brand-purple"
-
                                 />
+
+                                {/* Imagen de Título (reemplaza el texto) */}
+                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <label className="block text-sm font-medium text-blue-800 mb-2">
+                                        🖼️ Imagen como Título (PNG, reemplaza el texto)
+                                    </label>
+                                    {formData.tituloImagenUrl && (
+                                        <div className="mb-2 relative inline-block">
+                                            <img src={formData.tituloImagenUrl} alt="Título imagen" className="max-h-20 rounded" />
+                                            <button type="button" onClick={() => setFormData(prev => ({ ...prev, tituloImagenUrl: '' }))}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hover:bg-red-600">✕</button>
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/png,image/webp"
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0]
+                                            if (!file) return
+                                            const uploadData = new FormData()
+                                            uploadData.append('file', file)
+                                            try {
+                                                const res = await fetch('/api/admin/slider/upload', { method: 'POST', body: uploadData })
+                                                if (!res.ok) throw new Error()
+                                                const { url } = await res.json()
+                                                setFormData(prev => ({ ...prev, tituloImagenUrl: url }))
+                                            } catch { setError('Error al subir imagen de título') }
+                                        }}
+                                        className="text-sm"
+                                    />
+                                    <p className="text-xs text-blue-600 mt-1">Si se sube una imagen, se muestra en lugar del texto del título</p>
+                                </div>
                             </div>
 
                             <div>
@@ -746,6 +782,34 @@ export default function SliderAdminPage() {
                                                     <ElementControl label="Badge" element="badge" />
                                                     <ElementControl label="Tags" element="tags" hasSize={false} />
                                                     <ElementControl label="Botón" element="boton" />
+                                                </div>
+                                            </div>
+
+                                            {/* Spacing Controls */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-warm-700 mb-2">
+                                                    📏 Espaciado entre Elementos (px)
+                                                </label>
+                                                <div className="bg-white rounded-lg p-3 border border-warm-300 space-y-2">
+                                                    {[
+                                                        { label: 'Badge → Título', key: 'badgeTitulo' },
+                                                        { label: 'Título → Subtítulo', key: 'tituloSubtitulo' },
+                                                        { label: 'Subtítulo → Descripción', key: 'subtituloDescripcion' },
+                                                        { label: 'Descripción → Botón', key: 'descripcionBoton' },
+                                                    ].map(({ label, key }) => (
+                                                        <div key={key} className="flex items-center justify-between">
+                                                            <span className="text-sm text-warm-600">{label}</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <button type="button" onClick={() => updateLC(`espaciado.${key}`, Math.max(0, ((lc as any).espaciado?.[key] ?? 16) - 4))}
+                                                                    className="p-1 bg-warm-100 rounded border border-warm-300 hover:bg-warm-200 text-xs">−</button>
+                                                                <input type="number" value={(lc as any).espaciado?.[key] ?? 16}
+                                                                    onChange={e => updateLC(`espaciado.${key}`, parseInt(e.target.value) || 0)}
+                                                                    className="w-14 text-center px-1 py-0.5 border border-warm-300 rounded text-sm" />
+                                                                <button type="button" onClick={() => updateLC(`espaciado.${key}`, ((lc as any).espaciado?.[key] ?? 16) + 4)}
+                                                                    className="p-1 bg-warm-100 rounded border border-warm-300 hover:bg-warm-200 text-xs">+</button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             </div>
 

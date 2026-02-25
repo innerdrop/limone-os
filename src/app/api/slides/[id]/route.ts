@@ -82,6 +82,7 @@ export async function PUT(
         if (activo !== undefined) updateData.activo = activo
         if (body.aplicarBlur !== undefined) updateData.aplicarBlur = body.aplicarBlur
         if (body.botonOffset !== undefined) updateData.botonOffset = body.botonOffset
+        if (body.tituloImagenUrl !== undefined) updateData.tituloImagenUrl = body.tituloImagenUrl
         if (body.layoutConfig !== undefined) updateData.layoutConfig = body.layoutConfig
 
         const updatedSlide = await prisma.slide.update({

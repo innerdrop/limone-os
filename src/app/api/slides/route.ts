@@ -91,6 +91,7 @@ export async function POST(request: NextRequest) {
                 activo: activo !== false,
                 aplicarBlur: body.aplicarBlur !== false,
                 botonOffset: botonOffset || 0,
+                tituloImagenUrl: body.tituloImagenUrl || null,
                 layoutConfig: body.layoutConfig || '{}'
             }
         })

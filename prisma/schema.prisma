@@ -393,6 +393,7 @@ model Slide {
   activo        Boolean  @default(true)
   aplicarBlur   Boolean  @default(true)
   botonOffset   Int      @default(0)
+  tituloImagenUrl String? // Imagen PNG opcional que reemplaza el título texto
   layoutConfig  String?  @default("{}")
   creadoEn      DateTime @default(now())
   actualizadoEn DateTime @updatedAt

@@ -24,6 +24,7 @@ interface Slide {
     orden: number
     aplicarBlur?: boolean
     botonOffset?: number
+    tituloImagenUrl?: string | null
     layoutConfig?: string
 }
 
@@ -160,13 +161,22 @@ export default function MainHero() {
                         const fs = (el: string, deskDefault: string, mobDefault: string) =>
                             isMobile ? getMobileFontSize(el, mobDefault) : getFontSize(el, deskDefault)
 
+                        const sp = lc?.espaciado || {}
+                        const spacing = {
+                            badgeTitulo: sp.badgeTitulo ?? 16,
+                            tituloSubtitulo: sp.tituloSubtitulo ?? 8,
+                            subtituloDescripcion: sp.subtituloDescripcion ?? 12,
+                            descripcionBoton: sp.descripcionBoton ?? 24,
+                        }
+
                         return (
                             <div className={`w-full ${containerMaxW} px-4 sm:px-6 lg:px-8 ${containerAlign} ${isDark ? 'text-white' : ''}`}>
                                 {/* Badge */}
                                 {slide.badgeTexto && (
-                                    <div className={`animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 ${getAlign('badge')}`}>
+                                    <div className={`animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100 ${getAlign('badge')}`}
+                                        style={{ marginBottom: `${spacing.badgeTitulo}px` }}>
                                         <div
-                                            className="inline-block font-black px-4 py-1.5 rounded-full uppercase tracking-wider mb-4 shadow-lg transform -rotate-2"
+                                            className="inline-block font-black px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg transform -rotate-2"
                                             style={{ fontSize: fs('badge', 'sm', 'xs'), backgroundColor: slide.colorBadge || '#F1C40F', color: slide.estiloOverlay === 'dark' ? '#000' : '#fff' }}
                                         >
                                             {slide.badgeTexto}
@@ -175,8 +185,19 @@ export default function MainHero() {
                                 )}
 
                                 {/* Title */}
-                                <div className={`space-y-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 ${getAlign('titulo')}`}>
-                                    {slide.titulo && (
+                                <div className={`animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 ${getAlign('titulo')}`}
+                                    style={{ marginBottom: `${spacing.tituloSubtitulo}px` }}>
+                                    {slide.tituloImagenUrl ? (
+                                        <img
+                                            src={slide.tituloImagenUrl}
+                                            alt={slide.titulo || 'Título'}
+                                            className="max-h-32 md:max-h-48 lg:max-h-64 w-auto object-contain drop-shadow-lg"
+                                            style={{
+                                                marginLeft: getAlign('titulo').includes('center') ? 'auto' : getAlign('titulo').includes('right') ? 'auto' : undefined,
+                                                marginRight: getAlign('titulo').includes('center') ? 'auto' : getAlign('titulo').includes('left') ? 'auto' : undefined,
+                                            }}
+                                        />
+                                    ) : slide.titulo && (
                                         <h1
                                             className="font-black leading-tight tracking-tight drop-shadow-md"
                                             style={{ fontSize: fs('titulo', '7xl', '3xl'), color: slide.colorTitulo || (isDark ? '#FFFFFF' : '#2D2D2D') }}
@@ -185,7 +206,8 @@ export default function MainHero() {
                                         </h1>
                                     )}
                                     {slide.subtitulo && (
-                                        <div className={`flex items-center ${getJustify('subtitulo')} gap-3`}>
+                                        <div className={`flex items-center ${getJustify('subtitulo')} gap-3`}
+                                            style={{ marginTop: `${spacing.tituloSubtitulo}px` }}>
                                             {slide.subtitulo.includes('|') ? (
                                                 <>
                                                     <span
@@ -216,8 +238,13 @@ export default function MainHero() {
                                 {/* Description */}
                                 {slide.descripcion && (
                                     <p
-                                        className={`font-medium max-w-3xl leading-relaxed mt-3 mb-5 sm:mt-4 sm:mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md ${getAlign('descripcion')} ${lc?.descripcion?.alineacion === 'center' ? 'mx-auto' : ''}`}
-                                        style={{ fontSize: fs('descripcion', '2xl', 'lg'), color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E') }}
+                                        className={`font-medium max-w-3xl leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300 drop-shadow-md ${getAlign('descripcion')} ${lc?.descripcion?.alineacion === 'center' ? 'mx-auto' : ''}`}
+                                        style={{
+                                            fontSize: fs('descripcion', '2xl', 'lg'),
+                                            color: slide.colorDescripcion || (isDark ? 'rgba(255,255,255,0.9)' : '#57534E'),
+                                            marginTop: `${spacing.subtituloDescripcion}px`,
+                                            marginBottom: `${spacing.descripcionBoton}px`,
+                                        }}
                                     >
                                         {slide.descripcion}
                                     </p>
